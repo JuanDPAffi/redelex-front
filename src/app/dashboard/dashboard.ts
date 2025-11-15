@@ -175,8 +175,8 @@ export class DashboardComponent implements OnInit {
 
   formatRole(role: string): string {
     const roleMap: { [key: string]: string } = {
-      'admin': 'Administrador',
-      'user': 'Usuario',
+      'admin': 'Colaborador Affi',
+      'user': 'Inmobiliaria',
       'guest': 'Invitado'
     };
     
