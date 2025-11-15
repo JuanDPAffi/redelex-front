@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth';
+import { AffiAlert } from '../../../shared/affi-alert';
 
 @Component({
   selector: 'app-login',
@@ -33,15 +34,35 @@ export class LoginComponent {
   }
 
   submit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      AffiAlert.fire({
+        icon: 'info',
+        title: 'Datos incompletos',
+        text: 'Ingresa tu correo y contraseña para continuar.'
+      });
+      return;
+    }
 
     this.authService.login(this.form.value).subscribe({
       next: res => {
         this.authService.saveToken(res.token);
-        this.router.navigate(['/dashboard']);
+
+        AffiAlert.fire({
+          icon: 'success',
+          title: 'Bienvenido',
+          text: 'Inicio de sesión exitoso.',
+          timer: 1300,
+          showConfirmButton: false
+        }).then(() => {
+          this.router.navigate(['/dashboard']);
+        });
       },
       error: err => {
-        alert(err.error?.message || 'Error de login');
+        AffiAlert.fire({
+          icon: 'error',
+          title: 'Error al iniciar sesión',
+          text: err.error?.message || 'Correo o contraseña incorrectos.'
+        });
       }
     });
   }

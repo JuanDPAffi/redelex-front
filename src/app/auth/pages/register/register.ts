@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth';
 import { Router, RouterLink } from '@angular/router';
+import { AffiAlert } from '../../../shared/affi-alert';
 
 @Component({
   selector: 'app-register',
@@ -34,15 +35,35 @@ export class RegisterComponent {
   }
 
   submit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      AffiAlert.fire({
+        icon: 'info',
+        title: 'Formulario incompleto',
+        text: 'Por favor completa todos los campos requeridos.'
+      });
+      return;
+    }
 
     this.authService.register(this.form.value).subscribe({
       next: res => {
         this.authService.saveToken(res.token);
-        this.router.navigate(['/dashboard']);
+
+        AffiAlert.fire({
+          icon: 'success',
+          title: 'Registro exitoso',
+          text: 'Tu cuenta ha sido creada correctamente.',
+          timer: 1500,
+          showConfirmButton: false
+        }).then(() => {
+          this.router.navigate(['/dashboard']);
+        });
       },
       error: err => {
-        alert(err.error?.message || 'Error en el registro');
+        AffiAlert.fire({
+          icon: 'error',
+          title: 'Error en el registro',
+          text: err.error?.message || 'Ocurrió un error al intentar registrarte.'
+        });
       }
     });
   }
