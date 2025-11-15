@@ -15,7 +15,7 @@ import { Router, RouterOutlet, RouterLink } from '@angular/router';
       <aside class="sidebar" [class.sidebar--open]="sidebarOpen">
         <div class="sidebar__logo">
           <img src="/Affi_logo.png" alt="Logo" class="logo-img" />
-          <span class="logo-text">Consulta Redelex</span>
+          <span class="logo-text">Redelex Panel</span>
         </div>
 
         <nav class="sidebar__nav">
