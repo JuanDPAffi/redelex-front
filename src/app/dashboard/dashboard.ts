@@ -23,7 +23,7 @@ import { Router, RouterOutlet, RouterLink } from '@angular/router';
             <div class="nav-section__title">Consultas</div>
             <a routerLink="/dashboard/consultar"
                routerLinkActive="is-active"
-               class="nav-link"
+               class="nav-link is-active"
                (click)="closeSidebarOnMobile()">
               <span class="nav-link__icon">📄</span>
               <span class="nav-link__text">Consultar Procesos</span>
