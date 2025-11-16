@@ -29,7 +29,7 @@ export interface UserData {
   role?: string;
 }
 
-// Respuesta típica de /login y /register según tu backend
+// Respuesta típica de /login y /register
 export interface AuthResponse {
   message: string;
   user: {
@@ -84,7 +84,6 @@ export class AuthService {
     return localStorage.getItem(this.REFRESH_TOKEN_KEY);
   }
 
-  // Guardar access + refresh juntos
   saveTokens(accessToken: string, refreshToken: string): void {
     this.saveToken(accessToken);
     this.saveRefreshToken(refreshToken);
@@ -120,16 +119,14 @@ export class AuthService {
   // -----------------------------
 
   /** Llama al backend para invalidar la sesión actual */
-  private logoutApi(): Observable<any> {
-    const token = this.getToken();
-
+  private logoutApi(token: string): Observable<any> {
     return this.http.post(
       `${this.apiUrl}/logout`,
       {},
       {
-        headers: token
-          ? { Authorization: `Bearer ${token}` }
-          : {},
+        headers: {
+          Authorization: `Bearer ${token}`,   // 👈 importante el Bearer
+        },
       }
     );
   }
@@ -143,25 +140,26 @@ export class AuthService {
 
   /**
    * Logout completo:
-   * - Intenta invalidar la sesión en backend
-   * - Limpia el estado local siempre
+   * - Limpia inmediatamente el estado local
+   * - Notifica al backend (best effort) para invalidar la sesión
    */
   logout(): void {
     const token = this.getToken();
 
-    if (!token) {
-      this.logoutLocal();
-      return;
-    }
+    // 1️⃣ Limpio local de una vez
+    this.logoutLocal();
 
-    this.logoutApi().subscribe({
+    // 2️⃣ Si no había token, no hay nada que avisar al backend
+    if (!token) return;
+
+    // 3️⃣ Aviso al backend en segundo plano
+    this.logoutApi(token).subscribe({
       next: () => {
-        this.logoutLocal();
+        // nada más que hacer
       },
       error: (err) => {
         console.error('Error en logout API:', err);
-        // Aunque falle el backend, limpiamos local para no dejar la UI trabada
-        this.logoutLocal();
+        // ya estás desconectado en el front, no rompemos UX
       },
     });
   }
