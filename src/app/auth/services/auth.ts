@@ -22,9 +22,24 @@ export interface ResetPasswordPayload {
 
 export interface UserData {
   id?: string;
+  nombre?: string;
   name?: string;
   email?: string;
+  rol?: string;
   role?: string;
+}
+
+// Respuesta típica de /login y /register según tu backend
+export interface AuthResponse {
+  message: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  accessToken: string;
+  refreshToken: string;
 }
 
 @Injectable({
@@ -33,28 +48,46 @@ export interface UserData {
 export class AuthService {
   private apiUrl = 'https://redelex-ayhxghaje6c3gkaz.eastus-01.azurewebsites.net/api/auth';
 
+  private readonly ACCESS_TOKEN_KEY = 'redelex_token';
+  private readonly REFRESH_TOKEN_KEY = 'redelex_refresh_token';
+  private readonly USER_KEY = 'redelex_user';
+
   constructor(private http: HttpClient) {}
 
   // -----------------------------
   // AUTH
   // -----------------------------
-  register(data: RegisterPayload): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, data);
+  register(data: RegisterPayload): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data);
   }
 
-  login(data: LoginPayload): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, data);
+  login(data: LoginPayload): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, data);
   }
 
   // -----------------------------
   // TOKEN
   // -----------------------------
   saveToken(token: string): void {
-    localStorage.setItem('redelex_token', token);
+    localStorage.setItem(this.ACCESS_TOKEN_KEY, token);
   }
 
   getToken(): string | null {
-    return localStorage.getItem('redelex_token');
+    return localStorage.getItem(this.ACCESS_TOKEN_KEY);
+  }
+
+  saveRefreshToken(token: string): void {
+    localStorage.setItem(this.REFRESH_TOKEN_KEY, token);
+  }
+
+  getRefreshToken(): string | null {
+    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+  }
+
+  // 👉 método que usa tu LoginComponent
+  saveTokens(accessToken: string, refreshToken: string): void {
+    this.saveToken(accessToken);
+    this.saveRefreshToken(refreshToken);
   }
 
   // -----------------------------
@@ -63,32 +96,32 @@ export class AuthService {
   saveUserData(userData: UserData): void {
     const normalizedData = {
       id: userData.id,
-      nombre: userData.name || '',
+      nombre: userData.nombre || userData.name || '',
       email: userData.email || '',
-      rol: userData.role || 'Usuario'
+      rol: userData.rol || userData.role || 'Usuario',
     };
-    localStorage.setItem('redelex_user', JSON.stringify(normalizedData));
+    localStorage.setItem(this.USER_KEY, JSON.stringify(normalizedData));
   }
 
   getUserData(): UserData | null {
-    const data = localStorage.getItem('redelex_user');
-    if (data) {
-      try {
-        return JSON.parse(data);
-      } catch (error) {
-        console.error('Error al parsear datos de usuario:', error);
-        return null;
-      }
+    const data = localStorage.getItem(this.USER_KEY);
+    if (!data) return null;
+
+    try {
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error al parsear datos de usuario:', error);
+      return null;
     }
-    return null;
   }
 
   // -----------------------------
-  // LOGOUT
+  // LOGOUT (local)
   // -----------------------------
   logout(): void {
-    localStorage.removeItem('redelex_token');
-    localStorage.removeItem('redelex_user');
+    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    localStorage.removeItem(this.USER_KEY);
   }
 
   // -----------------------------

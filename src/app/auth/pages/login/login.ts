@@ -45,10 +45,10 @@ export class LoginComponent {
 
     this.authService.login(this.form.value).subscribe({
       next: res => {
-        // Guarda el token
-        this.authService.saveToken(res.token);
+        // Guardar tokens
+        this.authService.saveTokens(res.accessToken, res.refreshToken);
 
-        // Guarda los datos del usuario
+        // Guardar datos del usuario
         this.authService.saveUserData(res.user);
 
         AffiAlert.fire({

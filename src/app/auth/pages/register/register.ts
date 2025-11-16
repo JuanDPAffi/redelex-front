@@ -31,6 +31,8 @@ export class RegisterComponent {
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
+      // opcional: role si algún día lo quieres exponer
+      // role: ['Usuario']
     });
   }
 
@@ -46,7 +48,11 @@ export class RegisterComponent {
 
     this.authService.register(this.form.value).subscribe({
       next: res => {
-        this.authService.saveToken(res.token);
+        // Guardar tokens (access + refresh)
+        this.authService.saveTokens(res.accessToken, res.refreshToken);
+
+        // Guardar datos del usuario
+        this.authService.saveUserData(res.user);
 
         AffiAlert.fire({
           icon: 'success',
