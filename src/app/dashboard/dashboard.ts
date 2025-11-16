@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../auth/services/auth';
 
 interface UserData {
   nombre?: string;
@@ -142,7 +143,7 @@ export class DashboardComponent implements OnInit {
   userRole = 'Invitado';
   userInitials = 'U';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private authService: AuthService) {}
 
   ngOnInit() {
     this.loadUserData();
@@ -204,8 +205,7 @@ export class DashboardComponent implements OnInit {
   }
 
   logout() {
-    localStorage.removeItem('redelex_token');
-    localStorage.removeItem('redelex_user');
+    this.authService.logout();        // 🔥 Este sí invalida la sesión en el backend
     this.router.navigate(['/auth/login']);
   }
 }
