@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RedelexService, ProcesoDetalleDto } from '../../services/redelex';
 import { AffiAlert } from '../../../shared/affi-alert';
+import { jsPDF } from 'jspdf';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 @Component({
   selector: 'app-consultar-proceso',
@@ -34,6 +37,167 @@ export class ConsultarProcesoComponent {
     medidas: true,
     abogados: true,
   };
+
+    // ========================
+  //   EXPORTAR DETALLE
+  // ========================
+
+  private buildExportRows() {
+    if (!this.proceso) return [];
+    const p = this.proceso;
+
+    const rows: { Seccion: string; Campo: string; Valor: string | number }[] = [];
+
+    // --- Datos del proceso ---
+    rows.push(
+      { Seccion: 'Datos del proceso', Campo: 'ID Proceso', Valor: p.idProceso ?? '' },
+      { Seccion: 'Datos del proceso', Campo: 'Número de radicación', Valor: p.numeroRadicacion || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Código alterno (Cuenta Quasar)', Valor: p.codigoAlterno || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Clase de proceso', Valor: p.claseProceso || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Etapa procesal', Valor: p.etapaProcesal || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Estado', Valor: p.estado || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Regional', Valor: p.regional || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Tema (estado del inmueble)', Valor: p.tema || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Fecha creación expediente', Valor: p.fechaCreacion || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Fecha entrega abogado', Valor: p.fechaEntregaAbogado || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Fecha admisión demanda', Valor: p.fechaAdmisionDemanda || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Fecha recepción proceso', Valor: p.fechaRecepcionProceso || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Ubicación contrato', Valor: p.ubicacionContrato || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Sentencia 1ra instancia', Valor: p.sentenciaPrimeraInstanciaResultado || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Fecha sentencia 1ra instancia', Valor: p.sentenciaPrimeraInstanciaFecha || '' },
+      { Seccion: 'Datos del proceso', Campo: 'Calificación (recuperabilidad)', Valor: p.calificacion || '' },
+      {
+        Seccion: 'Datos del proceso',
+        Campo: 'Última actuación',
+        Valor: [
+          p.ultimaActuacionTipo || '',
+          p.ultimaActuacionFecha || '',
+          p.ultimaActuacionObservacion || ''
+        ].filter(Boolean).join(' | ')
+      }
+    );
+
+    // --- Datos del demandante ---
+    rows.push(
+      { Seccion: 'Datos del demandante', Campo: 'Nombre (Inmobiliaria)', Valor: p.demandanteNombre || '' }
+    );
+
+    // --- Datos del demandado ---
+    rows.push(
+      { Seccion: 'Datos del demandado', Campo: 'Nombre (Inquilino)', Valor: p.demandadoNombre || '' },
+      { Seccion: 'Datos del demandado', Campo: 'Identificación', Valor: p.demandadoIdentificacion || '' },
+      { Seccion: 'Datos del demandado', Campo: 'Despacho actual', Valor: p.despacho || '' },
+      { Seccion: 'Datos del demandado', Campo: 'Despacho de origen', Valor: p.despachoOrigen || '' }
+    );
+
+    // --- Medidas cautelares ---
+    if (p.medidasCautelares) {
+      const m = p.medidasCautelares;
+      rows.push(
+        { Seccion: 'Medidas cautelares', Campo: 'Id medida', Valor: m.id ?? '' },
+        { Seccion: 'Medidas cautelares', Campo: 'Fecha', Valor: m.fecha || '' },
+        { Seccion: 'Medidas cautelares', Campo: 'Tipo medida', Valor: m.tipoMedida || '' },
+        { Seccion: 'Medidas cautelares', Campo: 'Estado medida', Valor: m.medidaEfectiva || '' },
+        { Seccion: 'Medidas cautelares', Campo: 'Sujeto', Valor: m.sujetoNombre || '' },
+        { Seccion: 'Medidas cautelares', Campo: 'Tipo bien', Valor: m.tipoBien || '' },
+        { Seccion: 'Medidas cautelares', Campo: 'Dirección / detalle', Valor: m.direccion || '' },
+        { Seccion: 'Medidas cautelares', Campo: 'Área', Valor: m.area ?? '' },
+        { Seccion: 'Medidas cautelares', Campo: 'Avalúo judicial', Valor: m.avaluoJudicial ?? '' },
+        { Seccion: 'Medidas cautelares', Campo: 'Observaciones', Valor: m.observaciones || '' }
+      );
+    }
+
+    // --- Abogados ---
+    rows.push(
+      { Seccion: 'Abogados', Campo: 'Abogado principal', Valor: p.abogadoPrincipal || 'Sin asignar' }
+    );
+
+    if (p.abogadosInternos && p.abogadosInternos.length) {
+      const internos = p.abogadosInternos
+        .map((ab: any) => ab.Nombre || ab.name || 'Abogado interno')
+        .join(', ');
+
+      rows.push({
+        Seccion: 'Abogados',
+        Campo: 'Abogados internos',
+        Valor: internos
+      });
+    }
+
+    return rows;
+  }
+
+  exportarExcel() {
+    if (!this.proceso) {
+      AffiAlert.fire({
+        icon: 'info',
+        title: 'Sin datos',
+        text: 'Primero consulta un proceso para poder exportar.'
+      });
+      return;
+    }
+
+    const rows = this.buildExportRows();
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(rows);
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Detalle proceso');
+
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+    const fileName = `proceso-${this.proceso.idProceso || 'detalle'}.xlsx`;
+    const blob = new Blob([wbout], {
+      type:
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
+    });
+    saveAs(blob, fileName);
+  }
+
+  exportarPdf() {
+    if (!this.proceso) {
+      AffiAlert.fire({
+        icon: 'info',
+        title: 'Sin datos',
+        text: 'Primero consulta un proceso para poder exportar.'
+      });
+      return;
+    }
+
+    const rows = this.buildExportRows();
+    const doc = new jsPDF();
+
+    const p = this.proceso;
+    const title = `Detalle del proceso ${p.idProceso ?? ''}`;
+    doc.setFontSize(14);
+    doc.text(title, 10, 15);
+
+    let y = 25;
+    let currentSection = '';
+
+    doc.setFontSize(10);
+
+    rows.forEach((r) => {
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
+
+      if (r.Seccion !== currentSection) {
+        currentSection = r.Seccion;
+        doc.setFont('helvetica', 'bold');
+        doc.text(currentSection, 10, y);
+        y += 6;
+      }
+
+      doc.setFont('helvetica', 'normal');
+      const line = `${r.Campo}: ${r.Valor ?? ''}`;
+      const splitted = doc.splitTextToSize(line, 190);
+      doc.text(splitted, 12, y);
+      y += 4 + (splitted.length - 1) * 4;
+    });
+
+    const fileName = `proceso-${this.proceso.idProceso || 'detalle'}.pdf`;
+    doc.save(fileName);
+  }
 
   constructor(private redelexService: RedelexService) {}
 
