@@ -84,7 +84,7 @@ interface UserData {
           </button>
 
           <div class="breadcrumb">
-            <span class="breadcrumb__item">Dashboard</span>
+            <span class="breadcrumb__item">Consultas</span>
             <span class="breadcrumb__separator">/</span>
             <span class="breadcrumb__item breadcrumb__item--active">Consultar Procesos</span>
           </div>
@@ -146,9 +146,26 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.loadUserData();
+    this.handleResize(); // Verificar tamaño inicial
     
-    // Debug para ver la ruta actual
+    // Agregar listener para resize
+    window.addEventListener('resize', this.handleResize.bind(this));
+    
     console.log('Ruta actual:', this.router.url);
+  }
+
+  ngOnDestroy() {
+    // Limpiar listener
+    window.removeEventListener('resize', this.handleResize.bind(this));
+  }
+
+  handleResize() {
+    // Si la ventana es mayor a 768px (tablet o desktop), cerrar el sidebar móvil
+    if (window.innerWidth > 768) {
+      this.sidebarOpen = false;
+      // Permitir scroll del body nuevamente
+      document.body.style.overflow = '';
+    }
   }
 
   loadUserData() {
@@ -194,12 +211,23 @@ export class DashboardComponent implements OnInit {
   }
 
   toggleSidebar() {
-    this.sidebarOpen = !this.sidebarOpen;
+    // Solo permitir toggle en móvil (menos de 768px)
+    if (window.innerWidth <= 768) {
+      this.sidebarOpen = !this.sidebarOpen;
+      
+      // Prevenir scroll del body cuando el sidebar está abierto
+      if (this.sidebarOpen) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    }
   }
 
   closeSidebarOnMobile() {
     if (window.innerWidth <= 768) {
       this.sidebarOpen = false;
+      document.body.style.overflow = '';
     }
   }
 

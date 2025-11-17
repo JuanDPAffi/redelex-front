@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment.prod';
 
 export interface ProcesoDetalleDto {
   idProceso: number;
@@ -27,15 +28,19 @@ export interface ProcesoDetalleDto {
 
   ubicacionContrato: string | null;
 
+  // Subrogación
   fechaAceptacionSubrogacion: string | null;
   fechaPresentacionSubrogacion: string | null;
   motivoNoSubrogacion: string | null;
 
+  // Calificación
   calificacion: string | null;
 
+  // Sentencia 1ra instancia
   sentenciaPrimeraInstanciaResultado: string | null;
   sentenciaPrimeraInstanciaFecha: string | null;
 
+  // Medidas cautelares
   medidasCautelares: {
     id: number | null;
     fecha: string | null;
@@ -49,34 +54,46 @@ export interface ProcesoDetalleDto {
     observaciones: string | null;
   } | null;
 
+  // Última actuación
   ultimaActuacionFecha: string | null;
   ultimaActuacionTipo: string | null;
   ultimaActuacionObservacion: string | null;
 
+  // Abogados
   abogadoPrincipal: string | null;
   abogadosInternos: any[];
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class RedelexService {
-  private apiUrl =
-    'http://localhost:4000/api/redelex';
+  // environment.apiUrl = "https://redelex-ayhxghaje6c3gkaz.eastus-01.azurewebsites.net/"
+  private apiUrl = `${environment.apiUrl}api/redelex`;
 
   constructor(private http: HttpClient) {}
 
-  getProceso(id: number): Observable<{ success: boolean; data: ProcesoDetalleDto }> {
-    return this.http.get<{ success: boolean; data: ProcesoDetalleDto }>(
+  /**
+   * Detalle del proceso por ID
+   * GET /api/redelex/proceso/:id
+   * Respuesta: { success: boolean; data: ProcesoDetalleDto | null }
+   */
+  getProceso(id: number): Observable<{ success: boolean; data: ProcesoDetalleDto | null }> {
+    return this.http.get<{ success: boolean; data: ProcesoDetalleDto | null }>(
       `${this.apiUrl}/proceso/${id}`
     );
   }
 
+  /**
+   * Lista de procesos por identificación
+   * GET /api/redelex/procesos-por-identificacion/:identificacion
+   * Respuesta: { success: boolean; identificacion: string; procesos: number[] }
+   */
   getProcesosByIdentificacion(
     identificacion: string
   ): Observable<{ success: boolean; identificacion: string; procesos: number[] }> {
     return this.http.get<{ success: boolean; identificacion: string; procesos: number[] }>(
-      `${this.apiUrl}/procesos-por-identificacion/${identificacion}`
+      `${this.apiUrl}/procesos-por-identificacion/${encodeURIComponent(identificacion)}`
     );
   }
 }

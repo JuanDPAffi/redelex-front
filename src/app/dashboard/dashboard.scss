@@ -24,8 +24,14 @@
   z-index: 998;
   animation: fadeIn 0.2s ease;
 
+  // Solo visible en móvil cuando el sidebar está abierto
   @media (max-width: 768px) {
     display: block;
+  }
+
+  // NO mostrar en tablet o desktop
+  @media (min-width: 769px) {
+    display: none !important;
   }
 }
 
@@ -48,6 +54,7 @@
   left: 0;
   width: 260px;
   z-index: 900;
+  transition: transform 0.3s ease; // Añadir transición siempre
 
   /* Scrollbar personalizado */
   &::-webkit-scrollbar {
@@ -67,9 +74,9 @@
     }
   }
 
+  // MÓVIL: Sidebar oculto por defecto, se abre con hamburguesa
   @media (max-width: 768px) {
     transform: translateX(-100%);
-    transition: transform 0.3s ease;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     width: 280px;
     z-index: 999;
@@ -79,8 +86,16 @@
     }
   }
 
-  @media (max-width: 1024px) and (min-width: 769px) {
+  // TABLET: Sidebar compacto (iconos solamente) - SIEMPRE VISIBLE
+  @media (min-width: 769px) and (max-width: 1024px) {
     width: 70px;
+    transform: translateX(0) !important; // Forzar que esté visible
+    padding: 1rem 0;
+  }
+
+  // DESKTOP: Sidebar completo - SIEMPRE VISIBLE
+  @media (min-width: 1025px) {
+    transform: translateX(0) !important; // Forzar que esté visible
   }
 }
 
@@ -157,7 +172,7 @@
 
   &.is-active {
     background: #ede7f6;
-    color: #673ab7;
+    color: rgb(38, 0, 134);
     font-weight: 500;
 
     &::before {
@@ -168,7 +183,7 @@
       transform: translateY(-50%);
       width: 3px;
       height: 60%;
-      background: #673ab7;
+      background: rgb(38, 0, 134);
       border-radius: 0 2px 2px 0;
     }
   }
@@ -254,7 +269,7 @@
   text-align: center;
   padding: 0.4rem;
   background: #ede7f6;
-  color: #673ab7;
+  color: rgb(38, 0, 134);
   border-radius: 20px;
   font-size: 0.7rem;
   font-weight: 600;
@@ -318,10 +333,12 @@
     background: #eeeeee;
   }
 
-  @media (min-width: 1025px) {
-    display: none;
+  // Solo visible en móvil (menos de 768px)
+  @media (min-width: 769px) {
+    display: none !important; // Ocultar completamente en tablet y desktop
   }
 }
+
 
 /* Icono hamburguesa animado */
 .menu-icon {
@@ -425,7 +442,7 @@
 
 .user-info__role {
   font-size: 0.7rem;
-  color: #673ab7;
+  color: rgb(38, 0, 134);
   background: #ede7f6;
   padding: 0.15rem 0.5rem;
   border-radius: 8px;
@@ -615,7 +632,7 @@
     transition: color 0.2s;
 
     &:hover {
-      color: #673ab7;
+      color: rgb(38, 0, 134);
     }
   }
 }
