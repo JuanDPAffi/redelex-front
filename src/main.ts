@@ -1,13 +1,14 @@
+// src/main.ts
 import { bootstrapApplication } from '@angular/platform-browser';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet, NavigationStart } from '@angular/router';
 import { appConfig, initializePlugins } from './app/shared/services/app.config';
 import { PluginRegistryService } from './app/core/services/plugin-registry.service';
 import { SplashService } from './app/shared/services/splash.service';
 import { SplashComponent } from './app/shared/components/splash.component';
+import { filter } from 'rxjs/operators';
 
-// Componente raíz con Splash
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -15,20 +16,34 @@ import { SplashComponent } from './app/shared/components/splash.component';
   template: `
     <app-splash [visible]="showSplash"></app-splash>
     <router-outlet></router-outlet>
-  `,
-  styles: []
+  `
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   showSplash = true;
-
-  constructor(private splashService: SplashService) {}
-
+  private subscription?: any;
+  
+  constructor(
+    private splashService: SplashService,
+    private router: Router
+  ) {}
+  
   ngOnInit() {
+    // Splash inicial
     this.splashService.show(1500);
     
+    // Actualizar estado
     this.splashService.visible$.subscribe(visible => {
       this.showSplash = visible;
     });
+    
+    // Splash en navegaciones
+    this.subscription = this.router.events.pipe(
+      filter(e => e instanceof NavigationStart)
+    ).subscribe(() => this.splashService.show(1500));
+  }
+  
+  ngOnDestroy() {
+    this.subscription?.unsubscribe();
   }
 }
 
