@@ -98,7 +98,7 @@
   height: 42px; // Altura fija consistente
 
   &:focus {
-    border-color: #2563eb;
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   }
 
@@ -154,7 +154,7 @@
   }
 
   &.open {
-    border-color: #2563eb;
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   }
 
@@ -202,7 +202,7 @@
       font-size: 0.85rem;
       outline: none;
       
-      &:focus { border-color: #2563eb; }
+      &:focus { border-color: var(--color-primary); }
     }
   }
 
@@ -218,8 +218,8 @@
       transition: background 0.1s;
       border-bottom: 1px solid #f9fafb;
 
-      &:hover { background-color: #eff6ff; color: #2563eb; }
-      &.selected { background-color: #e0e7ff; color: #2563eb; font-weight: 600; }
+      &:hover { background-color: #eff6ff; color: var(--color-primary); }
+      &.selected { background-color: #e0e7ff; color: var(--color-primary); font-weight: 600; }
       &:last-child { border-bottom: none; }
       &.no-data { color: #9ca3af; cursor: default; text-align: center; padding: 12px; }
     }
@@ -265,7 +265,7 @@
       color: #374151;
       border-bottom: 1px solid #e5e7eb;
       white-space: nowrap;
-      &.new-col { background-color: #eff6ff; color: #2563eb; }
+      &.new-col { background-color: #eff6ff; color: var(--color-primary); }
     }
   }
 
@@ -278,12 +278,12 @@
       padding: 0.75rem 1rem;
       color: #111827;
       vertical-align: middle;
-      &.new-col { background-color: #eff6ff; color: #2563eb; font-family: monospace; }
+      &.new-col { background-color: #eff6ff; color: var(--color-primary); font-family: monospace; }
     }
   }
 }
 
-.cell-id, .cell-radicado { font-family: monospace; font-weight: 600; color: #2563eb; }
+.cell-id, .cell-radicado { font-family: monospace; font-weight: 600; color: var(--color-primary); }
 .cell-nombre { font-weight: 500; }
 .cell-despacho { color: #6b7280; font-size: 0.8rem; }
 
@@ -392,7 +392,7 @@
   &:active { transform: scale(0.98); }
 }
 .btn--primary { background: var(--color-primary); color: white; &:hover { background: var(--color-primary-light); } }
-.btn--secondary { background: #f9fafb; color: #2563eb; border: 1px solid #e5e7eb; &:hover { background: #f3f4f6; } }
+.btn--secondary { background: #f9fafb; color: var(--color-primary); border: 1px solid #e5e7eb; &:hover { background: #f3f4f6; } }
 
 .modal-overlay {
   position: fixed;
