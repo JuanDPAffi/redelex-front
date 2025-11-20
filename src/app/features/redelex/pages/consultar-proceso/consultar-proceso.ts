@@ -1,7 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RedelexService, ProcesoDetalleDto } from '../../services/redelex.service';
+import {
+  RedelexService,
+  ProcesoDetalleDto,
+  AbogadoDto,
+  SujetosDto,
+  MedidasDto,
+} from '../../services/redelex.service';
 import { AffiAlert } from '../../../../shared/services/affi-alert';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,17 +28,27 @@ interface ProcesoPorCedula {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './consultar-proceso.html',
-  styleUrl: './consultar-proceso.scss'
+  styleUrl: './consultar-proceso.scss',
 })
-
 export class ConsultarProcesoComponent {
   procesoId!: number;
   proceso: ProcesoDetalleDto | null = null;
+
+  abogadoPrincipal: AbogadoDto | null = null;
+  abogadosInternos: AbogadoDto[] = [];
+  otrosAbogados: AbogadoDto[] = [];
+
+  sujetoDemandado: SujetosDto[] = [];
+  sujetoDemandante: SujetosDto[] = [];
+  sujetosSolidarios: SujetosDto[] = [];
+  otrosSujetos: SujetosDto[] = [];
 
   identificacion: string = '';
   procesosPorCedula: ProcesoPorCedula[] = [];
   procesosFiltrados: ProcesoPorCedula[] = [];
   filtroProcesoId: string = '';
+
+  medidas: MedidasDto[] = [];
 
   loading = false;
 
@@ -45,32 +61,40 @@ export class ConsultarProcesoComponent {
     proceso: true,
     demandante: true,
     demandado: true,
+    solidarios: true,
+    otrosSujetos: true,
     medidas: true,
     abogados: true,
   };
 
+  formatObservaciones(obs: string | null | undefined): string {
+  if (!obs || !obs.trim()) {
+    return '-';
+  }
+
+  return obs
+    .replace(/\r\n/g, '<br>')
+    .replace(/\n/g, '<br>');
+}
+
   constructor(private redelexService: RedelexService) {}
 
-  // Abrir / cerrar sección
   toggleSection(section: keyof typeof this.sectionOpen) {
     this.sectionOpen[section] = !this.sectionOpen[section];
   }
-
-  // ========================
-  //   CONSULTAS
-  // ========================
 
   consultarPorId() {
     if (!this.procesoId) {
       AffiAlert.fire({
         icon: 'info',
         title: 'Dato requerido',
-        text: 'Ingresa el ID del proceso para consultar.'
+        text: 'Ingresa el ID del proceso para consultar.',
       });
       return;
     }
 
     this.loading = true;
+    this.limpiarDatos();
 
     this.redelexService.getProceso(this.procesoId).subscribe({
       next: (res) => {
@@ -81,32 +105,117 @@ export class ConsultarProcesoComponent {
           AffiAlert.fire({
             icon: 'warning',
             title: 'Proceso no encontrado',
-            text: 'No se encontró información para el ID de proceso ingresado.'
+            text: 'No se encontró información para el ID de proceso ingresado.',
           });
           return;
         }
 
         this.proceso = res.data;
+        this.procesarDatosProceso();
 
         AffiAlert.fire({
           icon: 'success',
           title: 'Proceso cargado',
           text: `Se cargó la información del proceso ${this.procesoId}.`,
           timer: 1400,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
       },
       error: () => {
         this.loading = false;
-        this.proceso = null;
-
+        this.limpiarDatos();
         AffiAlert.fire({
           icon: 'error',
           title: 'Error al consultar',
-          text: 'No se encontró el proceso'
+          text: 'No se encontró el proceso',
         });
-      }
+      },
     });
+  }
+
+  private limpiarDatos() {
+    this.proceso = null;
+    this.abogadoPrincipal = null;
+    this.abogadosInternos = [];
+    this.otrosAbogados = [];
+    this.sujetoDemandante = [];
+    this.sujetoDemandado = [];
+    this.sujetosSolidarios = [];
+    this.otrosSujetos = [];
+    this.medidas = [];
+  }
+
+  private procesarDatosProceso() {
+    if (!this.proceso) return;
+
+    const raw = this.proceso as any;
+
+    // ============ PROCESAR ABOGADOS ============
+    const abogados: AbogadoDto[] = (raw.abogados ?? []) as AbogadoDto[];
+
+    console.log('Abogados recibidos:', abogados);
+
+    this.abogadoPrincipal = abogados.find((a) => 
+      a.ActuaComo?.toUpperCase().includes('PRINCIPAL')
+    ) ?? null;
+
+    this.abogadosInternos = abogados.filter((a) =>
+      a.ActuaComo?.toUpperCase().includes('INTERNO')
+    );
+
+    this.otrosAbogados = abogados.filter((a) => {
+      const actuaComo = a.ActuaComo?.toUpperCase() ?? '';
+      return !actuaComo.includes('PRINCIPAL') && !actuaComo.includes('INTERNO');
+    });
+
+    // ============ PROCESAR SUJETOS ============
+    const sujetos: SujetosDto[] = (raw.sujetos ?? []) as SujetosDto[];
+
+    console.log('Sujetos recibidos:', sujetos);
+
+    this.sujetoDemandante = sujetos.filter((s) => 
+      s.Tipo?.toUpperCase().includes('DEMANDANTE')
+    );
+
+    this.sujetoDemandado = sujetos.filter((s) => 
+      s.Tipo?.toUpperCase().includes('DEMANDADO')
+    );
+
+    this.sujetosSolidarios = sujetos.filter((s) => 
+      s.Tipo?.toUpperCase().includes('SOLIDARIO')
+    );
+
+    this.otrosSujetos = sujetos.filter((s) => {
+      const tipo = s.Tipo?.toUpperCase() ?? '';
+      return !tipo.includes('DEMANDANTE') && 
+             !tipo.includes('DEMANDADO') && 
+             !tipo.includes('SOLIDARIO');
+    });
+
+    const medidasRaw = raw.medidasCautelares;
+
+    const medidasArray: any[] = Array.isArray(medidasRaw)
+      ? medidasRaw
+      : medidasRaw
+      ? [medidasRaw]
+      : [];
+
+    this.medidas = medidasArray.map((m: any): MedidasDto => ({
+      tipoBien: m.tipoBien ?? null,
+      sujeto: m.sujeto ?? null,
+      tipoMedida: m.tipoMedida ?? null,
+      medidaEfectiva: m.medidaEfectiva ?? null,
+      avaluoJudicial:
+        typeof m.avaluoJudicial === 'number'
+          ? m.avaluoJudicial
+          : m.avaluoJudicial
+          ? Number(m.avaluoJudicial)
+          : null,
+      observaciones: m.observaciones ?? null,
+    }));
+
+    // Mantener el DTO alineado con lo que usas en el componente/export
+    (this.proceso as any).medidasCautelares = this.medidas;
   }
 
   buscarPorCedula() {
@@ -116,7 +225,7 @@ export class ConsultarProcesoComponent {
       AffiAlert.fire({
         icon: 'info',
         title: 'Dato requerido',
-        text: 'Ingresa una cédula o NIT para buscar procesos.'
+        text: 'Ingresa una cédula o NIT para buscar procesos.',
       });
       return;
     }
@@ -124,7 +233,7 @@ export class ConsultarProcesoComponent {
     this.loading = true;
     this.procesosPorCedula = [];
     this.procesosFiltrados = [];
-    this.proceso = null;
+    this.limpiarDatos();
     this.filtroProcesoId = '';
     this.currentPage = 1;
 
@@ -138,12 +247,11 @@ export class ConsultarProcesoComponent {
           AffiAlert.fire({
             icon: 'error',
             title: 'Error al consultar',
-            text: 'No se pudieron obtener los procesos para esa identificación.'
+            text: 'No se pudieron obtener los procesos para esa identificación.',
           });
           return;
         }
 
-        // ✅ Ahora los datos vienen completos del backend
         this.procesosPorCedula = res.procesos || [];
         this.procesosFiltrados = [...this.procesosPorCedula];
 
@@ -151,7 +259,7 @@ export class ConsultarProcesoComponent {
           AffiAlert.fire({
             icon: 'info',
             title: 'Sin procesos',
-            text: 'No se encontraron procesos para esa identificación.'
+            text: 'No se encontraron procesos para esa identificación.',
           });
         } else {
           AffiAlert.fire({
@@ -159,7 +267,7 @@ export class ConsultarProcesoComponent {
             title: 'Procesos encontrados',
             text: `Se encontraron ${this.procesosPorCedula.length} proceso(s) para la identificación ${cedula}.`,
             timer: 1500,
-            showConfirmButton: false
+            showConfirmButton: false,
           });
         }
       },
@@ -167,13 +275,13 @@ export class ConsultarProcesoComponent {
         this.loading = false;
         this.procesosPorCedula = [];
         this.procesosFiltrados = [];
-
+        this.limpiarDatos();
         AffiAlert.fire({
           icon: 'error',
           title: 'Error al consultar',
-          text: 'No se pudieron obtener los procesos para esa identificación.'
+          text: 'No se pudieron obtener los procesos para esa identificación.',
         });
-      }
+      },
     });
   }
 
@@ -181,7 +289,6 @@ export class ConsultarProcesoComponent {
     const f = this.filtroProcesoId.trim().toLowerCase();
 
     if (!f) {
-      // reset
       this.procesosFiltrados = [...this.procesosPorCedula];
     } else {
       this.procesosFiltrados = this.procesosPorCedula.filter((p) => {
@@ -210,7 +317,6 @@ export class ConsultarProcesoComponent {
     return this.procesosFiltrados.slice(start, end);
   }
 
-
   get totalPages(): number {
     return Math.ceil(this.procesosFiltrados.length / this.itemsPerPage);
   }
@@ -236,12 +342,13 @@ export class ConsultarProcesoComponent {
     if (!this.proceso) return [];
     const p = this.proceso;
 
-    const rows: { Seccion: string; Campo: string; Valor: string | number }[] =
-      [];
+    const rows: { Seccion: string; Campo: string; Valor: string | number }[] = [];
 
     // --- Datos del proceso ---
     rows.push(
       { Seccion: 'Datos del proceso', Campo: 'ID Proceso', Valor: p.idProceso ?? '' },
+      { Seccion: 'Datos del Proceso', Campo: 'Despacho actual', Valor: p.despacho || '' },
+      { Seccion: 'Datos del Proceso', Campo: 'Despacho de origen', Valor: p.despachoOrigen || '' },
       { Seccion: 'Datos del proceso', Campo: 'Número de radicación', Valor: p.numeroRadicacion || '' },
       { Seccion: 'Datos del proceso', Campo: 'Código alterno (Cuenta Quasar)', Valor: p.codigoAlterno || '' },
       { Seccion: 'Datos del proceso', Campo: 'Clase de proceso', Valor: p.claseProceso || '' },
@@ -260,87 +367,89 @@ export class ConsultarProcesoComponent {
       {
         Seccion: 'Datos del proceso',
         Campo: 'Última actuación',
-        Valor: [
-          p.ultimaActuacionTipo || '',
-          p.ultimaActuacionFecha || '',
-          p.ultimaActuacionObservacion || '',
-        ]
+        Valor: [p.ultimaActuacionTipo || '', p.ultimaActuacionFecha || '', p.ultimaActuacionObservacion || '']
           .filter(Boolean)
           .join(' | '),
       }
     );
 
+    const joinOrDash = (values: (string | null | undefined)[]) =>
+      values.length ? values.map(v => v || '-').join(', ') : '-';
+
     // --- Demandante ---
-    rows.push(
-      {
-        Seccion: 'Datos del demandante',
-        Campo: 'Nombre (Inmobiliaria)',
-        Valor: p.demandanteNombre || '',
-      },
-      {
-        Seccion: 'Datos del demandado',
-        Campo: 'Identificación',
-        Valor: p.demandanteIdentificacion || '',
-      },
-    );
+    if (this.sujetoDemandante.length) {
+      const nombres = joinOrDash(this.sujetoDemandante.map(s => s.Nombre));
+      const identificaciones = joinOrDash(this.sujetoDemandante.map(s => s.NumeroIdentificacion));
+      rows.push(
+        { Seccion: 'Datos del demandante', Campo: 'Nombres', Valor: nombres },
+        { Seccion: 'Datos del demandante', Campo: 'Identificación', Valor: identificaciones },
+      );
+    }
 
     // --- Demandado ---
-    rows.push(
-      {
-        Seccion: 'Datos del demandado',
-        Campo: 'Nombre (Inquilino)',
-        Valor: p.demandadoNombre || '',
-      },
-      {
-        Seccion: 'Datos del demandado',
-        Campo: 'Identificación',
-        Valor: p.demandadoIdentificacion || '',
-      },
-      {
-        Seccion: 'Datos del demandado',
-        Campo: 'Despacho actual',
-        Valor: p.despacho || '',
-      },
-      {
-        Seccion: 'Datos del demandado',
-        Campo: 'Despacho de origen',
-        Valor: p.despachoOrigen || '',
-      }
-    );
+    if (this.sujetoDemandado.length) {
+      const nombres = joinOrDash(this.sujetoDemandado.map(s => s.Nombre));
+      const identificaciones = joinOrDash(this.sujetoDemandado.map(s => s.NumeroIdentificacion));
+      rows.push(
+        { Seccion: 'Datos del demandado', Campo: 'Nombres', Valor: nombres },
+        { Seccion: 'Datos del demandado', Campo: 'Identificación', Valor: identificaciones },
+      );
+    }
+
+    // --- Deudor solidario ---
+    if (this.sujetosSolidarios.length) {
+      const nombres = joinOrDash(this.sujetosSolidarios.map(s => s.Nombre));
+      const identificaciones = joinOrDash(this.sujetosSolidarios.map(s => s.NumeroIdentificacion));
+      rows.push(
+        { Seccion: 'Datos deudor solidario', Campo: 'Nombres', Valor: nombres },
+        { Seccion: 'Datos deudor solidario', Campo: 'Identificación', Valor: identificaciones },
+      );
+    }
+
+    // --- Otros sujetos ---
+    if (this.otrosSujetos.length) {
+      this.otrosSujetos.forEach((s, idx) => {
+        rows.push(
+          { Seccion: `Otro sujeto ${idx + 1}`, Campo: 'Tipo', Valor: s.Tipo || '-' },
+          { Seccion: `Otro sujeto ${idx + 1}`, Campo: 'Nombre', Valor: s.Nombre || '-' },
+          { Seccion: `Otro sujeto ${idx + 1}`, Campo: 'Identificación', Valor: s.NumeroIdentificacion || '-' },
+        );
+      });
+    }
 
     // --- Medidas cautelares ---
-    if (p.medidasCautelares) {
-      const m = p.medidasCautelares;
-      rows.push(
-        { Seccion: 'Medidas cautelares', Campo: 'Id medida', Valor: m.id ?? '' },
-        { Seccion: 'Medidas cautelares', Campo: 'Fecha', Valor: m.fecha || '' },
-        { Seccion: 'Medidas cautelares', Campo: 'Tipo medida', Valor: m.tipoMedida || '' },
-        { Seccion: 'Medidas cautelares', Campo: 'Estado medida', Valor: m.medidaEfectiva || '' },
-        { Seccion: 'Medidas cautelares', Campo: 'Sujeto', Valor: m.sujetoNombre || '' },
-        { Seccion: 'Medidas cautelares', Campo: 'Tipo bien', Valor: m.tipoBien || '' },
-        { Seccion: 'Medidas cautelares', Campo: 'Dirección / detalle', Valor: m.direccion || '' },
-        { Seccion: 'Medidas cautelares', Campo: 'Área', Valor: m.area ?? '' },
-        { Seccion: 'Medidas cautelares', Campo: 'Avalúo judicial', Valor: m.avaluoJudicial ?? '' },
-        { Seccion: 'Medidas cautelares', Campo: 'Observaciones', Valor: m.observaciones || '' },
-      );
+    if (this.medidas.length) {
+      this.medidas.forEach((m, idx) => {
+        rows.push(
+          { Seccion: `Medidas cautelares ${idx + 1}`, Campo: 'Tipo medida', Valor: m.tipoMedida || '' },
+          { Seccion: `Medidas cautelares ${idx + 1}`, Campo: 'Estado medida', Valor: m.medidaEfectiva || '' },
+          { Seccion: `Medidas cautelares ${idx + 1}`, Campo: 'Sujeto', Valor: m.sujeto|| '' },
+          { Seccion: `Medidas cautelares ${idx + 1}`, Campo: 'Tipo bien', Valor: m.tipoBien || '' },
+          { Seccion: `Medidas cautelares ${idx + 1}`, Campo: 'Avalúo judicial', Valor: m.avaluoJudicial ?? '' },
+          { Seccion: `Medidas cautelares ${idx + 1}`, Campo: 'Observaciones', Valor: m.observaciones || '' }
+        );
+      });
     }
 
     // --- Abogados ---
     rows.push({
       Seccion: 'Abogados',
       Campo: 'Abogado principal',
-      Valor: p.abogadoPrincipal || 'Sin asignar',
+      Valor: this.abogadoPrincipal?.Nombre || 'Sin asignar',
     });
 
-    if (p.abogadosInternos && p.abogadosInternos.length) {
-      const internos = p.abogadosInternos
-        .map((ab: any) => ab.Nombre || ab.name || 'Abogado interno')
-        .join(', ');
+    if (this.abogadosInternos.length) {
+      const internos = this.abogadosInternos.map(ab => ab.Nombre || 'Abogado interno').join(', ');
+      rows.push({ Seccion: 'Abogados', Campo: 'Abogados internos', Valor: internos });
+    }
 
-      rows.push({
-        Seccion: 'Abogados',
-        Campo: 'Abogados internos',
-        Valor: internos,
+    if (this.otrosAbogados.length) {
+      this.otrosAbogados.forEach((ab, idx) => {
+        rows.push({
+          Seccion: 'Abogados',
+          Campo: `Otro abogado ${idx + 1} (${ab.ActuaComo || 'N/A'})`,
+          Valor: ab.Nombre || '-',
+        });
       });
     }
 
@@ -365,19 +474,16 @@ export class ConsultarProcesoComponent {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Detalle proceso');
 
-    // Encabezados columnas
     sheet.columns = [
       { header: 'Sección', key: 'seccion', width: 25 },
       { header: 'Campo', key: 'campo', width: 35 },
       { header: 'Valor', key: 'valor', width: 80 },
     ];
 
-    // Estilo encabezado
     const headerRow = sheet.getRow(1);
     headerRow.font = { bold: true, name: 'Arial', size: 11 };
     headerRow.alignment = { horizontal: 'center' };
 
-    // Datos
     rows.forEach((r) => {
       sheet.addRow({
         seccion: r.Seccion,
@@ -386,7 +492,6 @@ export class ConsultarProcesoComponent {
       });
     });
 
-    // Bordes y wrap
     sheet.eachRow((row) => {
       row.eachCell((cell) => {
         cell.border = {
@@ -401,8 +506,7 @@ export class ConsultarProcesoComponent {
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
-      type:
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
     });
 
     const fileName = `proceso-${this.proceso.idProceso || 'detalle'}.xlsx`;
@@ -424,75 +528,69 @@ export class ConsultarProcesoComponent {
     }
 
     const p = this.proceso;
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
-
-    // Título centrado
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'pt',
+      format: 'A4',
+    });
 
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // Logo en la esquina superior izquierda
     if (AFFI_LOGO_BASE64 && AFFI_LOGO_BASE64.startsWith('data:image')) {
       try {
         doc.addImage(AFFI_LOGO_BASE64, 'PNG', 40, 20, 80, 60);
-      } catch {
-        // si por algún motivo el base64 está malo, simplemente no dibujamos el logo
-      }
+      } catch {}
     }
 
-    // Título centrado
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
 
-    const title = `PROCESO ID ${p.idProceso ?? ''}`;
-    const subtitle = (p.demandadoNombre || '').toString().toUpperCase();
+    const demandadoNombres = this.sujetoDemandado.length
+      ? this.sujetoDemandado.map(s => s.Nombre || '-').join(', ')
+      : '-';
 
+    const demandadoIdentificaciones = this.sujetoDemandado.length
+      ? this.sujetoDemandado.map(s => s.NumeroIdentificacion || '-').join(', ')
+      : '-';
+
+    const subtitle = (demandadoNombres !== '-' ? demandadoNombres : demandadoIdentificaciones).toUpperCase();
     const marginTop = 40;
 
-    doc.text(title, pageWidth / 2, marginTop, { align: 'center' });
+    doc.text(`PROCESO ID ${p.idProceso ?? ''}`, pageWidth / 2, marginTop, { align: 'center' });
     doc.text(subtitle, pageWidth / 2, marginTop + 20, { align: 'center' });
 
     let currentY = marginTop + 40;
 
-    // Tabla resumen demandado/demandante
+    // Tabla resumen
+    const demandanteNombres = this.sujetoDemandante.length
+      ? this.sujetoDemandante.map(s => s.Nombre || '-').join(', ')
+      : '-';
+
+    const demandanteIdentificaciones = this.sujetoDemandante.length
+      ? this.sujetoDemandante.map(s => s.NumeroIdentificacion || '-').join(', ')
+      : '-';
+
     autoTable(doc, {
       startY: currentY,
-      styles: {
-        font: 'helvetica',
-        fontSize: 9,
-        textColor: [0, 0, 0],
-        cellPadding: 4,
-      },
-      headStyles: {
-        fillColor: [255, 255, 255],
-        textColor: [0, 0, 0],
-        fontStyle: 'bold',
-      },
-      bodyStyles: {
-        fillColor: [255, 255, 255],
-        textColor: [0, 0, 0],
-      },
-      head: [
-        [
-          'Demandado',
-          p.demandadoNombre || '',
-          'Identificación',
-          p.demandadoIdentificacion || '',
-          'Número de radicación',
-          p.numeroRadicacion || '',
-        ],
-      ],
-      body: [
-        [
-          'Demandante',
-          p.demandanteNombre || '',
-          'Identificación',
-          p.demandanteIdentificacion || '',
-          'Código alterno (Cuenta Quasar)',
-          p.codigoAlterno || '',
-        ],
-      ],
+      styles: { font: 'helvetica', fontSize: 9, textColor: [0, 0, 0], cellPadding: 4 },
+      headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
+      bodyStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0] },
+      head: [[
+        'Demandado',
+        demandadoNombres,
+        'Identificación',
+        demandadoIdentificaciones,
+        'Número de radicación',
+        p.numeroRadicacion || '-',
+      ]],
+      body: [[
+        'Demandante',
+        demandanteNombres,
+        'Identificación',
+        demandanteIdentificaciones,
+        'Código alterno (Cuenta Quasar)',
+        p.codigoAlterno || '-',
+      ]],
       columnStyles: {
         0: { cellWidth: 90, halign: 'left', fontStyle: 'bold' },
         1: { cellWidth: 170 },
@@ -504,6 +602,44 @@ export class ConsultarProcesoComponent {
     });
 
     currentY = (doc as any).lastAutoTable.finalY + 20;
+
+    // Deudores solidarios
+    if (this.sujetosSolidarios.length) {
+      const solidarioNombres = this.sujetosSolidarios.map(s => s.Nombre || '-').join(', ');
+      const solidarioIdentificaciones = this.sujetosSolidarios.map(s => s.NumeroIdentificacion || '-').join(', ');
+
+      autoTable(doc, {
+        startY: currentY,
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [0, 0, 0], fontStyle: 'bold' },
+        head: [['Deudores solidarios', 'Valor']],
+        body: [
+          ['Nombres', solidarioNombres],
+          ['Identificación', solidarioIdentificaciones],
+        ],
+      });
+
+      currentY = (doc as any).lastAutoTable.finalY + 20;
+    }
+
+    // Otros sujetos
+    if (this.otrosSujetos.length) {
+      const otrosSujetosBody = this.otrosSujetos.flatMap(s => [
+        ['Tipo', s.Tipo || '-'],
+        ['Nombre', s.Nombre || '-'],
+        ['Identificación', s.NumeroIdentificacion || '-'],
+      ]);
+
+      autoTable(doc, {
+        startY: currentY,
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [0, 0, 0], fontStyle: 'bold' },
+        head: [['Otros sujetos', 'Valor']],
+        body: otrosSujetosBody,
+      });
+
+      currentY = (doc as any).lastAutoTable.finalY + 20;
+    }
 
     // Datos del proceso
     autoTable(doc, {
@@ -529,44 +665,48 @@ export class ConsultarProcesoComponent {
     currentY = (doc as any).lastAutoTable.finalY + 20;
 
     // Medidas cautelares
-    if (p.medidasCautelares) {
-      const m = p.medidasCautelares;
-      autoTable(doc, {
-        startY: currentY,
-        styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
-        headStyles: { fillColor: [0, 0, 0], fontStyle: 'bold' },
-        head: [['Medidas cautelares', 'Valor']],
-        body: [
-          ['Id medida', m.id ?? ''],
-          ['Fecha', m.fecha || ''],
-          ['Tipo medida', m.tipoMedida || ''],
-          ['Estado medida', m.medidaEfectiva || ''],
-          ['Sujeto', m.sujetoNombre || ''],
-          ['Tipo bien', m.tipoBien || ''],
-          ['Dirección / detalle', m.direccion || ''],
-          ['Área', m.area ?? ''],
-          ['Avalúo judicial', m.avaluoJudicial ?? ''],
-          ['Observaciones', m.observaciones || ''],
-        ],
+    if (this.medidas.length) {
+      this.medidas.forEach((m, idx) => {
+        autoTable(doc, {
+          startY: currentY,
+          styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
+          headStyles: { fillColor: [0, 0, 0], fontStyle: 'bold' },
+          head: [[`Medidas cautelares ${idx + 1}`, 'Valor']],
+          body: [
+            ['Tipo medida', m.tipoMedida || ''],
+            ['Estado medida', m.medidaEfectiva || ''],
+            ['Sujeto', m.sujeto || ''],
+            ['Tipo bien', m.tipoBien || ''],
+            ['Avalúo judicial', m.avaluoJudicial ?? ''],
+            ['Observaciones', m.observaciones || ''],
+          ],
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 20;
       });
-
-      currentY = (doc as any).lastAutoTable.finalY + 20;
     }
 
     // Abogados
-    const internos = (p.abogadosInternos || [])
-      .map((ab: any) => ab.Nombre || ab.name || 'Abogado interno')
-      .join(', ');
+    const abogadosBody: any[] = [
+      ['Abogado principal', this.abogadoPrincipal?.Nombre || 'Sin asignar']
+    ];
+
+    if (this.abogadosInternos.length) {
+      const internos = this.abogadosInternos.map(ab => ab.Nombre || 'Abogado interno').join(', ');
+      abogadosBody.push(['Abogados internos', internos]);
+    }
+
+    if (this.otrosAbogados.length) {
+      this.otrosAbogados.forEach(ab => {
+        abogadosBody.push([`${ab.ActuaComo || 'Otro'}`, ab.Nombre || '-']);
+      });
+    }
 
     autoTable(doc, {
       startY: currentY,
       styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [0, 0, 0], fontStyle: 'bold' },
       head: [['Abogados', 'Valor']],
-      body: [
-        ['Abogado principal', p.abogadoPrincipal || 'Sin asignar'],
-        ['Abogados internos', internos || '-'],
-      ],
+      body: abogadosBody,
     });
 
     const fileName = `proceso-${p.idProceso || 'detalle'}.pdf`;

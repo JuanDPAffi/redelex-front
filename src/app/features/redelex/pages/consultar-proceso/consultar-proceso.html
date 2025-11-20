@@ -54,7 +54,7 @@
       @if (procesosPorCedula.length > 0) {
         <div class="card">
           <div class="card__header">
-            <h3>Procesos asociados a {{ identificacion }}</h3>
+            <h3>Procesos asociados a <strong>{{ identificacion }}</strong></h3>
             <div class="count-badge">
               {{ procesosFiltrados.length }} de {{ procesosPorCedula.length }}
             </div>
@@ -88,10 +88,19 @@
                   (click)="seleccionarProceso(p.procesoId)"
                   class="process-list__item"
                 >
-                  <div>
-                    <span class="process-id"><strong>Proceso</strong> {{ p.procesoId }}</span><br>
-                    <span class="process-id"><strong>Sujeto</strong> {{ p.demandadoNombre }}</span><br>
-                    <span class="process-id"><strong>Identificación</strong> {{ p.demandadoIdentificacion }}</span>
+                  <div class="process-item__content">
+                    <div class="process-item__row">
+                      <span class="process-item__label">Proceso</span>
+                      <span class="process-id-badge">{{ p.procesoId }}</span>
+                    </div>
+                    <div class="process-item__row">
+                      <span class="process-item__label">Sujeto</span>
+                      <span class="process-item__value">{{ p.demandadoNombre }}</span>
+                    </div>
+                    <div class="process-item__row">
+                      <span class="process-item__label">ID</span>
+                      <span class="process-item__value">{{ p.demandadoIdentificacion }}</span>
+                    </div>
                   </div>
                   <span class="process-list__chevron">›</span>
                 </li>
@@ -136,10 +145,10 @@
       <!-- DETALLE DEL PROCESO -->
       @if (proceso) {
         <div class="card card--detail">
-          <!-- NUEVO HEADER CON ICONOS -->
+          <!-- HEADER CON ICONOS -->
           <div class="detail-header">
-            <h3>Detalle del proceso</h3>
-            
+            <h3>Proceso {{ (proceso.claseProceso || '-') | titlecase }}
+            </h3>
             <div class="export-actions">
               <button 
                 class="export-btn export-btn--excel" 
@@ -163,13 +172,187 @@
             </div>
           </div>
 
-          <!-- 1. DATOS DEL PROCESO -->
+          <!-- 1. DATOS DE LOS SUJETOS -->
+          @if (sujetoDemandante.length > 0 || sujetoDemandado.length > 0 || sujetosSolidarios.length > 0) {
+            <div 
+              class="detail-section" 
+              [class.detail-section--collapsed]="!sectionOpen.demandante"
+            >
+              <div class="detail-section__header" (click)="toggleSection('demandante')">
+                <h4>
+                  <span class="section-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/>
+                    </svg>
+                  </span>
+                  Datos de los Sujetos
+                </h4>
+                <span class="detail-section__chevron">
+                  {{ sectionOpen.demandante ? '▾' : '▸' }}
+                </span>
+              </div>
+
+              @if (sectionOpen.demandante) {
+                <div class="detail-section__body">
+                  
+                  <!-- DEMANDANTES -->
+                  @if (sujetoDemandante.length > 0) {
+                    <div class="subject-group">
+                      <div class="subject-group__header">
+                        <span class="subject-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                          </svg>
+                        </span>
+                        <h5>Demandante(s)</h5>
+                        <span class="subject-badge">{{ sujetoDemandante.length }}</span>
+                      </div>
+                      <div class="subject-list">
+                        @for (s of sujetoDemandante; track $index) {
+                          <div class="subject-card">
+                            <div class="detail-grid">
+                              <div>
+                                <p class="detail-label">Nombre</p>
+                                <p class="detail-value">{{ s.Nombre || '-' }}</p>
+                              </div>
+                              <div>
+                                <p class="detail-label">Tipo Identificación</p>
+                                <p class="detail-value">{{ s.TipoIdentificacion || '-' }}</p>
+                              </div>
+                              <div>
+                                <p class="detail-label">Número Identificación</p>
+                                <p class="detail-value">{{ s.NumeroIdentificacion || '-' }}</p>
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- DEMANDADOS -->
+                  @if (sujetoDemandado.length > 0) {
+                    <div class="subject-group">
+                      <div class="subject-group__header">
+                        <span class="subject-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,17V16H9V14H11V13H9V11H11V10H9V8H11C11,6.89 11.89,6 13,6H15V8H13V10H15V11H13V13H15V14H13V16H15V17H13C11.89,17 11,16.11 11,15M11,15H13V15H11V15Z"/>
+                          </svg>
+                        </span>
+                        <h5>Demandado(s)</h5>
+                        <span class="subject-badge">{{ sujetoDemandado.length }}</span>
+                      </div>
+                      <div class="subject-list">
+                        @for (s of sujetoDemandado; track $index) {
+                          <div class="subject-card">
+                            <div class="detail-grid">
+                              <div>
+                                <p class="detail-label">Nombre</p>
+                                <p class="detail-value">{{ s.Nombre || '-' }}</p>
+                              </div>
+                              <div>
+                                <p class="detail-label">Tipo Identificación</p>
+                                <p class="detail-value">{{ s.TipoIdentificacion || '-' }}</p>
+                              </div>
+                              <div>
+                                <p class="detail-label">Identificación</p>
+                                <p class="detail-value">{{ s.NumeroIdentificacion || '-' }}</p>
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- SOLIDARIOS -->
+                  @if (sujetosSolidarios.length > 0) {
+                    <div class="subject-group">
+                      <div class="subject-group__header">
+                        <span class="subject-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+                          </svg>
+                        </span>
+                        <h5>Deudor(es) Solidario(s)</h5>
+                        <span class="subject-badge">{{ sujetosSolidarios.length }}</span>
+                      </div>
+                      <div class="subject-list">
+                        @for (s of sujetosSolidarios; track $index) {
+                          <div class="subject-card">
+                            <div class="detail-grid">
+                              <div>
+                                <p class="detail-label">Nombre</p>
+                                <p class="detail-value">{{ s.Nombre || '-' }}</p>
+                              </div>
+                              <div>
+                                <p class="detail-label">Tipo Identificación</p>
+                                <p class="detail-value">{{ s.TipoIdentificacion || '-' }}</p>
+                              </div>
+                              <div>
+                                <p class="detail-label">Identificación</p>
+                                <p class="detail-value">{{ s.NumeroIdentificacion || '-' }}</p>
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                  <!-- OTROS SUJETOS -->
+                  @if (otrosSujetos.length > 0) {
+                    @for (s of otrosSujetos; track s; let i = $index) {
+                    <div class="subject-group">
+                      <div class="subject-group__header">
+                        <span class="subject-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/>
+                          </svg>
+                        </span>
+                        <h5>{{ (s.Tipo || '-') | titlecase  }}</h5>
+                        <span class="subject-badge">1</span>
+                      </div>
+
+                      @if (sectionOpen.otrosSujetos) {
+                        <div class="subject-card">
+                            <div class="detail-grid">
+                              <div>
+                                <p class="detail-label">Nombre</p>
+                                <p class="detail-value">{{ s.Nombre || '-' }}</p>
+                              </div>
+                              <div>
+                                <p class="detail-label">Tipo identificación</p>
+                                <p class="detail-value">{{ s.TipoIdentificacion || '-' }}</p>
+                              </div>
+                              <div>
+                                <p class="detail-label">Identificación</p>
+                                <p class="detail-value">{{ s.NumeroIdentificacion || '-' }}</p>
+                              </div>
+                            </div>
+                        </div>
+                      }
+                    </div>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- 2. DATOS DEL PROCESO -->
           <div
             class="detail-section"
             [class.detail-section--collapsed]="!sectionOpen.proceso"
           >
             <div class="detail-section__header" (click)="toggleSection('proceso')">
-              <h4>Datos del proceso</h4>
+              <h4>
+                <span class="section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                  </svg>
+                </span>
+                Datos del proceso
+              </h4>
               <span class="detail-section__chevron">
                 {{ sectionOpen.proceso ? '▾' : '▸' }}
               </span>
@@ -177,178 +360,98 @@
 
             @if (sectionOpen.proceso) {
               <div class="detail-section__body">
-                <div class="detail-grid">
-                  <div>
-                    <p class="detail-label">ID Proceso</p>
-                    <p class="detail-value">{{ proceso.idProceso }}</p>
+                <div class="proceso-card">
+                  <div class="detail-grid">
+                    <div>
+                      <p class="detail-label">Etapa Procesal</p>
+                      <p class="detail-value">{{ proceso.etapaProcesal || '-' }}</p>
+                    </div>
+                    <div>
+                      <p class="detail-label">Despacho actual</p>
+                      <p class="detail-value">{{ proceso.despacho || '-' }}</p>
+                    </div>
+                    <div>
+                      <p class="detail-label">Despacho de origen</p>
+                      <p class="detail-value">{{ proceso.despachoOrigen || '-' }}</p>
+                    </div>
+                    <div>
+                      <p class="detail-label">Tema (estado del inmueble)</p>
+                      <p class="detail-value">{{ proceso.tema || '-' }}</p>
+                    </div>
+                    <div>
+                      <p class="detail-label">Ubicación contrato</p>
+                      <p class="detail-value">{{ proceso.ubicacionContrato || '-' }}</p>
+                    </div>
                   </div>
-
-                  <div>
-                    <p class="detail-label">Número de radicación</p>
-                    <p class="detail-value">{{ proceso.numeroRadicacion || '-' }}</p>
+                </div>
+                <br>
+                <div class="proceso-card">
+                  <div class="detail-grid">
+                    <div>
+                      <p class="detail-label">Fecha creación expediente</p>
+                      <p class="detail-value">{{ proceso.fechaCreacion || '-' }}</p>
+                    </div>
+                    <div>
+                      <p class="detail-label">Fecha entrega abogado</p>
+                      <p class="detail-value">{{ proceso.fechaEntregaAbogado || '-' }}</p>
+                    </div>
+                    <div>
+                      <p class="detail-label">Fecha admisión demanda</p>
+                      <p class="detail-value">{{ proceso.fechaAdmisionDemanda || '-' }}</p>
+                    </div>
+                    <div>
+                      <p class="detail-label">Fecha recepción proceso</p>
+                      <p class="detail-value">{{ proceso.fechaRecepcionProceso || '-' }}</p>
+                    </div>
+                    <div>
+                      <p class="detail-label">Sentencia 1ra instancia</p>
+                      <p class="detail-value">
+                        {{ proceso.sentenciaPrimeraInstanciaResultado || '-' }}
+                        @if (proceso.sentenciaPrimeraInstanciaFecha) {
+                          <span>({{ proceso.sentenciaPrimeraInstanciaFecha }})</span>
+                        }
+                      </p>
+                    </div>
                   </div>
-
-                  <div>
-                    <p class="detail-label">Código alterno (Cuenta Quasar)</p>
-                    <p class="detail-value">{{ proceso.codigoAlterno || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Clase de proceso</p>
-                    <p class="detail-value">{{ proceso.claseProceso || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Etapa procesal</p>
-                    <p class="detail-value">{{ proceso.etapaProcesal || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Estado</p>
-                    <p class="detail-value">{{ proceso.estado || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Regional</p>
-                    <p class="detail-value">{{ proceso.regional || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Tema (estado del inmueble)</p>
-                    <p class="detail-value">{{ proceso.tema || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Fecha creación expediente</p>
-                    <p class="detail-value">{{ proceso.fechaCreacion || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Fecha entrega abogado</p>
-                    <p class="detail-value">{{ proceso.fechaEntregaAbogado || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Fecha admisión demanda</p>
-                    <p class="detail-value">{{ proceso.fechaAdmisionDemanda || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Fecha recepción proceso</p>
-                    <p class="detail-value">{{ proceso.fechaRecepcionProceso || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Ubicación contrato</p>
-                    <p class="detail-value">{{ proceso.ubicacionContrato || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Sentencia 1ra instancia</p>
-                    <p class="detail-value">
-                      {{ proceso.sentenciaPrimeraInstanciaResultado || '-' }}
-                      @if (proceso.sentenciaPrimeraInstanciaFecha) {
-                        <span>({{ proceso.sentenciaPrimeraInstanciaFecha }})</span>
-                      }
-                    </p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Calificación (recuperabilidad)</p>
-                    <p class="detail-value">{{ proceso.calificacion || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Última actuación</p>
-                    <p class="detail-value">{{ proceso.ultimaActuacionTipo || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Fecha</p>
-                    <p class="detail-value">{{ proceso.ultimaActuacionFecha || '-' }}</p>
-                  </div>
-
-                  <div>
-                    <p class="detail-label">Observación</p>
-                    <p class="detail-value">{{ proceso.ultimaActuacionObservacion || '-' }}</p>
+                </div>
+                <br>
+                <div class="proceso-card">
+                  <div class="detail-grid">
+                    <div>
+                      <p class="detail-label">Tipo</p>
+                      <p class="detail-value">{{ proceso.ultimaActuacionTipo || '-' }}</p>
+                    </div>
+                    <div>
+                      <p class="detail-label">Fecha</p>
+                      <p class="detail-value">{{ proceso.ultimaActuacionFecha || '-' }}</p>
+                    </div>
+                    <div class="detail-grid--full">
+                      <p class="detail-label">Observación</p>
+                      <p class="detail-value">
+                        {{ proceso.ultimaActuacionObservacion || '-' }}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             }
           </div>
 
-          <!-- 2. DATOS DEL DEMANDANTE -->
-          <div
-            class="detail-section"
-            [class.detail-section--collapsed]="!sectionOpen.demandante"
-          >
-            <div class="detail-section__header" (click)="toggleSection('demandante')">
-              <h4>Datos del demandante</h4>
-              <span class="detail-section__chevron">
-                {{ sectionOpen.demandante ? '▾' : '▸' }}
-              </span>
-            </div>
-
-            @if (sectionOpen.demandante) {
-              <div class="detail-section__body">
-                <div class="detail-grid">
-                  <div>
-                    <p class="detail-label">Nombre (Inmobiliaria)</p>
-                    <p class="detail-value">{{ proceso.demandanteNombre || '-' }}</p>
-                  </div>
-                  <div>
-                    <p class="detail-label">Identificación</p>
-                    <p class="detail-value">{{ proceso.demandanteIdentificacion || '-' }}</p>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-
-          <!-- 3. DATOS DEL DEMANDADO -->
-          <div
-            class="detail-section"
-            [class.detail-section--collapsed]="!sectionOpen.demandado"
-          >
-            <div class="detail-section__header" (click)="toggleSection('demandado')">
-              <h4>Datos del demandado</h4>
-              <span class="detail-section__chevron">
-                {{ sectionOpen.demandado ? '▾' : '▸' }}
-              </span>
-            </div>
-
-            @if (sectionOpen.demandado) {
-              <div class="detail-section__body">
-                <div class="detail-grid">
-                  <div>
-                    <p class="detail-label">Nombre (Inquilino)</p>
-                    <p class="detail-value">{{ proceso.demandadoNombre || '-' }}</p>
-                  </div>
-                  <div>
-                    <p class="detail-label">Identificación</p>
-                    <p class="detail-value">{{ proceso.demandadoIdentificacion || '-' }}</p>
-                  </div>
-                  <div>
-                    <p class="detail-label">Despacho actual</p>
-                    <p class="detail-value">{{ proceso.despacho || '-' }}</p>
-                  </div>
-                  <div>
-                    <p class="detail-label">Despacho de origen</p>
-                    <p class="detail-value">{{ proceso.despachoOrigen || '-' }}</p>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-
-          <!-- 4. MEDIDAS CAUTELARES -->
-          @if (proceso.medidasCautelares) {
+          <!-- 3. MEDIDAS CAUTELARES -->
+          @if (medidas && medidas.length > 0) {
             <div
               class="detail-section"
               [class.detail-section--collapsed]="!sectionOpen.medidas"
             >
               <div class="detail-section__header" (click)="toggleSection('medidas')">
-                <h4>Medidas cautelares</h4>
+                <h4>
+                  <span class="section-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,5A3,3 0 0,1 15,8A3,3 0 0,1 12,11A3,3 0 0,1 9,8A3,3 0 0,1 12,5M17.13,17C15.92,18.85 14.11,20.24 12,20.92C9.89,20.24 8.08,18.85 6.87,17C6.53,16.5 6.24,16 6,15.47C6,13.82 8.71,12.47 12,12.47C15.29,12.47 18,13.79 18,15.47C17.76,16 17.47,16.5 17.13,17Z"/>
+                    </svg>
+                  </span>
+                  Medidas cautelares
+                </h4>
                 <span class="detail-section__chevron">
                   {{ sectionOpen.medidas ? '▾' : '▸' }}
                 </span>
@@ -356,69 +459,57 @@
 
               @if (sectionOpen.medidas) {
                 <div class="detail-section__body">
-                  <div class="detail-grid">
-                    <div>
-                      <p class="detail-label">Id medida</p>
-                      <p class="detail-value">{{ proceso.medidasCautelares.id || '-' }}</p>
-                    </div>
-
-                    <div>
-                      <p class="detail-label">Fecha</p>
-                      <p class="detail-value">{{ proceso.medidasCautelares.fecha || '-' }}</p>
-                    </div>
-
-                    <div>
-                      <p class="detail-label">Tipo medida</p>
-                      <p class="detail-value">{{ proceso.medidasCautelares.tipoMedida || '-' }}</p>
-                    </div>
-
-                    <div>
-                      <p class="detail-label">Estado medida</p>
-                      <p class="detail-value">{{ proceso.medidasCautelares.medidaEfectiva || '-' }}</p>
-                    </div>
-
-                    <div>
-                      <p class="detail-label">Sujeto</p>
-                      <p class="detail-value">{{ proceso.medidasCautelares.sujetoNombre || '-' }}</p>
-                    </div>
-
-                    <div>
-                      <p class="detail-label">Tipo bien</p>
-                      <p class="detail-value">{{ proceso.medidasCautelares.tipoBien || '-' }}</p>
-                    </div>
-
-                    <div class="detail-grid--full">
-                      <p class="detail-label">Dirección / detalle</p>
-                      <p class="detail-value">{{ proceso.medidasCautelares.direccion || '-' }}</p>
-                    </div>
-
-                    <div>
-                      <p class="detail-label">Área</p>
-                      <p class="detail-value">{{ proceso.medidasCautelares.area || '-' }}</p>
-                    </div>
-
-                    <div>
-                      <p class="detail-label">Avalúo judicial</p>
-                      <p class="detail-value">{{ proceso.medidasCautelares.avaluoJudicial || '-' }}</p>
-                    </div>
-
-                    <div class="detail-grid--full">
-                      <p class="detail-label">Observaciones</p>
-                      <p class="detail-value">{{ proceso.medidasCautelares.observaciones || '-' }}</p>
-                    </div>
-                  </div>
+                  @for (m of medidas; track m) {
+                    <div class="medida-card">
+                      <div class="detail-grid">
+                        <div>
+                          <p class="detail-label">Tipo bien</p>
+                          <p class="detail-value">{{ m.tipoBien || '-' }}</p>
+                        </div>
+                        <div>
+                          <p class="detail-label">Sujeto</p>
+                          <p class="detail-value">{{ m.sujeto || '-' }}</p>
+                        </div>
+                        <div>
+                          <p class="detail-label">Tipo medida</p>
+                          <p class="detail-value">{{ m.tipoMedida || '-' }}</p>
+                        </div>
+                        <div>
+                          <p class="detail-label">Estado medida</p>
+                          <p class="detail-value">{{ m.medidaEfectiva || '-' }}</p>
+                        </div>
+                        <div>
+                          <p class="detail-label">Avalúo judicial</p>
+                          <p class="detail-value">{{ m.avaluoJudicial || '-' }}</p>
+                        </div>
+                        <div class="detail-grid--full">
+                          <p class="detail-label">Observaciones</p>
+                          <p class="detail-value"
+                            [innerHTML]="formatObservaciones(m.observaciones || '')">
+                          </p>
+                        </div>
+                      </div>
+                    </div><br>
+                  }
                 </div>
               }
             </div>
           }
 
-          <!-- 5. ABOGADOS -->
+          <!-- 4. ABOGADOS -->
           <div
             class="detail-section"
             [class.detail-section--collapsed]="!sectionOpen.abogados"
           >
             <div class="detail-section__header" (click)="toggleSection('abogados')">
-              <h4>Abogados</h4>
+              <h4>
+                <span class="section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+                  </svg>
+                </span>
+                Abogados
+              </h4>
               <span class="detail-section__chevron">
                 {{ sectionOpen.abogados ? '▾' : '▸' }}
               </span>
@@ -426,28 +517,53 @@
 
             @if (sectionOpen.abogados) {
               <div class="detail-section__body">
-                <div class="detail-grid">
-                  <div>
-                    <p class="detail-label">Abogado principal</p>
-                    <p class="detail-value">{{ proceso.abogadoPrincipal || 'Sin asignar' }}</p>
+                
+                <!-- Abogado Principal -->
+                @if (abogadoPrincipal) {
+                  <div class="abogado-principal">
+                    <div class="detail-grid">
+                      <div>
+                        <p class="detail-label">Abogado principal</p>
+                        <p class="detail-value">{{ abogadoPrincipal.Nombre }}</p>
+                      </div>
+                    </div>
                   </div>
+                }
 
-                  @if (proceso.abogadosInternos.length) {
-                    <div>
-                      <p class="detail-label">Abogados internos</p>
-                      <p class="detail-value">
-                        @for (ab of proceso.abogadosInternos; track ab; let i = $index) {
-                          {{ ab.Nombre || ab.name || 'Abogado interno' }}@if (i < proceso.abogadosInternos.length - 1) {<span>, </span>}
-                        }
-                      </p>
+                <!-- Abogados Internos -->
+                @if (abogadosInternos.length > 0) {
+                  <div class="abogados-internos">
+                    <div class="detail-grid">
+                      <div class="detail-grid--full">
+                        <p class="detail-label">Abogados internos ({{ abogadosInternos.length }})</p>
+                        <p class="detail-value">
+                          @for (ab of abogadosInternos; track ab; let i = $index) {
+                            {{ ab.Nombre }}@if (i < abogadosInternos.length - 1) {<span>, </span>}
+                          }
+                        </p>
+                      </div>
                     </div>
-                  } @else {
-                    <div>
-                      <p class="detail-label">Abogados internos</p>
-                      <p class="detail-value">-</p>
+                  </div>
+                }
+
+                <!-- Otros Abogados -->
+                @if (otrosAbogados.length > 0) {
+                  <div class="otros-abogados">
+                    <div class="detail-grid">
+                      @for (ab of otrosAbogados; track ab) {
+                        <div>
+                          <p class="detail-label">{{ ab.ActuaComo || 'Otro abogado' }}</p>
+                          <p class="detail-value">{{ ab.Nombre || '-' }}</p>
+                        </div>
+                      }
                     </div>
-                  }
-                </div>
+                  </div>
+                }
+
+                @if (!abogadoPrincipal && abogadosInternos.length === 0 && otrosAbogados.length === 0) {
+                  <p class="helper">No hay abogados asignados a este proceso.</p>
+                }
+
               </div>
             }
           </div>

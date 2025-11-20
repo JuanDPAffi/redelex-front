@@ -21,6 +21,16 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
       roles: ['user', 'admin'],
       enabled: true,
       order: 1
+    },
+    {
+      id: 'redelex-informe',
+      label: 'Reporte Inmobiliaria',
+      icon: 'file-text', // O el ícono que prefieras
+      route: '/dashboard/redelex/informe-inmobiliaria',
+      roles: ['user', 'admin'],
+      enabled: true,
+      // badge: 'Nuevo',
+      order: 2
     }
   ],
   

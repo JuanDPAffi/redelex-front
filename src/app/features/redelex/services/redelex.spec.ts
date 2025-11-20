@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { RedelexService } from './redelex';
+import { RedelexService } from './redelex.service';
 
 describe('Redelex', () => {
   let service: RedelexService;

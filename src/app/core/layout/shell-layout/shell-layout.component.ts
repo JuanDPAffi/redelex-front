@@ -6,6 +6,7 @@ import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/rou
 import { Subject, takeUntil } from 'rxjs';
 import { PluginRegistryService } from '../../services/plugin-registry.service';
 import { MenuSection } from '../../models/plugin.interface';
+import { FormsModule } from '@angular/forms';
 
 interface UserData {
   nombre?: string;
@@ -18,7 +19,7 @@ interface UserData {
 @Component({
   selector: 'app-shell-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, FormsModule],
   templateUrl: './shell-layout.component.html',
   styleUrl: './shell-layout.component.scss'
 })

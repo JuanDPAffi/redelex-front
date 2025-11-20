@@ -28,10 +28,7 @@ export interface ProcesoDetalleDto {
   regional: string | null;
   tema: string | null;
 
-  demandanteNombre: string | null;
-  demandanteIdentificacion: string | null;
-  demandadoNombre: string | null;
-  demandadoIdentificacion: string | null;
+  sujetos: SujetosDto[];
 
   despacho: string | null;
   despachoOrigen: string | null;
@@ -56,28 +53,60 @@ export interface ProcesoDetalleDto {
   sentenciaPrimeraInstanciaFecha: string | null;
 
   // Medidas cautelares
-  medidasCautelares: {
-    id: number | null;
-    fecha: string | null;
-    tipoMedida: string | null;
-    medidaEfectiva: string | null;
-    sujetoNombre: string | null;
-    tipoBien: string | null;
-    direccion: string | null;
-    area: number | null;
-    avaluoJudicial: number | null;
-    observaciones: string | null;
-  } | null;
+  medidasCautelares: MedidasDto[];
 
   // Última actuación
   ultimaActuacionFecha: string | null;
   ultimaActuacionTipo: string | null;
   ultimaActuacionObservacion: string | null;
 
-  // Abogados
-  abogadoPrincipal: string | null;
-  abogadosInternos: any[];
+  abogados: AbogadoDto[];
 }
+
+export interface MedidasDto {
+    tipoBien: string | null;
+    sujeto: string | null;
+    tipoMedida: string | null;
+    medidaEfectiva: string | null;
+    avaluoJudicial: number | null;
+    observaciones: string | null;
+}
+
+export interface AbogadoDto {
+  ActuaComo: string;
+  Nombre: string;
+}
+
+export interface SujetosDto {
+  Tipo: string;
+  Nombre: string;
+  TipoIdentificacion: string;
+  NumeroIdentificacion: string;
+}
+
+// Interfaz para tipar la respuesta (mismo DTO del backend)
+export interface InformeInmobiliaria {
+  idProceso: number;
+  claseProceso: string;
+  demandadoIdentificacion: string;
+  demandadoNombre: string;
+  demandanteIdentificacion: string;
+  demandanteNombre: string;
+  codigoAlterno: string;
+  etapaProcesal: string;
+  fechaRecepcionProceso: string;
+  sentenciaPrimeraInstancia: string;
+  despacho: string;
+  numeroRadicacion: string;
+  ciudadInmueble: string | null;
+}
+
+export interface InformeResponse {
+  success: boolean;
+  count: number;
+  data: InformeInmobiliaria[];
+}
+
 
 @Injectable({
   providedIn: 'root',
@@ -108,5 +137,13 @@ export class RedelexService {
     return this.http.get<ProcesosPorIdentificacionResponse>(
       `${this.apiUrl}/procesos-por-identificacion/${identificacion}`
     );
+  }
+
+  /**
+  * Obtiene el informe de Inmobiliar por ID
+  * @param informeId ID del informe (ej: 5626)
+  */
+  getInformeInmobiliaria(informeId: number): Observable<InformeResponse> {
+    return this.http.get<InformeResponse>(`${this.apiUrl}/informe-inmobiliaria/${informeId}`);
   }
 }
