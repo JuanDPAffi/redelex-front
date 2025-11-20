@@ -41,14 +41,16 @@ export class InformeInmobiliariaComponent implements OnInit {
   
   showExportModal = false;
   exportColumns = [
+    { key: 'idProceso', label: 'ID Proceso', selected: true },
+    { key: 'claseProceso', label: 'Clase Proceso', selected: true },
+    { key: 'numeroRadicacion', label: 'Número Radicación', selected: true },
     { key: 'demandadoIdentificacion', label: 'Identificación Demandado', selected: true },
     { key: 'demandadoNombre', label: 'Nombre Demandado', selected: true },
-    { key: 'codigoAlterno', label: 'Cuenta No', selected: true },
+    { key: 'codigoAlterno', label: 'Número Cuenta', selected: true },
     { key: 'etapaProcesal', label: 'Etapa Procesal', selected: true },
     { key: 'fechaRecepcionProceso', label: 'Fecha Presentación Demanda', selected: true },
     { key: 'sentenciaPrimeraInstancia', label: 'Fallo Sentencia', selected: true },
     { key: 'despacho', label: 'Despacho', selected: true },
-    { key: 'numeroRadicacion', label: 'Número Radicación', selected: true },
     { key: 'ciudadInmueble', label: 'Ciudad', selected: true },
   ];
 
