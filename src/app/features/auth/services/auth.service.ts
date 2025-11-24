@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment.prod';
 
 export interface LoginPayload {
   email: string;
@@ -31,19 +32,23 @@ export interface UserData {
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = 'https://redelex-ayhxghaje6c3gkaz.eastus-01.azurewebsites.net/api/auth';
-
+  private apiUrl = `${environment.apiUrl}api/auth/`;
   constructor(private http: HttpClient) {}
 
   // -----------------------------
   // AUTH
   // -----------------------------
   register(data: RegisterPayload): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, data);
+    return this.http.post(`${this.apiUrl}register`, data);
   }
 
   login(data: LoginPayload): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, data);
+    return this.http.post(`${this.apiUrl}login`, data);
+  }
+
+  activateAccount(email: string, token: string): Observable<any> {
+    // Nota: El backend espera un POST con el body { email, token }
+    return this.http.post(`${this.apiUrl}activate`, { email, token });
   }
 
   // -----------------------------
@@ -95,10 +100,10 @@ export class AuthService {
   // PASSWORD RESET
   // -----------------------------
   requestPasswordReset(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/request-password-reset`, { email });
+    return this.http.post(`${this.apiUrl}request-password-reset`, { email });
   }
 
   resetPassword(payload: ResetPasswordPayload): Observable<any> {
-    return this.http.post(`${this.apiUrl}/reset-password`, payload);
+    return this.http.post(`${this.apiUrl}reset-password`, payload);
   }
 }

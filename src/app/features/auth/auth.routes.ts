@@ -4,6 +4,7 @@ import { LoginComponent } from './pages/login/login';
 import { RegisterComponent } from './pages/register/register';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password';
+import { ActivateAccountComponent } from './pages/activate-account/activate-account';
 
 export const AUTH_ROUTES: Routes = [
   { 
@@ -15,6 +16,10 @@ export const AUTH_ROUTES: Routes = [
     path: 'register', 
     component: RegisterComponent,
     data: { animation: 'RegisterPage' }
+  },
+  { 
+    path: 'activate', 
+    component: ActivateAccountComponent 
   },
   { 
     path: 'forgot-password', 

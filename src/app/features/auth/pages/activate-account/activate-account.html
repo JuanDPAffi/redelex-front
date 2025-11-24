@@ -1,0 +1,37 @@
+<div class="affi-auth-page">
+  <div class="affi-auth-card">
+    
+    <div class="affi-auth-card__header">
+      <img src="/Affi.png" alt="Affi" class="affi-logo" />
+
+      <h1 *ngIf="status === 'loading'">Verificando...</h1>
+      <h1 *ngIf="status === 'success'">¡Todo listo!</h1>
+      <h1 *ngIf="status === 'error'">Ups, hubo un problema</h1>
+
+      <p>{{ message }}</p>
+    </div>
+
+    <div class="affi-auth-form"> <div *ngIf="status === 'loading'" style="text-align: center; padding: 20px;">
+        <span style="font-size: 24px; animation: spin 1s infinite linear;">⏳</span>
+      </div>
+
+      <button 
+        *ngIf="status === 'success'" 
+        routerLink="/auth/login" 
+        class="btn btn--primary" 
+        type="button">
+        Iniciar sesión
+      </button>
+
+      <button 
+        *ngIf="status === 'error'" 
+        routerLink="/auth/login" 
+        class="btn btn--primary" 
+        type="button">
+        Volver al inicio
+      </button>
+
+    </div>
+
+  </div>
+</div>
