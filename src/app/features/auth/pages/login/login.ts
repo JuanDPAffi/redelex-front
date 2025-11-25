@@ -65,24 +65,24 @@ export class LoginComponent implements OnInit {
         });
       },
       error: err => {
-        // Capturamos el mensaje que viene del Backend
         const mensajeBackend = err.error?.message || '';
 
-        // 🟡 CASO 1: USUARIO INACTIVO
-        // Buscamos palabras clave como "desactivada" o "inactivo"
-        if (mensajeBackend.toLowerCase().includes('desactivada') || mensajeBackend.toLowerCase().includes('inactivo')) {
+        // Buscamos palabras clave: "desactivada", "inactivo" O "advertencia"
+        if (
+          mensajeBackend.toLowerCase().includes('desactivada') || 
+          mensajeBackend.toLowerCase().includes('inactivo') ||
+          mensajeBackend.toLowerCase().includes('advertencia') // <--- NUEVO
+        ) {
           AffiAlert.fire({
-            icon: 'warning', // Icono amarillo
-            title: 'Usuario Inactivo',
-            text: mensajeBackend || 'Su cuenta se encuentra desactivada.'
+            icon: 'warning', // Amarillo
+            title: 'Atención',
+            text: mensajeBackend
           });
-        } 
-        // 🔴 CASO 2: ERROR GENÉRICO (Contraseña mal, etc.)
-        else {
+        } else {
           AffiAlert.fire({
-            icon: 'error',
+            icon: 'error', // Rojo
             title: 'Error al iniciar sesión',
-            text: 'Correo o contraseña incorrectos.'
+            text: 'Credenciales inválidas.'
           });
         }
       }
