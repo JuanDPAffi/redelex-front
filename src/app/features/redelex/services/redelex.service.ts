@@ -112,7 +112,7 @@ export interface InformeResponse {
   providedIn: 'root',
 })
 export class RedelexService {
-  // environment.apiUrl = "https://redelex-ayhxghaje6c3gkaz.eastus-01.azurewebsites.net/"
+  // environment.apiUrl = "https://api.estadosprocesales.affi.net/"
   private apiUrl = `${environment.apiUrl}api/redelex`;
 
   constructor(private http: HttpClient) {}
