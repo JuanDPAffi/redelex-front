@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../services/auth.service'; // Ajusta la ruta si es necesario
+import { AuthService } from '../../services/auth.service';
 import { Router, RouterLink } from '@angular/router';
 import { AffiAlert } from '../../../../shared/services/affi-alert';
 import { Title } from '@angular/platform-browser';
@@ -22,9 +22,8 @@ export class RegisterComponent implements OnInit {
     private router: Router,
     private titleService: Title 
   ) {
-    // Si ya tiene sesión, lo sacamos
-    const token = this.authService.getToken();
-    if (token) {
+    // 🔒 CORRECCIÓN: Usamos isLoggedIn() para verificar sesión existente
+    if (this.authService.isLoggedIn()) {
       this.router.navigate(['/panel']);
       return;
     }
@@ -32,13 +31,12 @@ export class RegisterComponent implements OnInit {
     this.form = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      // Regex que coincide con tu Backend (Min 8, Mayus, Minus, Num/Simbolo)
+      // Regex que coincide con tu Backend
       password: ['', [
         Validators.required, 
         Validators.minLength(8),
         Validators.pattern(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/)
       ]],
-      // NUEVOS CAMPOS
       nit: ['', Validators.required],
       codigoInmobiliaria: ['', Validators.required]
     });
@@ -50,15 +48,12 @@ export class RegisterComponent implements OnInit {
 
   submit() {
     if (this.form.invalid) {
-      this.form.markAllAsTouched(); // Para que se vean los errores visuales
+      this.form.markAllAsTouched();
       return;
     }
 
     this.authService.register(this.form.value).subscribe({
       next: (res: any) => {
-        // CAMBIO IMPORTANTE: Ya no guardamos token ni redireccionamos al panel
-        // porque la cuenta requiere activación por correo.
-        
         AffiAlert.fire({
           icon: 'success',
           title: 'Registro exitoso',
@@ -69,7 +64,6 @@ export class RegisterComponent implements OnInit {
         });
       },
       error: (err) => {
-        // Mostramos el mensaje exacto del backend (ej: "Inmobiliaria ocupada")
         AffiAlert.fire({
           icon: 'error',
           title: 'No se pudo registrar',

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core'; // Agregué OnInit
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -13,7 +13,7 @@ import { Title } from '@angular/platform-browser';
   templateUrl: './login.html',
   styleUrl: './login.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   form!: FormGroup;
 
   constructor(
@@ -22,10 +22,9 @@ export class LoginComponent {
     private router: Router,
     private titleService: Title
   ) {
-    // 🔒 Si ya hay sesión, mando al panel
-    const token = this.authService.getToken();
-    if (token) {
-      this.router.navigate(['/panel']);
+    // 🔒 CORRECCIÓN 1: Usamos isLoggedIn() en lugar de getToken()
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/panel']); // Ojo: Asegúrate que esta ruta exista
       return;
     }
 
@@ -51,11 +50,14 @@ export class LoginComponent {
 
     this.authService.login(this.form.value).subscribe({
       next: res => {
-        // Guarda el token
-        this.authService.saveToken(res.token);
+        // 🔒 CORRECCIÓN 2: ELIMINAMOS saveToken. La cookie viaja sola.
+        // this.authService.saveToken(res.token); <--- ELIMINADO
 
-        // Guarda los datos del usuario
-        this.authService.saveUserData(res.user);
+        // Guarda solo los datos visuales del usuario (nombre, rol)
+        // Nota: Asegúrate que tu back devuelva 'user' o ajusta según respuesta
+        if (res.user) {
+           this.authService.saveUserData(res.user);
+        }
 
         AffiAlert.fire({
           icon: 'success',
@@ -64,7 +66,7 @@ export class LoginComponent {
           timer: 1300,
           showConfirmButton: false
         }).then(() => {
-          this.router.navigate(['/panel']);
+          this.router.navigate(['/panel']); // Ajusta si tu ruta principal es diferente
         });
       },
       error: err => {
