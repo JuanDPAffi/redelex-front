@@ -1,11 +1,13 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { filter } from 'rxjs/operators'; // Importante para filtrar eventos de navegación
+import { filter } from 'rxjs/operators';
 import { PluginRegistryService } from '../../services/plugin-registry.service';
 import { MenuSection } from '../../models/plugin.interface';
 import { FormsModule } from '@angular/forms';
+// 1. IMPORTAR EL AUTH SERVICE
+import { AuthService } from '../../../features/auth/services/auth.service';
 
 interface UserData {
   nombre?: string;
@@ -29,26 +31,40 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   userInitials = 'U';
   
   menuSections: MenuSection[] = [];
-  
-  // Variable para el breadcrumb dinámico
   breadcrumbs: { label: string, active?: boolean }[] = [];
   
   private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
-    private pluginRegistry: PluginRegistryService
+    private pluginRegistry: PluginRegistryService,
+    private authService: AuthService // 2. INYECCIÓN DEL SERVICIO
   ) {}
 
   ngOnInit() {
+    // A. Carga inicial rápida (lo que hay en cache/local)
     this.loadUserData();
+    
+    // B. SINCRONIZACIÓN REAL (La magia): 
+    // Pedimos al backend los datos frescos. Si cambiaste el rol en BD, aquí se actualiza.
+    this.authService.refreshUserProfile()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (user) => {
+          // Si el backend responde, actualizamos la vista inmediatamente
+          this.updateUserView(user);
+        },
+        error: () => {
+          // Si falla (ej: cookie expiró), el interceptor se encargará del logout
+          console.log('No se pudo refrescar el perfil');
+        }
+      });
+
     this.loadMenuSections();
     this.handleResize();
     
     window.addEventListener('resize', this.handleResize.bind(this));
 
-    // SUSCRIPCIÓN A CAMBIOS DE RUTA
-    // Actualiza el breadcrumb cada vez que navegas
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       takeUntil(this.destroy$)
@@ -68,66 +84,53 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(sections => {
         this.menuSections = sections.filter(s => s.items.length > 0);
-        // Actualizar breadcrumbs una vez cargado el menú por si recargas la página
         this.updateBreadcrumbs();
       });
   }
 
-  // --- LÓGICA DE BREADCRUMBS CORREGIDA ---
   private updateBreadcrumbs() {
     this.breadcrumbs = [];
-
-    // Recorremos las secciones y sus ítems para ver cuál coincide con la URL actual
     for (const section of this.menuSections) {
       if (!section.items) continue;
-
       for (const item of section.items) {
-        // Validación de seguridad: si no tiene ruta, saltamos
         if (!item.route) continue;
-
-        // CORRECCIÓN AQUÍ: Normalizamos 'route' para que siempre sea un array compatible con createUrlTree
         const routeCommands = Array.isArray(item.route) ? item.route : [item.route];
-
-        // createUrlTree maneja correctamente rutas relativas y parámetros
-        // Casteamos a 'any[]' para silenciar el error de tipado estricto si la interfaz dice string
         const itemUrlTree = this.router.createUrlTree(routeCommands as any[]);
         
-        // 'subset' permite que /redelex/consultar/123 coincida con /redelex/consultar
         if (this.router.isActive(itemUrlTree, { 
           paths: 'subset', 
           queryParams: 'ignored', 
           fragment: 'ignored', 
           matrixParams: 'ignored' 
         })) {
-          
           this.breadcrumbs = [
-            { label: section.title },          // Ej: Consultas
-            { label: item.label, active: true } // Ej: Consultar Procesos
+            { label: section.title },
+            { label: item.label, active: true }
           ];
-          return; // Encontrado, terminamos
+          return;
         }
       }
     }
-
-    // Fallback por defecto si no está en el menú
     if (this.breadcrumbs.length === 0) {
        this.breadcrumbs = [{ label: 'Inicio', active: true }];
     }
   }
 
+  // Carga desde localStorage (rápido pero puede estar desactualizado)
   private loadUserData() {
-    const userDataStr = localStorage.getItem('redelex_user');
-    
-    if (userDataStr) {
-      try {
-        const userData: UserData = JSON.parse(userDataStr);
-        this.userName = userData.nombre || userData.name || userData.email?.split('@')[0] || 'Usuario';
-        this.userRole = this.formatRole(userData.rol || userData.role || 'Usuario');
-        this.userInitials = this.getInitials(this.userName);
-      } catch (error) {
-        console.error('Error al parsear datos de usuario:', error);
-      }
+    const userData = this.authService.getUserData(); // Usamos el helper del servicio si existe, o tu lógica manual
+    if (userData) {
+      this.updateUserView(userData);
     }
+  }
+
+  // Método auxiliar para actualizar las variables de la vista
+  private updateUserView(data: any) {
+    this.userName = data.nombre || data.name || data.email?.split('@')[0] || 'Usuario';
+    // Importante: Aseguramos que 'rol' o 'role' se procesen
+    const rawRole = data.rol || data.role || 'user';
+    this.userRole = this.formatRole(rawRole);
+    this.userInitials = this.getInitials(this.userName);
   }
 
   formatRole(role: string): string {
@@ -136,13 +139,11 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
       'user': 'Inmobiliaria',
       'guest': 'Invitado'
     };
-    
     return roleMap[role.toLowerCase()] || role;
   }
 
   getInitials(name: string): string {
     if (!name) return 'U';
-    
     const parts = name.trim().split(' ');
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -160,7 +161,6 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   toggleSidebar() {
     if (window.innerWidth <= 768) {
       this.sidebarOpen = !this.sidebarOpen;
-      
       if (this.sidebarOpen) {
         document.body.style.overflow = 'hidden';
       } else {
@@ -177,8 +177,11 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    localStorage.removeItem('redelex_token');
-    localStorage.removeItem('redelex_user');
+    // 3. LOGOUT REAL
+    // Delegamos al servicio para que llame al backend y limpie todo
+    this.authService.logout();
+    
+    // Redirección manual por si acaso el servicio no lo hace
     this.router.navigate(['/auth/login']);
   }
 }

@@ -31,6 +31,14 @@ export interface UserData {
 })
 export class AuthService {
   private apiUrl = `${environment.apiUrl}api/auth/`;
+
+  refreshUserProfile(): Observable<any> {
+    return this.http.get(`${this.apiUrl}profile`).pipe(
+      tap((user: any) => {
+        this.saveUserData(user); 
+      })
+    );
+  }
   
   constructor(private http: HttpClient) {}
 
