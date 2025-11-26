@@ -1,42 +1,47 @@
 import { Routes } from '@angular/router';
-import { roleGuard } from '../../core/guards/role.guard'; // <--- Importar
-import { ConsultarProcesoComponent } from './pages/consultar-proceso/consultar-proceso';
-import { MisProcesosComponent } from './pages/mis-procesos/mis-procesos';
-// ... otros imports
+import { roleGuard } from '../../core/guards/role.guard';
 
 export const REDELEX_ROUTES: Routes = [
   {
     path: '',
     children: [
-      // 1. RUTA NUEVA: Solo para Inmobiliarias (User)
+      // 1. Mis Procesos
       {
         path: 'mis-procesos',
-        component: MisProcesosComponent,
-        canActivate: [roleGuard(['user', 'admin'])] // Admin también puede ver por debug si quieres
+        loadComponent: () => import('./pages/mis-procesos/mis-procesos')
+          .then(m => m.MisProcesosComponent),
+        canActivate: [roleGuard(['user', 'admin'])]
       },
-      
-      // 2. RUTAS VIEJAS: Restringidas SOLO a Admins
+
+      // 2. Consultar Proceso
       {
         path: 'consultar-proceso',
-        component: ConsultarProcesoComponent,
-        canActivate: [roleGuard(['admin'])] // <--- CANDADO
+        loadComponent: () => import('./pages/consultar-proceso/consultar-proceso')
+          .then(m => m.ConsultarProcesoComponent),
+        canActivate: [roleGuard(['admin'])]
       },
+
+      // 3. AQUÍ ESTABA EL ERROR: Informe Inmobiliaria
+      // Debes asegurarte de tener la línea 'loadComponent' completa
       {
         path: 'informe-inmobiliaria',
-        // ... componente de informe ...
-        canActivate: [roleGuard(['admin'])] // <--- CANDADO
+        loadComponent: () => import('./pages/informe-inmobiliaria/informe-inmobiliaria')
+          .then(m => m.InformeInmobiliariaComponent),
+        canActivate: [roleGuard(['admin'])]
       },
-      
-      // 3. DETALLE: Accesible por ambos (El backend decide si muestra datos)
+
+      // 4. Detalle Proceso
       {
         path: 'proceso/:id',
-        loadComponent: () => import('./pages/detalle-proceso/detalle-proceso').then(m => m.DetalleProcesoComponent),
+        loadComponent: () => import('./pages/detalle-proceso/detalle-proceso')
+          .then(m => m.DetalleProcesoComponent),
         canActivate: [roleGuard(['admin', 'user'])]
       },
-      
+
+      // Default
       {
         path: '',
-        redirectTo: 'mis-procesos', // O lógica para redirigir según rol
+        redirectTo: 'mis-procesos',
         pathMatch: 'full'
       }
     ]
