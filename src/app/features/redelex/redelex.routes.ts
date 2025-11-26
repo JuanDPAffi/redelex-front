@@ -21,8 +21,7 @@ export const REDELEX_ROUTES: Routes = [
         canActivate: [roleGuard(['admin'])]
       },
 
-      // 3. AQUÍ ESTABA EL ERROR: Informe Inmobiliaria
-      // Debes asegurarte de tener la línea 'loadComponent' completa
+      // 3. Informe Inmobiliaria
       {
         path: 'informe-inmobiliaria',
         loadComponent: () => import('./pages/informe-inmobiliaria/informe-inmobiliaria')

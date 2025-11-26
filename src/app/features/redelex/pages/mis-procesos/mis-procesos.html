@@ -1,89 +1,136 @@
-<div class="page-container">
+<div class="page">
   
-  <header class="page-header">
+  <div class="page__header">
     <div class="header-content">
-      <h1>Mis Procesos Jurídicos</h1>
-      <div class="subtitle-badge" *ngIf="identificacionUsuario">
-        <span class="icon">🏢</span>
-        <span>NIT Asociado: <strong>{{ identificacionUsuario }}</strong></span>
+      <div>
+        <h2>Mis Procesos Jurídicos</h2>
+        <p *ngIf="identificacionUsuario">
+          NIT Asociado: <strong>{{ identificacionUsuario }}</strong> &bull; Total: {{ filteredData.length }}
+        </p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn--primary export-btn-icon" (click)="openExportModal()" [disabled]="filteredData.length === 0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar
+        </button>
       </div>
     </div>
-    
-    <button class="btn-refresh" (click)="cargarMisProcesos()" title="Actualizar lista">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-      Actualizar
-    </button>
-  </header>
-
-  <div *ngIf="loading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Buscando procesos activos...</p>
   </div>
 
-  <div *ngIf="!loading && error" class="error-state">
-    <div class="error-icon">❌</div>
-    <h3>Error de consulta</h3>
-    <p>{{ error }}</p>
-    <button class="btn btn--secondary" (click)="cargarMisProcesos()">Intentar nuevamente</button>
-  </div>
+  <div class="card">
+    <div class="filter-section">
+      <div class="filters-grid">
+        <label class="field full-width">
+          <span class="field__label">Búsqueda Rápida</span>
+          <input class="field__input" type="text" [(ngModel)]="filtros.busquedaGeneral" (input)="applyFilters()" placeholder="Buscar por nombre, ID, radicado...">
+        </label>
 
-  <div *ngIf="!loading && !error" class="fade-in">
-    
-    <div class="empty-state" *ngIf="procesos.length === 0">
-      <div class="empty-icon">📂</div>
-      <h3>No se encontraron procesos</h3>
-      <p>Actualmente no tiene procesos jurídicos activos registrados bajo su NIT.</p>
+        <div class="field custom-select-container">
+          <span class="field__label">Clase Proceso</span>
+          <div class="custom-select" (click)="toggleDropdown('clase', $event)" [class.open]="activeDropdown === 'clase'">
+            <span class="selected-value" [class.placeholder]="!filtros.claseProceso">{{ filtros.claseProceso || 'Todas' }}</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="dropdown-menu" *ngIf="activeDropdown === 'clase'">
+            <div class="options-list">
+              <div class="option" (click)="selectOption('')" [class.selected]="filtros.claseProceso === ''">Todas</div>
+              <div class="option" *ngFor="let c of listaClaseProceso" (click)="selectOption(c)" [class.selected]="filtros.claseProceso === c">{{ c }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="results-card" *ngIf="procesos.length > 0">
-      <div class="table-responsive">
-        <table class="data-table">
+    <div *ngIf="loading" class="helper">
+      <div class="spinner"></div>
+      <p>Consultando sus procesos...</p>
+    </div>
+
+    <div *ngIf="error" class="helper error-text">
+      <p>❌ {{ error }}</p>
+      <button class="btn-link" (click)="cargarMisProcesos()">Reintentar</button>
+    </div>
+
+    <div class="table-container" *ngIf="!loading && !error">
+      <div class="table-scroll">
+        <table class="excel-table">
           <thead>
             <tr>
-              <th width="100">Radicado / ID</th>
-              <th>Partes Procesales</th>
+              <th>ID Proceso</th>
               <th>Clase</th>
-              <th width="120" class="text-right">Acciones</th>
+              <th class="group-header">Demandado</th>
+              <th class="group-header">ID Dmdado.</th>
+              <th class="group-header">Demandante</th>
+              <th class="group-header">ID Dmte.</th>
+              <th style="text-align: center;">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let p of procesos" class="table-row" [routerLink]="['/redelex/proceso', p.procesoId]">
-              <td class="cell-id">
-                <span class="id-badge">#{{ p.procesoId }}</span>
-                </td>
-              
-              <td>
-                <div class="parties-cell">
-                  <div class="party-row">
-                    <span class="party-label">Demandado:</span>
-                    <span class="party-name">{{ p.demandadoNombre }}</span>
-                    <span class="party-nit">({{ p.demandadoIdentificacion }})</span>
-                  </div>
-                  <div class="party-divider">vs</div>
-                  <div class="party-row">
-                    <span class="party-label">Demandante:</span>
-                    <span class="party-name">{{ p.demandanteNombre }}</span>
-                    <span class="party-nit">({{ p.demandanteIdentificacion }})</span>
-                  </div>
-                </div>
+            <tr *ngFor="let item of paginatedData" class="hover-row" [routerLink]="['../proceso', item.procesoId]">
+              <td class="cell-id">#{{ item.procesoId }}</td>
+              <td><span class="tag-class">{{ item.claseProceso }}</span></td>
+              <td class="cell-nombre">{{ item.demandadoNombre }}</td>
+              <td>{{ item.demandadoIdentificacion }}</td>
+              <td class="cell-nombre">{{ item.demandanteNombre }}</td>
+              <td class="cell-id">{{ item.demandanteIdentificacion }}</td>
+              <td style="text-align: center;">
+                <button class="btn-icon" title="Ver Detalle">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
               </td>
-              
-              <td>
-                <span class="tag-class">{{ p.claseProceso }}</span>
-              </td>
-              
-              <td class="text-right">
-                <a [routerLink]="['/redelex/proceso', p.procesoId]" class="btn-icon" title="Ver Detalle" (click)="$event.stopPropagation()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                </a>
-              </td>
+            </tr>
+            <tr *ngIf="filteredData.length === 0" class="no-results">
+              <td colspan="7" class="helper">No se encontraron procesos activos asociados a su NIT.</td>
             </tr>
           </tbody>
         </table>
       </div>
-      
-      <div class="table-footer">
-        Mostrando {{ procesos.length }} procesos asociados a su cuenta.
+
+      <div class="pagination" *ngIf="filteredData.length > 0">
+        <button class="pagination__btn" [disabled]="currentPage === 1" (click)="prevPage()">← Anterior</button>
+        <div class="pagination__info">
+          <span>Página {{ currentPage }} de {{ totalPages }}</span>
+          <div class="page-size-selector custom-select-container">
+            <div class="custom-select" (click)="toggleDropdown('pageSize', $event)" [class.open]="activeDropdown === 'pageSize'">
+              <span class="selected-value">{{ itemsPerPage }} / pág</span>
+              <span class="arrow">▼</span>
+            </div>
+            <div class="dropdown-menu dropdown-menu--up" *ngIf="activeDropdown === 'pageSize'">
+              <div class="options-list">
+                <div class="option" *ngFor="let size of pageSizeOptions" (click)="selectPageSize(size)" [class.selected]="itemsPerPage === size">{{ size }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="pagination__btn" [disabled]="currentPage === totalPages" (click)="nextPage()">Siguiente →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showExportModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Exportar Procesos</h3>
+      <button class="close-btn" (click)="closeExportModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="helper" style="padding:0; text-align:left; margin-bottom:1rem;">Selecciona las columnas:</p>
+      <div class="columns-actions">
+        <button class="btn-link" (click)="selectAllColumns(true)">Todas</button>
+        <button class="btn-link" (click)="selectAllColumns(false)">Ninguna</button>
+      </div>
+      <div class="columns-grid">
+        <label *ngFor="let col of exportColumns" class="checkbox-field">
+          <input type="checkbox" [checked]="col.selected" (change)="toggleColumn(col.key)"><span>{{ col.label }}</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content: space-between;">
+      <button class="btn btn--secondary" (click)="closeExportModal()">Cancelar</button>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn--primary" style="background-color: #217346; border-color:#217346" (click)="exportToExcel()">Excel</button>
+        <button class="btn btn--primary" style="background-color: #c0392b; border-color:#c0392b" (click)="exportToPdf()">PDF</button>
       </div>
     </div>
   </div>

@@ -125,7 +125,7 @@ export class RedelexService {
 
   getProcesoDetalleById(id: number): Observable<any> {
     // Llama al endpoint GET /api/redelex/proceso/:id
-    return this.http.get(`${this.apiUrl}proceso/${id}`);
+    return this.http.get(`${this.apiUrl}/proceso/${id}`);
   }
 
   /**
