@@ -80,10 +80,33 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   }
 
   private loadMenuSections() {
+    // 1. Obtener el rol actual del usuario (normalizado a 'role')
+    const user = this.authService.getUserData();
+    const currentRole = user?.role || 'guest';
+
+    // Debug: Ver qué rol está detectando el menú
+    console.log('🍔 Cargando menú para rol:', currentRole);
+
     this.pluginRegistry.getMenuSections()
       .pipe(takeUntil(this.destroy$))
       .subscribe(sections => {
-        this.menuSections = sections.filter(s => s.items.length > 0);
+        
+        // 2. FILTRADO INTELIGENTE
+        this.menuSections = sections.map(section => {
+          // A. Filtrar ITEMS dentro de la sección
+          const filteredItems = section.items.filter(item => {
+            // Si no tiene roles definidos, es público
+            if (!item.roles || item.roles.length === 0) return true;
+            
+            // Si tiene roles, verificamos si el mío está incluido
+            return item.roles.includes(currentRole);
+          });
+
+          return { ...section, items: filteredItems };
+        })
+        // 3. Limpieza: Si una sección se quedó vacía tras el filtro, la ocultamos
+        .filter(section => section.items.length > 0);
+
         this.updateBreadcrumbs();
       });
   }

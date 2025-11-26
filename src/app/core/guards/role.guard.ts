@@ -24,7 +24,7 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
     AffiAlert.fire({
       icon: 'error',
       title: 'Acceso Denegado',
-      text: `No tienes permisos para acceder. Tu rol es: ${user?.role || 'Desconocido'}`
+      text: `No tienes permisos para acceder.`
     });
 
     // 3. ROMPER EL BUCLE (CORRECCIÓN CRÍTICA)

@@ -18,19 +18,28 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
       label: 'Consultar Procesos',
       icon: 'file-text',
       route: '/panel/consultas/consultar-proceso',
-      roles: ['user', 'admin'],
+      roles: ['admin'],
       enabled: true,
       order: 1
     },
     {
       id: 'redelex-informe',
-      label: 'Reporte Inmobiliaria',
+      label: 'Informe Inmobiliaria',
       icon: 'file-text',
-      route: '/panel/consultas/reporte-inmobiliaria',
-      roles: ['user', 'admin'],
+      route: '/panel/consultas/informe-inmobiliaria',
+      roles: ['admin'],
       enabled: true,
       // badge: 'Nuevo',
       order: 2
+    },
+    {
+      id: 'redelex-mis-procesos',
+      label: 'Mis Procesos',
+      icon: 'file-text',
+      route: '/panel/consultas/mis-procesos',
+      roles: ['user'],
+      enabled: true,
+      order: 3
     }
   ],
   

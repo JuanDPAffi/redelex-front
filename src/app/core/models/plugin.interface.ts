@@ -40,5 +40,6 @@ export interface MenuSection {
   id: string;
   title: string;
   items: MenuItem[];
+  roles?: string[];
   order?: number;
 }
