@@ -22,9 +22,14 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private titleService: Title
   ) {
-    // 🔒 CORRECCIÓN 1: Usamos isLoggedIn() en lugar de getToken()
+    // Si ya está logueado, redirigir inteligentemente
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/panel']); // Ojo: Asegúrate que esta ruta exista
+      const user = this.authService.getUserData();
+      if (user?.role === 'admin') {
+         this.router.navigate(['/panel/consultas/consultar-proceso']);
+      } else {
+         this.router.navigate(['/panel/consultas/mis-procesos']);
+      }
       return;
     }
 
@@ -61,17 +66,15 @@ export class LoginComponent implements OnInit {
           text: 'Inicio de sesión exitoso.',
           timer: 1300,
           showConfirmButton: false
-        }).then(() => {
-          // --- AQUÍ ESTÁ EL CAMBIO ---
-          // Antes ibas a '/panel', ahora redirigimos según el rol
+          }).then(() => {
           const user = this.authService.getUserData();
           
           if (user?.role === 'admin') {
-            // Si es Admin (Affi) -> Consultar Proceso
-            this.router.navigate(['/redelex/consultar-proceso']);
+            // CORREGIDO: Usamos la ruta real que se ve en tu navegador
+            this.router.navigate(['/panel/consultas/consultar-proceso']); 
           } else {
-            // Si es Inmobiliaria (User) -> Mis Procesos
-            this.router.navigate(['/redelex/mis-procesos']);
+            // CORREGIDO
+            this.router.navigate(['/panel/consultas/mis-procesos']);
           }
         });
       },

@@ -8,27 +8,29 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
     const authService = inject(AuthService);
     const router = inject(Router);
     
-    // Obtenemos el usuario del localStorage (o del servicio)
+    // Obtenemos el usuario
     const user = authService.getUserData();
     
-    // Validamos: Si existe usuario y su rol está en la lista permitida
+    // Debug para ver qué está leyendo el Guard
+    console.log('🛡️ Guard Check:', { userRole: user?.role, allowed: allowedRoles });
+
+    // 1. Validamos: Si existe usuario y su rol está en la lista permitida
+    // Aseguramos que lea 'role' (inglés) que es como lo guarda tu AuthService ahora
     if (user && allowedRoles.includes(user.role || '')) {
       return true;
     }
 
-    // Si no tiene permiso:
+    // 2. Si NO tiene permiso:
     AffiAlert.fire({
       icon: 'error',
       title: 'Acceso Denegado',
-      text: 'No tienes permisos para acceder a esta sección.'
+      text: `No tienes permisos para acceder. Tu rol es: ${user?.role || 'Desconocido'}`
     });
 
-    // Redirigir según el rol que tenga (para no dejarlo en el limbo)
-    if (user?.role === 'user') {
-      router.navigate(['/redelex/mis-procesos']);
-    } else {
-      router.navigate(['/redelex/consultar-proceso']); // O home admin
-    }
+    // 3. ROMPER EL BUCLE (CORRECCIÓN CRÍTICA)
+    // Si no tiene permiso, lo sacamos al Login. 
+    // NUNCA lo redirigas a la misma página interna si el Guard falló.
+    router.navigate(['/auth/login']);
 
     return false;
   };
