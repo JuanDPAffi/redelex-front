@@ -541,12 +541,12 @@ exportToPdf() {
         sentencia: contarEtapa('SENTENCIA'),
         lanzamiento: contarEtapa('LANZAMIENTO'),
         excepciones: contarEtapa('EXCEPCIONES'),
-        terminacion: contarEtapa('TERMINACION'),
-        archivo: contarEtapa('ARCHIVO'),
-        liquidacion: contarEtapa('LIQUIDACION'),
-        acuerdo: contarEtapa('ACUERDO'),
-        embargo: contarEtapa('EMBARGO'),
-        secuestro: contarEtapa('SECUESTRO')
+        // terminacion: contarEtapa('TERMINACION'),
+        // archivo: contarEtapa('ARCHIVO'),
+        // liquidacion: contarEtapa('LIQUIDACION'),
+        // acuerdo: contarEtapa('ACUERDO'),
+        // embargo: contarEtapa('EMBARGO'),
+        // secuestro: contarEtapa('SECUESTRO')
       };
 
       const colorsRGB: { [key: string]: [number, number, number] } = {
@@ -608,14 +608,14 @@ exportToPdf() {
         { title: 'Excepciones', desc: 'Objeciones presentadas', count: counts.excepciones, color: colorsRGB['gray'] },
       ];
 
-      const boxesRow2 = [
-        { title: 'Terminación', desc: 'Terminado por pago/acuerdo', count: counts.terminacion, color: colorsRGB['blue'] },
-        { title: 'Archivo', desc: 'Archivado / Desistimiento', count: counts.archivo, color: colorsRGB['gray'] },
-        { title: 'Liquidación', desc: 'Etapa liquidación crédito', count: counts.liquidacion, color: colorsRGB['yellow'] },
-        { title: 'Acuerdo Pago', desc: 'Acuerdo logrado', count: counts.acuerdo, color: colorsRGB['green'] },
-        { title: 'Embargo', desc: 'Medidas cautelares', count: counts.embargo, color: colorsRGB['pink'] },
-        { title: 'Secuestro', desc: 'Diligencia secuestro', count: counts.secuestro, color: colorsRGB['orange'] },
-      ];
+      // const boxesRow2 = [
+      //   { title: 'Terminación', desc: 'Terminado por pago/acuerdo', count: counts.terminacion, color: colorsRGB['blue'] },
+      //   { title: 'Archivo', desc: 'Archivado / Desistimiento', count: counts.archivo, color: colorsRGB['gray'] },
+      //   { title: 'Liquidación', desc: 'Etapa liquidación crédito', count: counts.liquidacion, color: colorsRGB['yellow'] },
+      //   { title: 'Acuerdo Pago', desc: 'Acuerdo logrado', count: counts.acuerdo, color: colorsRGB['green'] },
+      //   { title: 'Embargo', desc: 'Medidas cautelares', count: counts.embargo, color: colorsRGB['pink'] },
+      //   { title: 'Secuestro', desc: 'Diligencia secuestro', count: counts.secuestro, color: colorsRGB['orange'] },
+      // ];
 
       const drawPDFBoxRow = (y: number, items: any[]) => {
         items.forEach((item, i) => {
@@ -642,7 +642,7 @@ exportToPdf() {
       };
 
       drawPDFBoxRow(startBoxY, boxesRow1);
-      drawPDFBoxRow(startBoxY + boxHeight + boxGap, boxesRow2); // Añadimos gap vertical también
+      // drawPDFBoxRow(startBoxY + boxHeight + boxGap, boxesRow2); // Añadimos gap vertical también
 
       // 5. TABLA DE DATOS
       const bodyData = this.filteredData.map(item => {
@@ -676,12 +676,12 @@ exportToPdf() {
             else if (etapa.includes('SENTENCIA')) colorRGB = colorsRGB['green'];
             else if (etapa.includes('LANZAMIENTO')) colorRGB = colorsRGB['blue'];
             else if (etapa.includes('EXCEPCIONES')) colorRGB = colorsRGB['gray'];
-            else if (etapa.includes('TERMINACION')) colorRGB = colorsRGB['blue'];
-            else if (etapa.includes('ARCHIVO') || etapa.includes('DESISTIMIENTO')) colorRGB = colorsRGB['gray'];
-            else if (etapa.includes('LIQUIDACION')) colorRGB = colorsRGB['yellow'];
-            else if (etapa.includes('ACUERDO')) colorRGB = colorsRGB['green'];
-            else if (etapa.includes('EMBARGO')) colorRGB = colorsRGB['pink'];
-            else if (etapa.includes('SECUESTRO')) colorRGB = colorsRGB['orange'];
+            // else if (etapa.includes('TERMINACION')) colorRGB = colorsRGB['blue'];
+            // else if (etapa.includes('ARCHIVO') || etapa.includes('DESISTIMIENTO')) colorRGB = colorsRGB['gray'];
+            // else if (etapa.includes('LIQUIDACION')) colorRGB = colorsRGB['yellow'];
+            // else if (etapa.includes('ACUERDO')) colorRGB = colorsRGB['green'];
+            // else if (etapa.includes('EMBARGO')) colorRGB = colorsRGB['pink'];
+            // else if (etapa.includes('SECUESTRO')) colorRGB = colorsRGB['orange'];
 
             if (colorRGB) data.cell.styles.fillColor = colorRGB;
           }
