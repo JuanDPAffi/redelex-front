@@ -296,165 +296,215 @@ export class InformeInmobiliariaComponent implements OnInit {
 
   async exportToExcel() {
     try {
-      console.log('Iniciando exportación a Excel...');
+      console.log('Generando Excel con Contadores Automáticos...');
       const activeColumns = this.exportColumns.filter(c => c.selected);
       if (activeColumns.length === 0) { alert('Selecciona columnas'); return; }
 
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Informe Estado Procesal');
 
-      // 1. AGREGAR LOGO (Usando la constante Base64)
-      // Nota: ExcelJS requiere el base64 sin el prefijo 'data:image/png;base64,' a veces, 
-      // pero generalmente lo maneja bien. Si falla, haz un split.
-      const imageId = workbook.addImage({
-        base64: AFFI_LOGO_BASE64,
-        extension: 'png',
-      });
+      // --- 0. CALCULAR CONTADORES AUTOMÁTICAMENTE ---
+      // Función auxiliar para contar ocurrencias en la etapa procesal (ignorando mayúsculas/minúsculas)
+      const contarEtapa = (termino: string, exacto: boolean = false) => {
+        return this.filteredData.filter(item => {
+          const etapa = item.etapaProcesal ? item.etapaProcesal.toUpperCase() : '';
+          const busqueda = termino.toUpperCase();
+          return exacto ? etapa === busqueda : etapa.includes(busqueda);
+        }).length;
+      };
 
-      // Ajustamos el logo para que ocupe aprox las celdas A1:B4 manteniendo proporción cuadrada
-      sheet.addImage(imageId, {
-        tl: { col: 0.2, row: 0.1 },
-        ext: { width: 115, height: 115 } 
-      });
+      // Calculamos los valores reales para usarlos abajo
+      const counts = {
+        // Fila 1
+        demanda: contarEtapa('DEMANDA', true), // Exacto, según tu lógica original
+        admision: contarEtapa('ADMISION DEMANDA'),
+        notificacion: contarEtapa('NOTIFICACION'),
+        sentencia: contarEtapa('SENTENCIA'),
+        lanzamiento: contarEtapa('LANZAMIENTO'),
+        excepciones: contarEtapa('EXCEPCIONES'),
+        
+        // Fila 2 (Nuevos contadores basados en el nombre de la etapa)
+        // terminacion: contarEtapa('TERMINACION'),
+        // archivo: contarEtapa('ARCHIVO'), // O 'DESISTIMIENTO' si prefieres
+        // liquidacion: contarEtapa('LIQUIDACION'),
+        // acuerdo: contarEtapa('ACUERDO'),
+        // embargo: contarEtapa('EMBARGO'),
+        // secuestro: contarEtapa('SECUESTRO')
+      };
 
-      // 2. TÍTULOS E INFORMACIÓN
-      sheet.mergeCells('C2:H2');
-      const titleCell = sheet.getCell('C2');
-      titleCell.value = this.getReportFullTitle();
-      titleCell.font = { bold: true, size: 14, name: 'Arial', color: { argb: 'FF333333' } };
+      // --- 1. CONFIGURACIÓN ESTRUCTURAL ---
+      const colSpans: { [key: string]: number } = {
+        'numeroRadicacion': 2, 'demandadoNombre': 2, 'despacho': 2, 
+      };
+      const UNIFORM_WIDTH = 22; 
+      
+      let totalPhysicalColumns = 0;
+      activeColumns.forEach(col => { totalPhysicalColumns += (colSpans[col.key] || 1); });
+
+      for (let i = 1; i <= 50; i++) { sheet.getColumn(i).width = UNIFORM_WIDTH; }
+
+      // --- 2. ESTILOS Y COLORES ---
+      const colors = {
+        yellow: 'FFFFC000', pink: 'FFDA9694', orange: 'FFFCD5B4',
+        green: 'FF92D050', blue: 'FFB7DEE8', gray: 'FFBFBFBF',
+        headerBlue: 'FF1F4E78', textDark: 'FF333333'
+      };
+
+      // --- 3. LOGO Y ENCABEZADOS ---
+      const imageId = workbook.addImage({ base64: AFFI_LOGO_BASE64, extension: 'png' });
+      sheet.addImage(imageId, { tl: { col: 0.1, row: 0.1 }, ext: { width: 90, height: 90 } });
+
+      const titleEndCol = Math.max(10, totalPhysicalColumns); 
+      sheet.mergeCells(2, 3, 2, titleEndCol);
+      const titleCell = sheet.getCell(2, 3);
+      titleCell.value = 'INFORME ESTADO PROCESAL - TODOS LOS PROCESOS';
+      titleCell.font = { bold: true, size: 14, name: 'Calibri' };
       titleCell.alignment = { horizontal: 'center' };
 
-      sheet.mergeCells('C3:H3');
-      const dateCell = sheet.getCell('C3');
-      const fechaHoy = this.datePipe.transform(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", undefined, 'es-CO');
-      dateCell.value = fechaHoy;
-      dateCell.font = { bold: false, size: 11, name: 'Arial', color: { argb: 'FF555555' } };
+      sheet.mergeCells(3, 3, 3, titleEndCol);
+      const dateCell = sheet.getCell(3, 3);
+      dateCell.value = this.datePipe.transform(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", undefined, 'es-CO');
+      dateCell.font = { size: 11, name: 'Calibri', color: { argb: 'FF555555' } };
       dateCell.alignment = { horizontal: 'center' };
 
-      const infoStartRow = 6;
-      sheet.getCell(`A${infoStartRow}`).value = `Nombre Inmobiliaria: ${this.getReportInmobiliariaName()}`;
-      sheet.getCell(`A${infoStartRow}`).font = { bold: true, size: 10 };
-      
-      sheet.getCell(`A${infoStartRow + 2}`).value = `NIT Inmobiliaria: ${this.getReportInmobiliariaNit()}`;
-      sheet.getCell(`A${infoStartRow + 2}`).font = { bold: true, size: 10 };
+      const setInfo = (row: number, text: string) => {
+        sheet.mergeCells(row, 1, row, 3);
+        const c = sheet.getCell(row, 1);
+        c.value = text;
+        c.font = { bold: true, size: 10, name: 'Calibri' };
+      };
+      setInfo(6, `Nombre Inmobiliaria: ${this.getReportInmobiliariaName()}`);
+      setInfo(8, `NIT Inmobiliaria: ${this.getReportInmobiliariaNit()}`);
+      setInfo(10, `Cantidad de procesos: ${this.filteredData.length}`);
 
-      sheet.getCell(`A${infoStartRow + 4}`).value = `Cantidad de procesos: ${this.filteredData.length}`;
-      sheet.getCell(`A${infoStartRow + 4}`).font = { bold: true, size: 10 };
 
-      // 3. CAJAS DE RESUMEN
-      const summary = this.getSummaryCounts();
-      const sumStartCol = 4; // Columna D
-      const sumStartRow = 6;
-      
-      const headersSum = ['Demanda', 'Admisión Demanda', 'Notificación', 'Sentencia', 'Lanzamiento', 'Excepciones'];
-      // Colores ARGB (Alpha, Red, Green, Blue) - Quitamos el # y agregamos FF al inicio
-      const colorsSum = ['FFFFC000', 'FFDA9694', 'FFFCD5B4', 'FF92D050', 'FFB7DEE8', 'FFBFBFBF'];
-      const descSum = [
-        'Hemos iniciado el proceso judicial de restitución', 
-        'El juez acepta tramitar la demanda', 
-        'Etapa en la que se notifica al arrendatario', 
-        'El juez decidió sobre la demanda', 
-        'Se está gestionando el desalojo de los inquilinos', 
-        'Demandado presentó objeciones a la demanda'
+      // --- 4. CAJAS DE RESUMEN (CON CONTADORES REALES) ---
+
+      // DATOS FILA 1 (Usando counts.variable)
+      const datosFila1 = [
+        { title: 'Demanda', desc: 'Hemos iniciado el proceso judicial de restitución', count: counts.demanda, color: colors.yellow },
+        { title: 'Admisión Demanda', desc: 'El juez acepta tramitar la demanda', count: counts.admision, color: colors.pink },
+        { title: 'Notificación', desc: 'Etapa en la que se notifica al arrendatario', count: counts.notificacion, color: colors.orange },
+        { title: 'Sentencia', desc: 'El juez decidió sobre la demanda', count: counts.sentencia, color: colors.green },
+        { title: 'Lanzamiento', desc: 'Se está gestionando el desalojo de los inquilinos', count: counts.lanzamiento, color: colors.blue },
+        { title: 'Excepciones', desc: 'Demandado presentó objeciones a la demanda', count: counts.excepciones, color: colors.gray },
       ];
-      const valuesSum = [summary.demanda, summary.admisionDemanda, summary.notificacion, summary.sentencia, summary.lanzamiento, summary.excepciones];
 
-      // Borde suave para las cajas
-      const boxBorder = { top: {style:'thin', color: {argb:'FF999999'}}, left: {style:'thin', color: {argb:'FF999999'}}, bottom: {style:'thin', color: {argb:'FF999999'}}, right: {style:'thin', color: {argb:'FF999999'}} };
+      // DATOS FILA 2 (Usando counts.variable)
+      // const datosFila2 = [
+      //   { title: 'Terminación', desc: 'Procesos terminados por pago o acuerdo', count: counts.terminacion, color: colors.blue }, 
+      //   { title: 'Archivo', desc: 'Procesos archivados por desistimiento', count: counts.archivo, color: colors.gray },
+      //   { title: 'Liquidación', desc: 'Etapa de liquidación del crédito', count: counts.liquidacion, color: colors.yellow },
+      //   { title: 'Acuerdo Pago', desc: 'Se ha llegado a un acuerdo de pago', count: counts.acuerdo, color: colors.green },
+      //   { title: 'Embargo', desc: 'Medidas cautelares aplicadas', count: counts.embargo, color: colors.pink },
+      //   { title: 'Secuestro', desc: 'Diligencia de secuestro programada', count: counts.secuestro, color: colors.orange },
+      // ];
 
-      headersSum.forEach((header, i) => {
-        const colIndex = sumStartCol + i;
-        const col = sheet.getColumn(colIndex); 
-        col.width = 22; // Un poco más ancho
+      const drawBoxRow = (startRow: number, datos: any[]) => {
+        let currentBoxCol = 4;
+        datos.forEach(box => {
+          // Título
+          const cellTitle = sheet.getCell(startRow, currentBoxCol);
+          cellTitle.value = box.title;
+          cellTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: box.color } };
+          cellTitle.font = { bold: true, size: 8, name: 'Calibri' };
+          cellTitle.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          cellTitle.border = { top: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
 
-        // Título Caja
-        const cellTitle = sheet.getCell(sumStartRow, colIndex);
-        cellTitle.value = header;
-        cellTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorsSum[i] } };
-        cellTitle.font = { bold: true, size: 10 };
-        cellTitle.alignment = { horizontal: 'center', vertical: 'middle' };
-        cellTitle.border = { top: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
+          // Descripción
+          sheet.mergeCells(startRow + 1, currentBoxCol, startRow + 2, currentBoxCol);
+          const cellDesc = sheet.getCell(startRow + 1, currentBoxCol);
+          cellDesc.value = box.desc;
+          cellDesc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: box.color } };
+          cellDesc.font = { size: 7, name: 'Calibri' };
+          cellDesc.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          cellDesc.border = { left: {style:'thin'}, right: {style:'thin'} };
 
-        // Descripción Caja
-        sheet.mergeCells(sumStartRow + 1, colIndex, sumStartRow + 2, colIndex);
-        const cellDesc = sheet.getCell(sumStartRow + 1, colIndex);
-        cellDesc.value = descSum[i];
-        cellDesc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorsSum[i] } };
-        cellDesc.font = { size: 8 };
-        cellDesc.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-        cellDesc.border = { left: {style:'thin'}, right: {style:'thin'} };
+          // Contador
+          const cellCount = sheet.getCell(startRow + 3, currentBoxCol);
+          cellCount.value = box.count; // ¡AQUÍ SE PONE EL VALOR CALCULADO!
+          cellCount.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: box.color } };
+          cellCount.font = { bold: true, size: 11, name: 'Calibri' };
+          cellCount.alignment = { horizontal: 'center', vertical: 'middle' };
+          cellCount.border = { bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
 
-        // Valor Caja
-        const cellVal = sheet.getCell(sumStartRow + 3, colIndex);
-        cellVal.value = valuesSum[i];
-        cellVal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorsSum[i] } };
-        cellVal.font = { bold: true, size: 12 };
-        cellVal.alignment = { horizontal: 'center', vertical: 'middle' };
-        cellVal.border = { bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
-      });
+          currentBoxCol++;
+        });
+      };
 
-      // 4. TABLA DE DATOS (ESTILO PROFESIONAL)
-      const tableStartRow = 12;
+      drawBoxRow(6, datosFila1);
+      // drawBoxRow(11, datosFila2);
+
+      // --- 5. TABLA DE DATOS (Igual que antes) ---
+      const tableStartRow = 16;
       const headerRow = sheet.getRow(tableStartRow);
-      
-      // Estilo de borde sutil para toda la tabla
-      const tableBorderStr = 'thin';
-      const tableBorderColor = { argb: 'FFD3D3D3' }; // Gris suave
+      let currentPhysicalCol = 1;
 
-      activeColumns.forEach((col, idx) => {
-        const cell = headerRow.getCell(idx + 1);
+      activeColumns.forEach((col) => {
+        const span = colSpans[col.key] || 1;
+        if (span > 1) { sheet.mergeCells(tableStartRow, currentPhysicalCol, tableStartRow, currentPhysicalCol + span - 1); }
+
+        const cell = sheet.getCell(tableStartRow, currentPhysicalCol);
         cell.value = col.label;
-        
-        // ESTILO ENCABEZADO: Fondo oscuro, texto blanco
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF34495E' } }; // Gris Pizarra
-        cell.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' }, name: 'Arial' };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.headerBlue } };
+        cell.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-        cell.border = { 
-          top: { style: tableBorderStr, color: tableBorderColor }, 
-          left: { style: tableBorderStr, color: tableBorderColor }, 
-          bottom: { style: tableBorderStr, color: tableBorderColor }, 
-          right: { style: tableBorderStr, color: tableBorderColor } 
-        };
-        
-        // Ajuste de anchos
-        sheet.getColumn(idx + 1).width = col.key === 'demandadoNombre' ? 35 : 22;
+        cell.border = { top: {style:'thin', color: {argb:'FFFFFFFF'}}, left: {style:'thin', color: {argb:'FFFFFFFF'}}, right: {style:'thin', color: {argb:'FFFFFFFF'}} };
+        currentPhysicalCol += span;
       });
 
-      // RENDERIZADO DE FILAS
+      const borderStyle: Partial<ExcelJS.Borders> = {
+        top: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        left: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        right: { style: 'thin', color: { argb: 'FFCCCCCC' } }
+      };
+
       this.filteredData.forEach((item, index) => {
         const currentRowIndex = tableStartRow + 1 + index;
-        const currentRow = sheet.getRow(currentRowIndex);
-        
-        // Color de fondo para filas alternadas (Zebra Striping)
-        // FFF8F8F8 es un gris casi blanco, muy sutil
-        const rowFill = index % 2 !== 0 ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F8F8' } } : null;
+        let rowPhysicalCol = 1;
 
-        activeColumns.forEach((col, colIndex) => {
-          const cell = currentRow.getCell(colIndex + 1);
+        activeColumns.forEach((col) => {
+          const span = colSpans[col.key] || 1;
           let val = item[col.key as keyof InformeInmobiliaria];
           
           if (col.key.includes('Fecha')) val = this.datePipe.transform(val as string, 'yyyy-MM-dd') || val;
           if (col.key === 'claseProceso') val = this.clasePipe.transform(val as string);
 
-          cell.value = val || '';
-          
-          // ESTILO CUERPO: Texto negro, bordes suaves
-          cell.font = { size: 9, name: 'Arial', color: { argb: 'FF000000' } }; // Negro
-          cell.alignment = { vertical: 'middle', wrapText: true, horizontal: 'left' };
-          
-          // Bordes grises
-          cell.border = { 
-            top: { style: tableBorderStr, color: tableBorderColor }, 
-            left: { style: tableBorderStr, color: tableBorderColor }, 
-            bottom: { style: tableBorderStr, color: tableBorderColor }, 
-            right: { style: tableBorderStr, color: tableBorderColor } 
-          };
+          if (span > 1) { sheet.mergeCells(currentRowIndex, rowPhysicalCol, currentRowIndex, rowPhysicalCol + span - 1); }
 
-          // Aplicar fondo alternado si corresponde
-          if (rowFill) {
-             // TypeScript trick para ExcelJS fill type
-             cell.fill = rowFill as ExcelJS.Fill; 
+          const cell = sheet.getCell(currentRowIndex, rowPhysicalCol);
+          cell.value = val || '';
+          cell.font = { size: 8, name: 'Calibri', color: { argb: colors.textDark } };
+          cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+          cell.border = borderStyle;
+
+          // PINTAR CELDA ETAPA
+          if (col.key === 'etapaProcesal') {
+             const etapaVal = val ? String(val).toUpperCase() : '';
+             let cellArgb = null;
+             
+             // Revisamos coincidencias para pintar la celda (Fila 1)
+             if (etapaVal === 'DEMANDA') cellArgb = colors.yellow;
+             else if (etapaVal.includes('ADMISION DEMANDA')) cellArgb = colors.pink;
+             else if (etapaVal.includes('NOTIFICACION')) cellArgb = colors.orange;
+             else if (etapaVal.includes('SENTENCIA')) cellArgb = colors.green;
+             else if (etapaVal.includes('LANZAMIENTO')) cellArgb = colors.blue;
+             else if (etapaVal.includes('EXCEPCIONES')) cellArgb = colors.gray;
+             
+             // Revisamos coincidencias para pintar la celda (Fila 2 - Nuevos colores)
+            //  else if (etapaVal.includes('TERMINACION')) cellArgb = colors.blue;
+            //  else if (etapaVal.includes('ARCHIVO') || etapaVal.includes('DESISTIMIENTO')) cellArgb = colors.gray;
+            //  else if (etapaVal.includes('LIQUIDACION')) cellArgb = colors.yellow;
+            //  else if (etapaVal.includes('ACUERDO')) cellArgb = colors.green;
+            //  else if (etapaVal.includes('EMBARGO')) cellArgb = colors.pink;
+            //  else if (etapaVal.includes('SECUESTRO')) cellArgb = colors.orange;
+
+             if (cellArgb) {
+               cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cellArgb } };
+             }
           }
+          rowPhysicalCol += span;
         });
       });
 
@@ -464,88 +514,137 @@ export class InformeInmobiliariaComponent implements OnInit {
 
     } catch (error) {
       console.error('Error al exportar a Excel:', error);
-      alert('Hubo un error al generar el Excel: ' + error);
+      alert('Error: ' + error);
     }
   }
 
-  exportToPdf() { 
+exportToPdf() { 
     try {
-      console.log('Iniciando exportación a PDF...');
-      const activeColumns = this.exportColumns.filter(c => c.selected);
-      const doc = new jsPDF('landscape');
-      const pageWidth = doc.internal.pageSize.width;
-      const margin = 14;
-
-      // 1. AGREGAR LOGO (Mantiene proporción cuadrada 30x30)
-      doc.addImage(AFFI_LOGO_BASE64, 'PNG', margin, 3, 30, 30);
-
-      // 2. ENCABEZADO GENERAL
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(this.getReportFullTitle(), pageWidth / 2, 16, { align: 'center' });
+      console.log('Exportando PDF con cajas de resumen centradas y con margen...');
       
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      const fechaHoy = this.datePipe.transform(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", undefined, 'es-CO') || '';
-      doc.text(fechaHoy, pageWidth / 2, 22, { align: 'center' });
+      // 1. PREPARACIÓN DE DATOS (Contadores)
+      const activeColumns = this.exportColumns.filter(c => c.selected);
+      const etapaColIndex = activeColumns.findIndex(c => c.key === 'etapaProcesal');
 
-      // 3. DATOS INMOBILIARIA
-      const infoStartY = 35;
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Nombre Inmobiliaria: ${this.getReportInmobiliariaName()}`, margin, infoStartY);
-      doc.text(`NIT Inmobiliaria: ${this.getReportInmobiliariaNit()}`, margin, infoStartY + 5);
-      doc.text(`Cantidad de procesos: ${this.filteredData.length}`, margin, infoStartY + 10);
+      const contarEtapa = (termino: string, exacto: boolean = false) => {
+        return this.filteredData.filter(item => {
+          const etapa = item.etapaProcesal ? item.etapaProcesal.toUpperCase() : '';
+          const busqueda = termino.toUpperCase();
+          return exacto ? etapa === busqueda : etapa.includes(busqueda);
+        }).length;
+      };
 
-      // 4. CAJAS DE RESUMEN
-      const summary = this.getSummaryCounts();
-      const descSum = [
-        'Hemos iniciado el proceso judicial de restitución',
-        'El juez acepta tramitar la demanda',
-        'Etapa en la que se notifica al arrendatario',
-        'El juez decidió sobre la demanda',
-        'Se está gestionando el desalojo de los inquilinos',
-        'Demandado presentó objeciones a la demanda'
-      ];
+      const counts = {
+        demanda: contarEtapa('DEMANDA', true),
+        admision: contarEtapa('ADMISION DEMANDA'),
+        notificacion: contarEtapa('NOTIFICACION'),
+        sentencia: contarEtapa('SENTENCIA'),
+        lanzamiento: contarEtapa('LANZAMIENTO'),
+        excepciones: contarEtapa('EXCEPCIONES'),
+        terminacion: contarEtapa('TERMINACION'),
+        archivo: contarEtapa('ARCHIVO'),
+        liquidacion: contarEtapa('LIQUIDACION'),
+        acuerdo: contarEtapa('ACUERDO'),
+        embargo: contarEtapa('EMBARGO'),
+        secuestro: contarEtapa('SECUESTRO')
+      };
 
-      const boxWidth = 32; 
-      const boxHeight = 24; 
-      const gap = 3; 
-      const totalBoxesWidth = (boxWidth * 6) + (gap * 5);
-      const startX = (pageWidth - totalBoxesWidth) / 2; 
-      const startY = 55;
+      const colorsRGB: { [key: string]: [number, number, number] } = {
+        yellow: [255, 192, 0], pink: [218, 150, 148], orange: [255, 213, 180],
+        green: [146, 208, 80], blue: [183, 222, 232], gray: [191, 191, 191]
+      };
 
-      const dataSum = [ 
-        { title: 'Demanda', color: [255, 192, 0], count: summary.demanda }, 
-        { title: 'Admisión Demanda', color: [218, 150, 148], count: summary.admisionDemanda }, 
-        { title: 'Notificación', color: [255, 213, 180], count: summary.notificacion }, 
-        { title: 'Sentencia', color: [146, 208, 80], count: summary.sentencia }, 
-        { title: 'Lanzamiento', color: [183, 222, 232], count: summary.lanzamiento }, 
-        { title: 'Excepciones', color: [191, 191, 191], count: summary.excepciones } 
-      ];
+      // 2. CONFIGURACIÓN DE PÁGINA
+      const doc = new jsPDF('landscape', 'mm', 'a4'); 
+      const pageWidth = doc.internal.pageSize.width; // ~297mm
+      const margin = 5; 
+      const usableWidth = pageWidth - (margin * 2);
 
-      dataSum.forEach((item, i) => {
-        const x = startX + (i * (boxWidth + gap));
-        
-        doc.setFillColor(item.color[0], item.color[1], item.color[2]);
-        doc.rect(x, startY, boxWidth, boxHeight, 'F');
-        doc.setDrawColor(200); // Borde gris suave para las cajas también
-        doc.rect(x, startY, boxWidth, boxHeight, 'S');
-        
-        doc.setFontSize(8); 
-        doc.setFont('helvetica', 'bold');
-        doc.text(item.title, x + (boxWidth/2), startY + 4, { align: 'center', maxWidth: boxWidth - 1 });
-        
-        doc.setFontSize(6); 
-        doc.setFont('helvetica', 'normal');
-        doc.text(descSum[i], x + (boxWidth/2), startY + 9, { align: 'center', maxWidth: boxWidth - 2 });
+      // --- CÁLCULO PROPORCIONAL DE ANCHOS TABLA (1x vs 2x) ---
+      const doubleColumns = ['numeroRadicacion', 'demandadoNombre', 'despacho'];
+      let totalUnits = 0;
+      activeColumns.forEach(c => { totalUnits += doubleColumns.includes(c.key) ? 2 : 1; });
+      const unitWidth = usableWidth / totalUnits;
 
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(item.count.toString(), x + (boxWidth/2), startY + 21, { align: 'center' });
+      const dynamicColumnStyles: { [key: number]: any } = {};
+      activeColumns.forEach((col, index) => {
+        const weight = doubleColumns.includes(col.key) ? 2 : 1;
+        dynamicColumnStyles[index] = { cellWidth: unitWidth * weight, overflow: 'linebreak' };
       });
 
-      // 5. TABLA DE DATOS (ESTILO PROFESIONAL)
+      // 3. ENCABEZADO
+      doc.addImage(AFFI_LOGO_BASE64, 'PNG', margin, 5, 20, 20);
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+      doc.text('INFORME ESTADO PROCESAL - TODOS LOS PROCESOS', pageWidth / 2, 10, { align: 'center' });
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      const fechaHoy = this.datePipe.transform(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", undefined, 'es-CO') || '';
+      doc.text(fechaHoy, pageWidth / 2, 15, { align: 'center' });
+
+      const infoY = 28;
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+      doc.text(`Nombre Inmobiliaria: ${this.getReportInmobiliariaName()}`, margin, infoY);
+      doc.text(`NIT Inmobiliaria: ${this.getReportInmobiliariaNit()}`, margin, infoY + 4);
+      doc.text(`Cantidad de procesos: ${this.filteredData.length}`, margin, infoY + 8);
+
+      // --- 4. CAJAS DE RESUMEN (NUEVO DISEÑO: CENTRADO CON MARGEN) ---
+      const numBoxes = 6;
+      const boxGap = 4; // Espacio entre cajas (mm)
+      const boxWidth = 42; // Ancho fijo estético para cada caja
+      const boxHeight = 14; 
+      const startBoxY = 42; 
+
+      // Cálculo para centrar el bloque total de cajas en la página
+      const totalBlockWidth = (numBoxes * boxWidth) + ((numBoxes - 1) * boxGap);
+      // El punto X donde empieza la primera caja para que todo el bloque quede centrado
+      const startX = margin + (usableWidth - totalBlockWidth) / 2;
+
+      // Datos Filas
+      const boxesRow1 = [
+        { title: 'Demanda', desc: 'Iniciado proceso restitución', count: counts.demanda, color: colorsRGB['yellow'] },
+        { title: 'Admisión', desc: 'Juez acepta demanda', count: counts.admision, color: colorsRGB['pink'] },
+        { title: 'Notificación', desc: 'Notificación al arrendatario', count: counts.notificacion, color: colorsRGB['orange'] },
+        { title: 'Sentencia', desc: 'Decisión sobre la demanda', count: counts.sentencia, color: colorsRGB['green'] },
+        { title: 'Lanzamiento', desc: 'Gestionando desalojo', count: counts.lanzamiento, color: colorsRGB['blue'] },
+        { title: 'Excepciones', desc: 'Objeciones presentadas', count: counts.excepciones, color: colorsRGB['gray'] },
+      ];
+
+      const boxesRow2 = [
+        { title: 'Terminación', desc: 'Terminado por pago/acuerdo', count: counts.terminacion, color: colorsRGB['blue'] },
+        { title: 'Archivo', desc: 'Archivado / Desistimiento', count: counts.archivo, color: colorsRGB['gray'] },
+        { title: 'Liquidación', desc: 'Etapa liquidación crédito', count: counts.liquidacion, color: colorsRGB['yellow'] },
+        { title: 'Acuerdo Pago', desc: 'Acuerdo logrado', count: counts.acuerdo, color: colorsRGB['green'] },
+        { title: 'Embargo', desc: 'Medidas cautelares', count: counts.embargo, color: colorsRGB['pink'] },
+        { title: 'Secuestro', desc: 'Diligencia secuestro', count: counts.secuestro, color: colorsRGB['orange'] },
+      ];
+
+      const drawPDFBoxRow = (y: number, items: any[]) => {
+        items.forEach((item, i) => {
+          // Cálculo de la posición X de cada caja usando el inicio centrado y el gap
+          const x = startX + (i * (boxWidth + boxGap)); 
+          
+          // Rectángulo relleno y borde
+          doc.setFillColor(item.color[0], item.color[1], item.color[2]);
+          doc.rect(x, y, boxWidth, boxHeight, 'F');
+          doc.setDrawColor(100); doc.setLineWidth(0.1);
+          doc.rect(x, y, boxWidth, boxHeight, 'S');
+
+          // Textos
+          doc.setTextColor(0);
+          doc.setFontSize(6); doc.setFont('helvetica', 'bold');
+          doc.text(item.title, x + (boxWidth/2), y + 3, { align: 'center' }); 
+
+          doc.setFontSize(5); doc.setFont('helvetica', 'normal');
+          doc.text(item.desc, x + (boxWidth/2), y + 6.5, { align: 'center', maxWidth: boxWidth - 2 });
+
+          doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+          doc.text(item.count.toString(), x + (boxWidth/2), y + 11.5, { align: 'center' });
+        });
+      };
+
+      drawPDFBoxRow(startBoxY, boxesRow1);
+      drawPDFBoxRow(startBoxY + boxHeight + boxGap, boxesRow2); // Añadimos gap vertical también
+
+      // 5. TABLA DE DATOS
       const bodyData = this.filteredData.map(item => {
         return activeColumns.map(col => {
           let val = item[col.key as keyof InformeInmobiliaria];
@@ -556,40 +655,37 @@ export class InformeInmobiliariaComponent implements OnInit {
       });
 
       autoTable(doc, {
-        startY: startY + boxHeight + 8,
+        startY: startBoxY + (boxHeight * 2) + (boxGap * 2) + 2, // Posición debajo de las cajas
         head: [activeColumns.map(c => c.label)],
         body: bodyData,
-        theme: 'grid', // Mantenemos la grilla pero la estilizamos
-        
-        // Estilo del Encabezado (Fondo oscuro, texto blanco)
-        headStyles: { 
-          fillColor: [52, 73, 94], // Gris azulado oscuro profesional (Dark Slate)
-          textColor: [255, 255, 255], // Texto Blanco
-          fontStyle: 'bold',
-          halign: 'center',
-          valign: 'middle',
-          lineWidth: 0.1,
-          lineColor: [200, 200, 200] // Líneas divisorias grises
-        },
+        theme: 'grid',
+        styles: { fontSize: 5, cellPadding: 1, valign: 'middle', halign: 'center', overflow: 'linebreak', lineWidth: 0.1, lineColor: [180, 180, 180], textColor: [0, 0, 0] },
+        headStyles: { fillColor: [31, 78, 120], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6, lineWidth: 0.1, lineColor: [255, 255, 255] },
+        margin: { left: margin, right: margin },
+        tableWidth: 'auto',
+        columnStyles: dynamicColumnStyles,
+        didParseCell: (data) => {
+          if (data.section === 'body' && etapaColIndex !== -1 && data.column.index === etapaColIndex) {
+            const cellValue = data.cell.raw; 
+            const etapa = cellValue ? String(cellValue).toUpperCase() : '';
+            let colorRGB: [number, number, number] | null = null;
+            
+            if (etapa === 'DEMANDA') colorRGB = colorsRGB['yellow'];
+            else if (etapa.includes('ADMISION DEMANDA')) colorRGB = colorsRGB['pink'];
+            else if (etapa.includes('NOTIFICACION')) colorRGB = colorsRGB['orange'];
+            else if (etapa.includes('SENTENCIA')) colorRGB = colorsRGB['green'];
+            else if (etapa.includes('LANZAMIENTO')) colorRGB = colorsRGB['blue'];
+            else if (etapa.includes('EXCEPCIONES')) colorRGB = colorsRGB['gray'];
+            else if (etapa.includes('TERMINACION')) colorRGB = colorsRGB['blue'];
+            else if (etapa.includes('ARCHIVO') || etapa.includes('DESISTIMIENTO')) colorRGB = colorsRGB['gray'];
+            else if (etapa.includes('LIQUIDACION')) colorRGB = colorsRGB['yellow'];
+            else if (etapa.includes('ACUERDO')) colorRGB = colorsRGB['green'];
+            else if (etapa.includes('EMBARGO')) colorRGB = colorsRGB['pink'];
+            else if (etapa.includes('SECUESTRO')) colorRGB = colorsRGB['orange'];
 
-        // Estilo del Cuerpo (Texto negro, bordes suaves)
-        styles: { 
-          textColor: [0, 0, 0], // Texto NEGRO garantizado
-          fontSize: 7, 
-          cellPadding: 3, // Más espacio interno para que se vea limpio
-          valign: 'middle',
-          overflow: 'linebreak',
-          lineWidth: 0.1,
-          lineColor: [200, 200, 200] // Bordes grises suaves, no negros fuertes
-        },
-
-        // Filas alternadas (Efecto cebra sutil)
-        alternateRowStyles: {
-          fillColor: [248, 248, 248] // Un gris muy pálido para diferenciar filas
-        },
-
-        columnStyles: { 1: { cellWidth: 35 } },
-        margin: { top: 20 } 
+            if (colorRGB) data.cell.styles.fillColor = colorRGB;
+          }
+        }
       });
 
       doc.save(`Informe_Inmobiliaria_${new Date().getTime()}.pdf`);
@@ -597,11 +693,10 @@ export class InformeInmobiliariaComponent implements OnInit {
 
     } catch (error) {
       console.error('Error al exportar a PDF:', error);
-      alert('Hubo un error al generar el PDF: ' + error);
+      alert('Error al generar PDF: ' + error);
     }
   }
-
-  private saveFile(buffer: any, extension: string) {
+    private saveFile(buffer: any, extension: string) {
     const blob = new Blob([buffer], { type: extension === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
