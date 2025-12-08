@@ -8,30 +8,27 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
     const authService = inject(AuthService);
     const router = inject(Router);
     
-    // Obtenemos el usuario
     const user = authService.getUserData();
+    const currentRole = user?.role || '';
     
-    // Debug para ver qué está leyendo el Guard
-    console.log('🛡️ Guard Check:', { userRole: user?.role, allowed: allowedRoles });
-
-    // 1. Validamos: Si existe usuario y su rol está en la lista permitida
-    // Aseguramos que lea 'role' (inglés) que es como lo guarda tu AuthService ahora
-    if (user && allowedRoles.includes(user.role || '')) {
+    // 1. PODER ABSOLUTO: Si es admin, pasa siempre
+    if (currentRole === 'admin') {
       return true;
     }
 
-    // 2. Si NO tiene permiso:
+    // 2. Validar si el rol está permitido
+    if (user && allowedRoles.includes(currentRole)) {
+      return true;
+    }
+
+    // 3. Denegar
     AffiAlert.fire({
       icon: 'error',
       title: 'Acceso Denegado',
-      text: `No tienes permisos para acceder.`
+      text: `Tu perfil de usuario no tiene acceso a esta sección.`
     });
 
-    // 3. ROMPER EL BUCLE (CORRECCIÓN CRÍTICA)
-    // Si no tiene permiso, lo sacamos al Login. 
-    // NUNCA lo redirigas a la misma página interna si el Guard falló.
-    router.navigate(['/auth/login']);
-
+    router.navigate(['/home']); // Redirigir a un lugar seguro en vez de login si ya está logueado
     return false;
   };
 };

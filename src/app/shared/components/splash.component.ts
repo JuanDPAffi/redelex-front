@@ -6,12 +6,12 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="splash" *ngIf="visible">
+    <div class="splash" [class.is-hidden]="!visible">
       <img src="/Affi.png" alt="logo" class="splash-logo" />
     </div>
   `,
   styleUrls: ['./splash.component.scss']
 })
 export class SplashComponent {
-  @Input() visible = false;
+  @Input() visible = true;
 }

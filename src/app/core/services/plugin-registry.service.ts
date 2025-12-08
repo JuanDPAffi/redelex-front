@@ -69,7 +69,18 @@ export class PluginRegistryService {
     const sections = this.menuSections$.value;
     
     items.forEach(item => {
-      const sectionIndex = sections.findIndex(s => s.id === 'consultas');
+      // 1. Determinar la sección destino
+      let targetSectionId = 'consultas'; // Por defecto
+
+      // Lógica simple para distribuir los items:
+      if (item.id.includes('users') || item.id === 'admin') {
+        targetSectionId = 'sistema'; // Gestión de usuarios va en Sistema
+      } else if (item.id.includes('informe') || item.id.includes('reporte')) {
+        targetSectionId = 'reportes'; // Informes van en Reportes
+      }
+
+      // 2. Buscar la sección correcta
+      const sectionIndex = sections.findIndex(s => s.id === targetSectionId);
       
       if (sectionIndex !== -1) {
         const existingItemIndex = sections[sectionIndex].items.findIndex(

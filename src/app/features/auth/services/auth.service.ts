@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { environment } from '../../../../environments/environment.prod';
+import { environment } from '../../../../environments/environment';
 
-// ... (Tus interfaces LoginPayload, RegisterPayload, etc. se mantienen igual)
+// ... Interfaces de Payload se mantienen ...
 export interface LoginPayload {
   email: string;
   password: string;
@@ -19,11 +19,14 @@ export interface ResetPasswordPayload {
     token: string;
     password: string;
 }
+
+// 1. ACTUALIZAMOS LA INTERFAZ DEL USUARIO
 export interface UserData {
     id?: string;
     name?: string;
     email?: string;
     role?: string;
+    permissions?: string[]; // <--- NUEVO
 }
 
 @Injectable({
@@ -31,6 +34,8 @@ export interface UserData {
 })
 export class AuthService {
   private apiUrl = `${environment.apiUrl}api/auth/`;
+
+  constructor(private http: HttpClient) {}
 
   refreshUserProfile(): Observable<any> {
     return this.http.get(`${this.apiUrl}profile`).pipe(
@@ -40,18 +45,11 @@ export class AuthService {
     );
   }
   
-  constructor(private http: HttpClient) {}
-
-  // -----------------------------
-  // AUTH
-  // -----------------------------
   register(data: RegisterPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}register`, data);
   }
 
   login(data: LoginPayload): Observable<any> {
-    // Al hacer login, el servidor setea la cookie automáticamente.
-    // Solo necesitamos guardar los datos del usuario para mostrar "Hola Juan"
     return this.http.post(`${this.apiUrl}login`, data).pipe(
       tap((response: any) => {
         if (response.user) {
@@ -61,29 +59,25 @@ export class AuthService {
     );
   }
 
-  // Nuevo método para llamar al logout del servidor (borra la cookie)
   logout(): void {
     this.http.post(`${this.apiUrl}logout`, {}).subscribe({
       next: () => this.logoutClientSide(),
-      error: () => this.logoutClientSide() // Si falla, igual limpiamos local
+      error: () => this.logoutClientSide()
     });
   }
 
-  // Limpieza solo visual (del navegador)
   logoutClientSide(): void {
     localStorage.removeItem('redelex_user');
-    // Redirigir al login si fuera necesario, o dejar que el interceptor lo haga
   }
 
-  // -----------------------------
-  // USER DATA (Solo info pública)
-  // -----------------------------
+  // 2. GUARDAR DATOS COMPLETOS (ROL + PERMISOS)
   saveUserData(userData: any): void { 
-    const normalizedData = {
+    const normalizedData: UserData = {
       id: userData.id || userData._id,
-      name: userData.name || userData.nombre || '', // Preferimos 'name'
+      name: userData.name || userData.nombre || '',
       email: userData.email || '',
-      role: userData.role || userData.rol || 'user' // <--- CAMBIO CLAVE: Guardar como 'role'
+      role: userData.role || userData.rol || 'inmobiliaria',
+      permissions: userData.permissions || [] // <--- GUARDAMOS PERMISOS
     };
     localStorage.setItem('redelex_user', JSON.stringify(normalizedData));
   }
@@ -100,20 +94,45 @@ export class AuthService {
     return null;
   }
 
-  // Verifica si hay usuario en local (para Guards visuales)
-  // La seguridad REAL la hace el backend con la cookie
   isLoggedIn(): boolean {
     return !!localStorage.getItem('redelex_user'); 
   }
 
+  // --- NUEVOS HELPERS DE AUTORIZACIÓN ---
+
+  // Verifica si es Super Admin (Pase libre)
+  isAdmin(): boolean {
+    const user = this.getUserData();
+    return user?.role === 'admin';
+  }
+
+  // Verifica si tiene un permiso específico (o es admin)
+  hasPermission(requiredPermission: string): boolean {
+    const user = this.getUserData();
+    if (!user) return false;
+
+    // Admin tiene poder absoluto (igual que en backend)
+    if (user.role === 'admin') return true;
+
+    // Verificar en el array de permisos
+    return user.permissions?.includes(requiredPermission) || false;
+  }
+
+  // Verificar si tiene AL MENOS UNO de un array de permisos
+  hasAnyPermission(permissions: string[]): boolean {
+    if (!permissions || permissions.length === 0) return true;
+    const user = this.getUserData();
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+
+    return permissions.some(p => user.permissions?.includes(p));
+  }
+
+  // ... Resto de métodos (activateAccount, resetPassword) se mantienen igual ...
   activateAccount(email: string, token: string): Observable<any> {
-    // Nota: El backend espera un POST con el body { email, token }
     return this.http.post(`${this.apiUrl}activate`, { email, token });
   }
 
-  // -----------------------------
-  // PASSWORD RESET
-  // -----------------------------
   requestPasswordReset(email: string): Observable<any> {
     return this.http.post(`${this.apiUrl}request-password-reset`, { email });
   }

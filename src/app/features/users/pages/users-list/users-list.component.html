@@ -1,0 +1,71 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Gestión de Usuarios</h1>
+    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      + Crear Usuario
+    </button>
+  </div>
+
+  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa / Nit</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr *ngFor="let user of users">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+              <div class="ml-4">
+                <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
+                <div class="text-sm text-gray-500">{{ user.email }}</div>
+              </div>
+            </div>
+          </td>
+
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-gray-900">{{ user.nombreInmobiliaria || 'N/A' }}</div>
+            <div class="text-sm text-gray-500" *ngIf="user.nit">NIT: {{ user.nit }}</div>
+          </td>
+
+          <td class="px-6 py-4 whitespace-nowrap">
+            <select 
+              [ngModel]="user.role" 
+              (ngModelChange)="changeRole(user, $event)"
+              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-50">
+              <option *ngFor="let role of availableRoles" [value]="role.value">
+                {{ role.label }}
+              </option>
+            </select>
+            <span *ngIf="user.permissions && user.permissions.length > 0" class="text-xs text-blue-600 mt-1 block">
+              * Permisos custom activos
+            </span>
+          </td>
+
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span (click)="toggleStatus(user)"
+              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full cursor-pointer select-none"
+              [ngClass]="user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+              {{ user.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <a href="javascript:void(0)" class="text-indigo-600 hover:text-indigo-900">
+              Ver Permisos
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="loading" class="p-6 text-center text-gray-500">
+      Cargando usuarios...
+    </div>
+  </div>
+</div>

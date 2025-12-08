@@ -1,0 +1,232 @@
+// Importamos variables si no están disponibles globalmente (opcional si usas Angular CLI predeterminado)
+// @use 'styles.scss';
+
+:host {
+  display: block;
+  min-height: 100%;
+  background-color: var(--bg-secondary);
+}
+
+// =============================================
+// Contenedor Principal
+// =============================================
+.p-6 {
+  padding: var(--spacing-xl);
+  max-width: 1400px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: var(--spacing-md);
+  }
+}
+
+// =============================================
+// Header (Título y Botón)
+// =============================================
+.flex.justify-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  h1 {
+    font-size: 1.5rem; // var(--font-size-2xl)
+    font-weight: var(--font-bold);
+    color: var(--color-primary-dark); // Usamos el azul oscuro de Affi
+    margin: 0;
+  }
+
+  // Estilizando el botón "+ Crear Usuario" para que coincida con el Login
+  button {
+    background: var(--color-primary-gradient); // Gradiente Affi
+    color: white;
+    font-weight: var(--font-medium);
+    font-size: 0.9rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--border-radius-full);
+    border: none;
+    box-shadow: var(--shadow-primary);
+    transition: all var(--transition-base);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-primary-hover);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}
+
+// =============================================
+// Card de la Tabla
+// =============================================
+.bg-white.shadow-md {
+  background: #ffffff;
+  border-radius: var(--border-radius-xl); // Bordes redondeados modernos
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); // Sombra suave
+  overflow: hidden; // Para que la tabla no se salga de los bordes redondeados
+  border: 1px solid var(--color-gray-100);
+}
+
+// =============================================
+// Tabla
+// =============================================
+.overflow-hidden {
+  overflow-x: auto; // Scroll horizontal en móviles
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+// Cabecera de la tabla
+thead {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--color-gray-200);
+
+  th {
+    padding: 1rem 1.5rem;
+    font-size: 0.75rem;
+    font-weight: var(--font-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-gray-500);
+  }
+}
+
+// Cuerpo de la tabla
+tbody {
+  tr {
+    border-bottom: 1px solid var(--color-gray-100);
+    transition: background-color var(--transition-fast);
+
+    &:hover {
+      background-color: var(--bg-tertiary); // Color suave al pasar el mouse
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  td {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+  }
+}
+
+// =============================================
+// Estilos de Celdas Específicos
+// =============================================
+
+// 1. Info Usuario y Empresa
+.text-gray-900 {
+  color: var(--color-gray-800);
+  font-weight: var(--font-medium);
+  font-size: 0.95rem;
+}
+
+.text-gray-500 {
+  color: var(--color-gray-500);
+  font-size: 0.85rem;
+  margin-top: 0.2rem;
+}
+
+// 2. Select de Roles
+select {
+  appearance: none;
+  background-color: #fff;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--border-radius-md);
+  padding: 0.4rem 2rem 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  color: var(--color-gray-700);
+  cursor: pointer;
+  transition: border-color 0.2s;
+  
+  // Flechita custom (SVG codificado en base64 para no depender de iconos externos)
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(38, 0, 134, 0.1); // Glow primario
+  }
+}
+
+// Badge de "Permisos custom"
+.text-blue-600 {
+  color: var(--color-secondary);
+  font-weight: var(--font-medium);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: currentColor;
+    border-radius: 50%;
+  }
+}
+
+// 3. Badges de Estado (Activo/Inactivo)
+.rounded-full {
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.bg-green-100 {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.bg-red-100 {
+  background-color: rgba(249, 115, 115, 0.1);
+  color: var(--color-error);
+  border: 1px solid rgba(249, 115, 115, 0.2);
+}
+
+// 4. Link "Ver Permisos"
+a.text-indigo-600 {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: var(--font-semibold);
+  font-size: 0.9rem;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--color-secondary);
+    text-decoration: underline;
+  }
+}
+
+// =============================================
+// Estado de Carga
+// =============================================
+.text-center.text-gray-500 {
+  padding: 3rem;
+  color: var(--color-gray-500);
+  font-style: italic;
+}

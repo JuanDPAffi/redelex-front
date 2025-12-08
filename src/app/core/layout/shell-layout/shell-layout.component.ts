@@ -3,28 +3,32 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { FormsModule } from '@angular/forms';
+
+// Servicios y Modelos
 import { PluginRegistryService } from '../../services/plugin-registry.service';
 import { MenuSection } from '../../models/plugin.interface';
-import { FormsModule } from '@angular/forms';
-// 1. IMPORTAR EL AUTH SERVICE
-import { AuthService } from '../../../features/auth/services/auth.service';
+import { AuthService, UserData } from '../../../features/auth/services/auth.service';
 
-interface UserData {
-  nombre?: string;
-  name?: string;
-  rol?: string;
-  role?: string;
-  email?: string;
-}
+// 1. Importamos solo el módulo base (los íconos ya se registraron en app.config.ts)
+import { FeatherModule } from 'angular-feather';
 
 @Component({
   selector: 'app-shell-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, FormsModule],
+  imports: [
+    CommonModule, 
+    RouterOutlet, 
+    RouterLink, 
+    RouterLinkActive, 
+    FormsModule,
+    FeatherModule // 2. Importamos el módulo para poder usar <i-feather> en el HTML
+  ],
   templateUrl: './shell-layout.component.html',
   styleUrl: './shell-layout.component.scss'
 })
 export class ShellLayoutComponent implements OnInit, OnDestroy {
+  // --- VARIABLES DE ESTADO (Estas eran las que faltaban) ---
   sidebarOpen = false;
   userName = 'Usuario';
   userRole = 'Invitado';
@@ -38,26 +42,17 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private pluginRegistry: PluginRegistryService,
-    private authService: AuthService // 2. INYECCIÓN DEL SERVICIO
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
-    // A. Carga inicial rápida (lo que hay en cache/local)
     this.loadUserData();
     
-    // B. SINCRONIZACIÓN REAL (La magia): 
-    // Pedimos al backend los datos frescos. Si cambiaste el rol en BD, aquí se actualiza.
     this.authService.refreshUserProfile()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (user) => {
-          // Si el backend responde, actualizamos la vista inmediatamente
-          this.updateUserView(user);
-        },
-        error: () => {
-          // Si falla (ej: cookie expiró), el interceptor se encargará del logout
-          console.log('No se pudo refrescar el perfil');
-        }
+        next: (user) => this.updateUserView(user),
+        error: () => console.log('No se pudo refrescar el perfil')
       });
 
     this.loadMenuSections();
@@ -80,31 +75,37 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   }
 
   private loadMenuSections() {
-    // 1. Obtener el rol actual del usuario (normalizado a 'role')
     const user = this.authService.getUserData();
     const currentRole = user?.role || 'guest';
-
-    // Debug: Ver qué rol está detectando el menú
-    console.log('🍔 Cargando menú para rol:', currentRole);
+    const currentPermissions = user?.permissions || [];
+    
+    const isAdmin = currentRole === 'admin';
 
     this.pluginRegistry.getMenuSections()
       .pipe(takeUntil(this.destroy$))
       .subscribe(sections => {
         
-        // 2. FILTRADO INTELIGENTE
         this.menuSections = sections.map(section => {
-          // A. Filtrar ITEMS dentro de la sección
+          
           const filteredItems = section.items.filter(item => {
-            // Si no tiene roles definidos, es público
-            if (!item.roles || item.roles.length === 0) return true;
+            if (isAdmin) return true;
+
+            if (item.roles && item.roles.length > 0 && !item.roles.includes(currentRole)) {
+              return false;
+            }
+
+            const itemPerms = (item as any).permissions as string[] | undefined;
             
-            // Si tiene roles, verificamos si el mío está incluido
-            return item.roles.includes(currentRole);
+            if (itemPerms && itemPerms.length > 0) {
+               const hasPerm = itemPerms.some(p => currentPermissions.includes(p));
+               if (!hasPerm) return false;
+            }
+
+            return true;
           });
 
           return { ...section, items: filteredItems };
         })
-        // 3. Limpieza: Si una sección se quedó vacía tras el filtro, la ocultamos
         .filter(section => section.items.length > 0);
 
         this.updateBreadcrumbs();
@@ -139,28 +140,26 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Carga desde localStorage (rápido pero puede estar desactualizado)
   private loadUserData() {
-    const userData = this.authService.getUserData(); // Usamos el helper del servicio si existe, o tu lógica manual
+    const userData = this.authService.getUserData(); 
     if (userData) {
       this.updateUserView(userData);
     }
   }
 
-  // Método auxiliar para actualizar las variables de la vista
-  private updateUserView(data: any) {
-    this.userName = data.nombre || data.name || data.email?.split('@')[0] || 'Usuario';
-    // Importante: Aseguramos que 'rol' o 'role' se procesen
-    const rawRole = data.rol || data.role || 'user';
+  private updateUserView(data: UserData) {
+    this.userName = data.name || data.email?.split('@')[0] || 'Usuario';
+    const rawRole = data.role || 'user';
     this.userRole = this.formatRole(rawRole);
     this.userInitials = this.getInitials(this.userName);
   }
 
   formatRole(role: string): string {
     const roleMap: { [key: string]: string } = {
-      'admin': 'Colaborador Affi',
-      'user': 'Inmobiliaria',
-      'guest': 'Invitado'
+      'admin': 'Administrador', 
+      'affi': 'Colaborador Affi',
+      'inmobiliaria': 'Inmobiliaria',
+      'user': 'Inmobiliaria' 
     };
     return roleMap[role.toLowerCase()] || role;
   }
@@ -200,11 +199,7 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    localStorage.removeItem('redelex_user');
-    localStorage.removeItem('redelex_token'); // Por si quedó basura vieja
-
     this.authService.logout(); 
-    
     this.router.navigate(['/auth/login']);
   }
 }
