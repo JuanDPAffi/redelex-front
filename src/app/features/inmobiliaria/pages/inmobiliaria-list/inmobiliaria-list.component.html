@@ -1,0 +1,206 @@
+<div class="page">
+  <div class="page__header">
+    <div class="header-content">
+      <div>
+        <h2>Inmobiliarias</h2>
+        <p>Base de datos de clientes. Sincroniza masivamente desde Excel.</p>
+      </div>
+      
+      <div class="header-actions">
+        <div class="search-wrapper">
+          <i-feather name="search" class="search-icon"></i-feather>
+          <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar NIT, Código o Nombre..." class="search-input">
+        </div>
+
+        <button class="btn btn--primary" 
+                (click)="openImportModal()" 
+                *ngIf="authService.hasPermission('inmo:import') || authService.isAdmin()">
+          <i-feather name="upload-cloud" class="btn-icon-left"></i-feather>
+          Importar Excel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="table-scroll">
+      <table class="excel-table">
+        <thead>
+          <tr>
+            <th>Inmobiliaria</th>
+            <th>NIT</th>
+            <th>Código</th>
+            <th>Correo Usuario</th>
+            <th>Estado</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (inmo of filteredInmobiliarias; track inmo._id) {
+            <tr>
+              <td>
+                <div class="company-info">
+                  <span class="company-name">{{ inmo.nombreInmobiliaria }}</span>
+                  <span class="company-nit">Actualizado: {{ inmo.updatedAt | date:'shortDate' }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="codes-cell">
+                  <span class="code-pill">NIT: {{ inmo.nit }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="codes-cell">
+                  <span class="code-pill code-pill--blue">COD: {{ inmo.codigo }}</span>
+                </div>
+              </td>
+              <td>
+                @if (inmo.emailRegistrado) {
+                  <span class="text-sm text-gray-700 font-medium">{{ inmo.emailRegistrado }}</span>
+                } @else {
+                  <span class="text-xs text-gray-400 italic">Sin asignar</span>
+                }
+              </td>
+              <td>
+                <span (click)="toggleStatus(inmo)"
+                  class="status-badge"
+                  [class.status-badge--active]="inmo.isActive"
+                  [class.status-badge--inactive]="!inmo.isActive">
+                  {{ inmo.isActive ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="text-right">
+                <button (click)="openEditModal(inmo)" class="btn-icon" title="Editar">
+                  <i-feather name="edit-2"></i-feather>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (loading) { <div class="loading-state"><div class="spinner"></div><p>Cargando...</p></div> }
+  </div>
+</div>
+
+@if (showImportModal) {
+  <div class="modal-overlay">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3>Sincronización Masiva</h3>
+        <button class="close-btn" (click)="closeModals()"><i-feather name="x"></i-feather></button>
+      </div>
+      
+      <div class="modal-body">
+        @if (!isUploading && !importResult) {
+          <div class="upload-area" 
+               [class.drag-over]="dragOver"
+               (dragover)="onDragOver($event)" 
+               (dragleave)="onDragLeave($event)" 
+               (drop)="onDrop($event)">
+            
+            <i-feather name="upload-cloud" class="upload-icon"></i-feather>
+            <h4>Arrastra tu archivo Excel aquí</h4>
+            <p>o haz clic para seleccionar</p>
+            
+            <input type="file" (change)="onFileSelected($event)" accept=".xlsx, .xls" id="fileInput" hidden>
+            <label for="fileInput" class="btn btn--secondary mt-4">Seleccionar Archivo</label>
+            
+            <div class="file-info" *ngIf="currentFile">
+              <i-feather name="file-text"></i-feather>
+              <span>{{ currentFile.name }}</span>
+            </div>
+
+            <p class="helper-text mt-4">
+              <strong>Nota:</strong> El archivo debe contener las columnas <code>NIT</code>, <code>CODIGO</code> y <code>NOMBRE</code>. 
+              Los registros que no estén en el Excel <strong>serán eliminados</strong>.
+            </p>
+          </div>
+        }
+
+        @if (isUploading) {
+          <div class="uploading-state">
+            <div class="spinner mb-4"></div>
+            <h4>Procesando archivo...</h4>
+            <div class="progress-bar-container">
+              <div class="progress-bar" [style.width.%]="uploadProgress"></div>
+            </div>
+            <p>{{ uploadProgress }}% Completado</p>
+          </div>
+        }
+
+        @if (importResult) {
+          <div class="results-state">
+            <div class="success-icon-wrapper">
+              <i-feather name="check" class="success-icon"></i-feather>
+            </div>
+            <h3 class="text-green-600 mb-4">¡Sincronización Completada!</h3>
+            
+            <div class="stats-grid">
+              <div class="stat-card bg-blue-50 text-blue-700">
+                <span class="stat-val">{{ importResult.resumen.procesados_excel }}</span>
+                <span class="stat-label">Leídos</span>
+              </div>
+              <div class="stat-card bg-green-50 text-green-700">
+                <span class="stat-val">{{ importResult.resumen.nuevos }}</span>
+                <span class="stat-label">Nuevos</span>
+              </div>
+              <div class="stat-card bg-yellow-50 text-yellow-700">
+                <span class="stat-val">{{ importResult.resumen.actualizados }}</span>
+                <span class="stat-label">Actualizados</span>
+              </div>
+              <div class="stat-card bg-red-50 text-red-700">
+                <span class="stat-val">{{ importResult.resumen.eliminados }}</span>
+                <span class="stat-label">Eliminados</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn--secondary" (click)="closeModals()">
+          {{ importResult ? 'Cerrar' : 'Cancelar' }}
+        </button>
+        
+        @if (!isUploading && !importResult) {
+          <button class="btn btn--primary" (click)="uploadFile()" [disabled]="!currentFile">
+            <i-feather name="refresh-cw" class="btn-icon-left"></i-feather>
+            Iniciar Sincronización
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+@if (showEditModal && selectedInmo) {
+  <div class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Editar Inmobiliaria</h3>
+        <button class="close-btn" (click)="closeModals()"><i-feather name="x"></i-feather></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input [(ngModel)]="selectedInmo.nombreInmobiliaria" class="field__input">
+        </div>
+        <div class="row">
+          <div class="form-group">
+            <label>NIT</label>
+            <input [(ngModel)]="selectedInmo.nit" class="field__input">
+          </div>
+          <div class="form-group">
+            <label>Código</label>
+            <input [(ngModel)]="selectedInmo.codigo" class="field__input">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--secondary" (click)="closeModals()">Cancelar</button>
+        <button class="btn btn--primary" (click)="saveEdit()">Guardar</button>
+      </div>
+    </div>
+  </div>
+}

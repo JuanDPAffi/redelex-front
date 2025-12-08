@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-splash',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <div class="splash" [class.is-hidden]="!visible">
       <img src="/Affi.png" alt="logo" class="splash-logo" />

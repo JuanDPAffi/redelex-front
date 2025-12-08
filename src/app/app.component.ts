@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterOutlet, NavigationStart, RouterOutletContract } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
@@ -15,6 +15,7 @@ import { SplashComponent } from './shared/components/splash.component';
 import { AUTH_PLUGIN_CONFIG } from './features/auth/auth-plugin.config';
 import { REDELEX_PLUGIN_CONFIG } from './features/redelex/redelex-plugin.config';
 import { USERS_PLUGIN_CONFIG } from './features/users/users-plugin.config';
+import { INMOBILIARIA_PLUGIN_CONFIG } from './features/inmobiliaria/inmobiliaria-plugin.config';
 
 // Animaciones (Importamos la constante que me pasaste)
 import { routeFadeAnimation } from './animations/route-animations';
@@ -22,7 +23,7 @@ import { routeFadeAnimation } from './animations/route-animations';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, SplashComponent],
+  imports: [RouterOutlet, SplashComponent],
   templateUrl: './app.component.html',
   animations: [routeFadeAnimation] // <--- Registramos la animación aquí
 })
@@ -42,6 +43,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.pluginRegistry.register(AUTH_PLUGIN_CONFIG);
     this.pluginRegistry.register(REDELEX_PLUGIN_CONFIG);
     this.pluginRegistry.register(USERS_PLUGIN_CONFIG);
+    this.pluginRegistry.register(INMOBILIARIA_PLUGIN_CONFIG);
 
     // 2. Lógica del Splash Screen
     this.splashService.show(1500);

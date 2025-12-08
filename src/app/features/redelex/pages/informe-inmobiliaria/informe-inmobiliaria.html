@@ -1,5 +1,5 @@
 <div class="page">
-  
+
   <div class="page__header">
     <div class="header-content">
       <div>
@@ -20,206 +20,241 @@
   </div>
 
   <div class="card">
-    <div class="filter-section" *ngIf="mostrarFiltros">
-      <div class="filters-grid">
-        
-        <label class="field full-width">
-          <span class="field__label">Búsqueda Rápida</span>
-          <input class="field__input" type="text" [(ngModel)]="filtros.busquedaGeneral" (input)="applyFilters()" placeholder="Buscar por radicado, nombre, cédula...">
-        </label>
-
-        <div class="field full-width custom-select-container">
-          <span class="field__label">Inmobiliaria</span>
-          <div class="custom-select" (click)="toggleDropdown('demandante', $event)" [class.open]="activeDropdown === 'demandante'">
-            <span class="selected-value" [class.placeholder]="!filtros.demandante">
-              {{ filtros.demandante ? filtros.demandante.nombre : 'Todas las Inmobiliarias' }}
-            </span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="dropdown-menu" *ngIf="activeDropdown === 'demandante'">
-            <div class="search-box" (click)="$event.stopPropagation()">
-              <input type="text" placeholder="Buscar Inmobiliaria..." [(ngModel)]="searchDemandante" autofocus>
+    @if (mostrarFiltros) {
+      <div class="filter-section">
+        <div class="filters-grid">
+          <label class="field full-width">
+            <span class="field__label">Búsqueda Rápida</span>
+            <input class="field__input" type="text" [(ngModel)]="filtros.busquedaGeneral" (input)="applyFilters()" placeholder="Buscar por radicado, nombre, cédula...">
+          </label>
+          <div class="field full-width custom-select-container">
+            <span class="field__label">Inmobiliaria</span>
+            <div class="custom-select" (click)="toggleDropdown('demandante', $event)" [class.open]="activeDropdown === 'demandante'">
+              <span class="selected-value" [class.placeholder]="!filtros.demandante">
+                {{ filtros.demandante ? filtros.demandante.nombre : 'Todas las Inmobiliarias' }}
+              </span>
+              <span class="arrow">▼</span>
             </div>
-            <div class="options-list">
-              <div class="option" (click)="selectDemandante(null)" [class.selected]="!filtros.demandante">Todas las Inmobiliarias</div>
-              <div class="option" *ngFor="let d of filteredDemandanteList" (click)="selectDemandante(d)" [class.selected]="filtros.demandante === d">
-                {{ d.nombre }} <small style="color:#9ca3af; margin-left:5px;">({{ d.identificacion }})</small>
+            @if (activeDropdown === 'demandante') {
+              <div class="dropdown-menu">
+                <div class="search-box" (click)="$event.stopPropagation()">
+                  <input type="text" placeholder="Buscar Inmobiliaria..." [(ngModel)]="searchDemandante" autofocus>
+                </div>
+                <div class="options-list">
+                  <div class="option" (click)="selectDemandante(null)" [class.selected]="!filtros.demandante">Todas las Inmobiliarias</div>
+                  @for (d of filteredDemandanteList; track d) {
+                    <div class="option" (click)="selectDemandante(d)" [class.selected]="filtros.demandante === d">
+                      {{ d.nombre }} <small style="color:#9ca3af; margin-left:5px;">({{ d.identificacion }})</small>
+                    </div>
+                  }
+                  @if (filteredDemandanteList.length === 0) {
+                    <div class="option no-data">Sin resultados</div>
+                  }
+                </div>
               </div>
-              <div class="option no-data" *ngIf="filteredDemandanteList.length === 0">Sin resultados</div>
+            }
+          </div>
+          <label class="field">
+            <span class="field__label">ID Demandado</span>
+            <input class="field__input" type="text" [(ngModel)]="filtros.identificacion" (input)="applyFilters()" placeholder="Ej: 805000...">
+          </label>
+          <label class="field">
+            <span class="field__label">Nombre Demandado</span>
+            <input class="field__input" type="text" [(ngModel)]="filtros.nombre" (input)="applyFilters()" placeholder="Ej: Continental...">
+          </label>
+          <div class="field custom-select-container">
+            <span class="field__label">Clase Proceso</span>
+            <div class="custom-select" (click)="toggleDropdown('clase', $event)" [class.open]="activeDropdown === 'clase'">
+              <span class="selected-value" [class.placeholder]="!filtros.claseProceso">{{ filtros.claseProceso || 'Todas' }}</span>
+              <span class="arrow">▼</span>
             </div>
+            @if (activeDropdown === 'clase') {
+              <div class="dropdown-menu">
+                <div class="search-box" (click)="$event.stopPropagation()">
+                  <input type="text" placeholder="Buscar..." [(ngModel)]="searchClase" autofocus>
+                </div>
+                <div class="options-list">
+                  <div class="option" (click)="selectOption('claseProceso', '')" [class.selected]="filtros.claseProceso === ''">Todas</div>
+                  @for (c of filteredClaseList; track c) {
+                    <div class="option" (click)="selectOption('claseProceso', c)" [class.selected]="filtros.claseProceso === c">{{ c }}</div>
+                  }
+                  @if (filteredClaseList.length === 0) {
+                    <div class="option no-data">Sin resultados</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+          <div class="field custom-select-container">
+            <span class="field__label">Etapa Procesal</span>
+            <div class="custom-select" (click)="toggleDropdown('etapa', $event)" [class.open]="activeDropdown === 'etapa'">
+              <span class="selected-value" [class.placeholder]="!filtros.etapa">{{ filtros.etapa || 'Todas' }}</span>
+              <span class="arrow">▼</span>
+            </div>
+            @if (activeDropdown === 'etapa') {
+              <div class="dropdown-menu">
+                <div class="search-box" (click)="$event.stopPropagation()">
+                  <input type="text" placeholder="Buscar..." [(ngModel)]="searchEtapa" autofocus>
+                </div>
+                <div class="options-list">
+                  <div class="option" (click)="selectOption('etapa', '')" [class.selected]="filtros.etapa === ''">Todas</div>
+                  @for (e of filteredEtapaList; track e) {
+                    <div class="option" (click)="selectOption('etapa', e)" [class.selected]="filtros.etapa === e">{{ e }}</div>
+                  }
+                  @if (filteredEtapaList.length === 0) {
+                    <div class="option no-data">Sin resultados</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+          <div class="field custom-select-container">
+            <span class="field__label">Despacho</span>
+            <div class="custom-select" (click)="toggleDropdown('despacho', $event)" [class.open]="activeDropdown === 'despacho'">
+              <span class="selected-value" [class.placeholder]="!filtros.despacho">{{ filtros.despacho || 'Todos' }}</span>
+              <span class="arrow">▼</span>
+            </div>
+            @if (activeDropdown === 'despacho') {
+              <div class="dropdown-menu">
+                <div class="search-box" (click)="$event.stopPropagation()">
+                  <input type="text" placeholder="Buscar..." [(ngModel)]="searchDespacho" autofocus>
+                </div>
+                <div class="options-list">
+                  <div class="option" (click)="selectOption('despacho', '')" [class.selected]="filtros.despacho === ''">Todos</div>
+                  @for (d of filteredDespachoList; track d) {
+                    <div class="option" (click)="selectOption('despacho', d)" [class.selected]="filtros.despacho === d">{{ d }}</div>
+                  }
+                  @if (filteredDespachoList.length === 0) {
+                    <div class="option no-data">Sin resultados</div>
+                  }
+                </div>
+              </div>
+            }
           </div>
         </div>
-
-        <label class="field">
-          <span class="field__label">ID Demandado</span>
-          <input class="field__input" type="text" [(ngModel)]="filtros.identificacion" (input)="applyFilters()" placeholder="Ej: 805000...">
-        </label>
-
-        <label class="field">
-          <span class="field__label">Nombre Demandado</span>
-          <input class="field__input" type="text" [(ngModel)]="filtros.nombre" (input)="applyFilters()" placeholder="Ej: Continental...">
-        </label>
-
-        <div class="field custom-select-container">
-          <span class="field__label">Clase Proceso</span>
-          <div class="custom-select" (click)="toggleDropdown('clase', $event)" [class.open]="activeDropdown === 'clase'">
-            <span class="selected-value" [class.placeholder]="!filtros.claseProceso">{{ filtros.claseProceso || 'Todas' }}</span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="dropdown-menu" *ngIf="activeDropdown === 'clase'">
-            <div class="search-box" (click)="$event.stopPropagation()">
-              <input type="text" placeholder="Buscar..." [(ngModel)]="searchClase" autofocus>
-            </div>
-            <div class="options-list">
-              <div class="option" (click)="selectOption('claseProceso', '')" [class.selected]="filtros.claseProceso === ''">Todas</div>
-              <div class="option" *ngFor="let c of filteredClaseList" (click)="selectOption('claseProceso', c)" [class.selected]="filtros.claseProceso === c">{{ c }}</div>
-              <div class="option no-data" *ngIf="filteredClaseList.length === 0">Sin resultados</div>
-            </div>
-          </div>
+        <div class="filters-footer">
+          <button class="btn-link" (click)="limpiarFiltros()">Limpiar todos los filtros</button>
         </div>
-
-        <div class="field custom-select-container">
-          <span class="field__label">Etapa Procesal</span>
-          <div class="custom-select" (click)="toggleDropdown('etapa', $event)" [class.open]="activeDropdown === 'etapa'">
-            <span class="selected-value" [class.placeholder]="!filtros.etapa">{{ filtros.etapa || 'Todas' }}</span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="dropdown-menu" *ngIf="activeDropdown === 'etapa'">
-            <div class="search-box" (click)="$event.stopPropagation()">
-              <input type="text" placeholder="Buscar..." [(ngModel)]="searchEtapa" autofocus>
-            </div>
-            <div class="options-list">
-              <div class="option" (click)="selectOption('etapa', '')" [class.selected]="filtros.etapa === ''">Todas</div>
-              <div class="option" *ngFor="let e of filteredEtapaList" (click)="selectOption('etapa', e)" [class.selected]="filtros.etapa === e">{{ e }}</div>
-              <div class="option no-data" *ngIf="filteredEtapaList.length === 0">Sin resultados</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="field custom-select-container">
-          <span class="field__label">Despacho</span>
-          <div class="custom-select" (click)="toggleDropdown('despacho', $event)" [class.open]="activeDropdown === 'despacho'">
-            <span class="selected-value" [class.placeholder]="!filtros.despacho">{{ filtros.despacho || 'Todos' }}</span>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="dropdown-menu" *ngIf="activeDropdown === 'despacho'">
-            <div class="search-box" (click)="$event.stopPropagation()">
-              <input type="text" placeholder="Buscar..." [(ngModel)]="searchDespacho" autofocus>
-            </div>
-            <div class="options-list">
-              <div class="option" (click)="selectOption('despacho', '')" [class.selected]="filtros.despacho === ''">Todos</div>
-              <div class="option" *ngFor="let d of filteredDespachoList" (click)="selectOption('despacho', d)" [class.selected]="filtros.despacho === d">{{ d }}</div>
-              <div class="option no-data" *ngIf="filteredDespachoList.length === 0">Sin resultados</div>
-            </div>
-          </div>
-        </div>
-
+        <div class="divider"></div>
       </div>
-      <div class="filters-footer">
-        <button class="btn-link" (click)="limpiarFiltros()">Limpiar todos los filtros</button>
-      </div>
-      <div class="divider"></div>
-    </div>
+    }
 
-    <div *ngIf="loading" class="helper"><div class="spinner"></div><p>Cargando datos...</p></div>
+    @if (loading) {
+      <div class="helper"><div class="spinner"></div><p>Cargando datos...</p></div>
+    }
 
-    <div class="table-container" *ngIf="!loading && !error">
-      <div class="table-scroll">
-        <table class="excel-table">
-          <thead>
-            <tr>
-              <th>ID Proceso</th>
-              <th class="group-header">ID Dmdado.</th>
-              <th class="group-header">Demandado</th>
-              <th class="group-header">ID Dmte.</th>
-              <th class="group-header">Demandante</th>
-              <th>Fecha Recepción</th>
-              <th>Etapa</th>
-              <th>Clase</th>
-              <th>Sentencia 1ra</th>
-              <th>Ciudad</th>
-              <th>Radicado</th>
-              <th>Despacho</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of paginatedData">
-              <td class="cell-id">{{ item.idProceso }}</td>
-              <td>{{ item.demandadoIdentificacion }}</td>
-              <td class="cell-nombre">{{ item.demandadoNombre }}</td>
-              <td class="cell-id">{{ item.demandanteIdentificacion }}</td>
-              <td class="cell-nombre">{{ item.demandanteNombre }}</td>
-              <td>{{ item.fechaRecepcionProceso | date:'dd/MM/yyyy' }}</td>
-              <td>
+    @if (!loading && !error) {
+      <div class="table-container">
+        <div class="table-scroll">
+          <table class="excel-table">
+            <thead>
+              <tr>
+                <th>ID Proceso</th>
+                <th class="group-header">ID Dmdado.</th>
+                <th class="group-header">Demandado</th>
+                <th class="group-header">ID Dmte.</th>
+                <th class="group-header">Demandante</th>
+                <th>Fecha Recepción</th>
+                <th>Etapa</th>
+                <th>Clase</th>
+                <th>Sentencia 1ra</th>
+                <th>Ciudad</th>
+                <th>Radicado</th>
+                <th>Despacho</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of paginatedData; track item) {
+                <tr>
+                  <td class="cell-id">{{ item.idProceso }}</td>
+                  <td>{{ item.demandadoIdentificacion }}</td>
+                  <td class="cell-nombre">{{ item.demandadoNombre }}</td>
+                  <td class="cell-id">{{ item.demandanteIdentificacion }}</td>
+                  <td class="cell-nombre">{{ item.demandanteNombre }}</td>
+                  <td>{{ item.fechaRecepcionProceso | date:'dd/MM/yyyy' }}</td>
+                  <td>
                 <span class="status-badge" [ngClass]="{
                   'status-badge--active': item.etapaProcesal === 'LIQUIDACION',
                   'status-badge--pending': item.etapaProcesal === 'EJECUCION DEL ACUERDO',
                   'status-badge--inactive': item.etapaProcesal === 'TERMINACION'
                 }">{{ item.etapaProcesal }}</span>
-              </td>
-              <td>{{ item.claseProceso | claseProceso }}</td>
-              <td>{{ item.sentenciaPrimeraInstancia }}</td>
-              <td>{{ item.ciudadInmueble || '-' }}</td>
-              <td class="cell-radicado" title="{{ item.numeroRadicacion }}">{{ item.numeroRadicacion || 'N/A' }}</td>
-              <td class="cell-despacho" title="{{ item.despacho }}">{{ item.despacho }}</td>
-            </tr>
-            <tr *ngIf="filteredData.length === 0" class="no-results"><td colspan="12" class="helper">No se encontraron resultados.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination" *ngIf="filteredData.length > 0">
-        <button class="pagination__btn" [disabled]="currentPage === 1" (click)="prevPage()">← Anterior</button>
-        <div class="pagination__info">
-          <span>Página {{ currentPage }} de {{ totalPages }}</span>
-          <div class="page-size-selector custom-select-container">
-            <div class="custom-select" (click)="toggleDropdown('pageSize', $event)" [class.open]="activeDropdown === 'pageSize'">
-              <span class="selected-value">{{ itemsPerPage }} / pág</span>
-              <span class="arrow">▼</span>
-            </div>
-            <div class="dropdown-menu dropdown-menu--up" *ngIf="activeDropdown === 'pageSize'">
-              <div class="options-list">
-                <div class="option" *ngFor="let size of pageSizeOptions" (click)="selectPageSize(size)" [class.selected]="itemsPerPage === size">
-                  {{ size }} registros
+                  </td>
+                  <td>{{ item.claseProceso | claseProceso }}</td>
+                  <td>{{ item.sentenciaPrimeraInstancia }}</td>
+                  <td>{{ item.ciudadInmueble || '-' }}</td>
+                  <td class="cell-radicado" title="{{ item.numeroRadicacion }}">{{ item.numeroRadicacion || 'N/A' }}</td>
+                  <td class="cell-despacho" title="{{ item.despacho }}">{{ item.despacho }}</td>
+                </tr>
+              }
+              @if (filteredData.length === 0) {
+                <tr class="no-results"><td colspan="12" class="helper">No se encontraron resultados.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (filteredData.length > 0) {
+          <div class="pagination">
+            <button class="pagination__btn" [disabled]="currentPage === 1" (click)="prevPage()">← Anterior</button>
+            <div class="pagination__info">
+              <span>Página {{ currentPage }} de {{ totalPages }}</span>
+              <div class="page-size-selector custom-select-container">
+                <div class="custom-select" (click)="toggleDropdown('pageSize', $event)" [class.open]="activeDropdown === 'pageSize'">
+                  <span class="selected-value">{{ itemsPerPage }} / pág</span>
+                  <span class="arrow">▼</span>
                 </div>
+                @if (activeDropdown === 'pageSize') {
+                  <div class="dropdown-menu dropdown-menu--up">
+                    <div class="options-list">
+                      @for (size of pageSizeOptions; track size) {
+                        <div class="option" (click)="selectPageSize(size)" [class.selected]="itemsPerPage === size">
+                          {{ size }} registros
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
               </div>
             </div>
+            <button class="pagination__btn" [disabled]="currentPage === totalPages" (click)="nextPage()">Siguiente →</button>
           </div>
-        </div>
-        <button class="pagination__btn" [disabled]="currentPage === totalPages" (click)="nextPage()">Siguiente →</button>
+        }
       </div>
-    </div>
+    }
   </div>
 </div>
 
-<div class="modal-overlay" *ngIf="showExportModal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3>Configurar Exportación</h3>
-      <button class="close-btn" (click)="closeExportModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <p class="helper" style="padding:0; text-align:left;">Selecciona las columnas que deseas incluir:</p>
-      <div class="columns-actions">
-        <button class="btn-link" (click)="selectAllColumns(true)">Marcar todas</button>
-        <button class="btn-link" (click)="selectAllColumns(false)">Desmarcar todas</button>
+@if (showExportModal) {
+  <div class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Configurar Exportación</h3>
+        <button class="close-btn" (click)="closeExportModal()">×</button>
       </div>
-      <div class="columns-grid">
-        <label *ngFor="let col of exportColumns" class="checkbox-field">
-          <input type="checkbox" [checked]="col.selected" (change)="toggleColumn(col.key)"><span>{{ col.label }}</span>
-        </label>
+      <div class="modal-body">
+        <p class="helper" style="padding:0; text-align:left;">Selecciona las columnas que deseas incluir:</p>
+        <div class="columns-actions">
+          <button class="btn-link" (click)="selectAllColumns(true)">Marcar todas</button>
+          <button class="btn-link" (click)="selectAllColumns(false)">Desmarcar todas</button>
+        </div>
+        <div class="columns-grid">
+          @for (col of exportColumns; track col) {
+            <label class="checkbox-field">
+              <input type="checkbox" [checked]="col.selected" (change)="toggleColumn(col.key)"><span>{{ col.label }}</span>
+            </label>
+          }
+        </div>
       </div>
-    </div>
-    <div class="modal-footer" style="justify-content: space-between;">
-      <button type="button" class="btn btn--secondary" (click)="closeExportModal()">Cancelar</button>
-      <div style="display: flex; gap: 10px;">
-        <button type="button" class="btn btn--primary" style="background-color: #217346; border-color: #217346;" (click)="exportToExcel()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Excel
-        </button>
-        <button type="button" class="btn btn--primary" style="background-color: #c0392b; border-color: #c0392b;" (click)="exportToPdf()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> PDF
-        </button>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" class="btn btn--secondary" (click)="closeExportModal()">Cancelar</button>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn--primary" style="background-color: #217346; border-color: #217346;" (click)="exportToExcel()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Excel
+          </button>
+          <button type="button" class="btn btn--primary" style="background-color: #c0392b; border-color: #c0392b;" (click)="exportToPdf()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> PDF
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</div>
+}

@@ -20,7 +20,8 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
       roles: ['inmobiliaria', 'admin'], // Legacy / Respaldo
       permissions: ['procesos:view_own'],
       enabled: true,
-      order: 1 // Lo puse primero porque es lo más común para el cliente
+      order: 1,
+      sectionId: 'consultas'
     },
     {
       id: 'redelex-consultar',
@@ -30,7 +31,8 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
       roles: ['admin', 'affi'], 
       permissions: ['procesos:view_all'], // <--- NUEVO: Affi y Admin lo verán
       enabled: true,
-      order: 2
+      order: 2,
+      sectionId: 'consultas'
     },
     {
       id: 'redelex-informe',
@@ -40,7 +42,8 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
       roles: ['admin', 'affi'],
       permissions: ['reports:view'],
       enabled: true,
-      order: 3
+      order: 3,
+      sectionId: 'reportes'
     }
   ],
   

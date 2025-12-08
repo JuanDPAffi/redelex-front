@@ -15,40 +15,44 @@
           type="email"
           formControlName="email"
           placeholder="tucorreo@ejemplo.com"
-        />
-        <span class="field__error"
-              *ngIf="form.get('email')?.invalid && form.get('email')?.touched">
-          Ingresa un correo válido.
-        </span>
-      </label>
+          />
+          @if (form.get('email')?.invalid && form.get('email')?.touched) {
+            <span class="field__error"
+              >
+              Ingresa un correo válido.
+            </span>
+          }
+        </label>
 
-      <label class="field">
-        <span class="field__label">Contraseña</span>
-        <input
-          class="field__input"
-          type="password"
-          formControlName="password"
-          placeholder="••••••••"
-        />
-        <span class="field__error"
-              *ngIf="form.get('password')?.invalid && form.get('password')?.touched">
-          La contraseña es obligatoria.
-        </span>
-      </label>
+        <label class="field">
+          <span class="field__label">Contraseña</span>
+          <input
+            class="field__input"
+            type="password"
+            formControlName="password"
+            placeholder="••••••••"
+            />
+            @if (form.get('password')?.invalid && form.get('password')?.touched) {
+              <span class="field__error"
+                >
+                La contraseña es obligatoria.
+              </span>
+            }
+          </label>
 
-      <button class="btn btn--primary" type="submit" [disabled]="form.invalid">
-        Iniciar sesión
-      </button>
-    </form>
+          <button class="btn btn--primary" type="submit" [disabled]="form.invalid">
+            Iniciar sesión
+          </button>
+        </form>
 
-    <p class="affi-auth-footer">
-      <a routerLink="/auth/forgot-password">¿Olvidaste tu contraseña?</a>
-    </p>
+        <p class="affi-auth-footer">
+          <a routerLink="/auth/forgot-password">¿Olvidaste tu contraseña?</a>
+        </p>
 
-    <p class="affi-auth-footer">
-      ¿No tienes cuenta?
-      <a routerLink="/auth/register">Crear cuenta</a>
-    </p>
-  </div>
-</div>
+        <p class="affi-auth-footer">
+          ¿No tienes cuenta?
+          <a routerLink="/auth/register">Crear cuenta</a>
+        </p>
+      </div>
+    </div>
 

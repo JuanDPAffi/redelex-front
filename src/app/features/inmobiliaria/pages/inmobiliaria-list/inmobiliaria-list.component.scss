@@ -1,0 +1,144 @@
+// Reutilizamos estilos base
+@import '../../../users/pages/users-list/users-list.component.scss';
+
+// =============================================
+// ESTILOS ESPECÍFICOS DE INMOBILIARIAS
+// =============================================
+
+.codes-cell {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.code-pill {
+  font-size: 0.7rem;
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 600;
+
+  &--blue {
+    background: #e0e7ff;
+    color: var(--color-primary);
+  }
+}
+
+// =============================================
+// ZONA DE CARGA (DROPZONE)
+// =============================================
+.upload-area {
+  border: 2px dashed var(--color-gray-300);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+  transition: all 0.2s;
+  background: var(--bg-secondary);
+  cursor: pointer;
+
+  &.drag-over {
+    border-color: var(--color-primary);
+    background: #eef2ff;
+    transform: scale(1.02);
+  }
+
+  .upload-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--color-gray-400);
+    margin-bottom: 1rem;
+  }
+
+  h4 {
+    margin: 0;
+    color: var(--color-gray-700);
+    font-weight: 600;
+  }
+
+  p {
+    color: var(--color-gray-500);
+    margin: 0.5rem 0;
+  }
+}
+
+.file-info {
+  margin-top: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--border-radius-md);
+  color: var(--color-primary);
+  font-weight: 500;
+  
+  svg { width: 16px; height: 16px; }
+}
+
+// =============================================
+// ESTADO DE SUBIDA
+// =============================================
+.uploading-state {
+  text-align: center;
+  padding: 2rem;
+
+  h4 { margin-top: 1rem; }
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: var(--color-gray-200);
+  border-radius: 4px;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--color-primary-gradient);
+  transition: width 0.3s ease;
+}
+
+// =============================================
+// RESULTADOS
+// =============================================
+.results-state {
+  text-align: center;
+  padding: 1rem;
+}
+
+.success-icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  
+  svg { width: 32px; height: 32px; }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.stat-card {
+  padding: 1rem;
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  .stat-val { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+  .stat-label { font-size: 0.8rem; text-transform: uppercase; font-weight: 600; margin-top: 0.2rem; }
+}

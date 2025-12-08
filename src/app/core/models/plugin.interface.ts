@@ -35,6 +35,8 @@ export interface MenuItem {
   enabled?: boolean;
   badge?: string | number;
   order?: number;
+
+  sectionId?: string;
 }
 
 /**

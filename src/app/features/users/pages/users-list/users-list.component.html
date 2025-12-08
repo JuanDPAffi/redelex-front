@@ -1,71 +1,255 @@
-<div class="p-6">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Gestión de Usuarios</h1>
-    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-      + Crear Usuario
-    </button>
-  </div>
+<div class="page">
+  <div class="page__header">
+    <div class="header-content">
+      <div>
+        <h2>Gestión de Usuarios</h2>
+        <p>Administra el acceso, roles y permisos de la plataforma.</p>
+      </div>
+      
+      <div class="header-actions">
+        <div class="search-wrapper">
+          <i-feather name="search" class="search-icon"></i-feather>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm" 
+            placeholder="Buscar por nombre, NIT o email..." 
+            class="search-input"
+          >
+        </div>
 
-  <div class="bg-white shadow-md rounded-lg overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa / Nit</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        <tr *ngFor="let user of users">
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="flex items-center">
-              <div class="ml-4">
-                <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
-                <div class="text-sm text-gray-500">{{ user.email }}</div>
-              </div>
-            </div>
-          </td>
+        <button class="btn btn--primary" (click)="openEditModal(null)">
+          <i-feather name="plus" class="btn-icon-left"></i-feather>
+          Crear Usuario
+        </button>
+      </div>
 
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900">{{ user.nombreInmobiliaria || 'N/A' }}</div>
-            <div class="text-sm text-gray-500" *ngIf="user.nit">NIT: {{ user.nit }}</div>
-          </td>
-
-          <td class="px-6 py-4 whitespace-nowrap">
-            <select 
-              [ngModel]="user.role" 
-              (ngModelChange)="changeRole(user, $event)"
-              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-50">
-              <option *ngFor="let role of availableRoles" [value]="role.value">
-                {{ role.label }}
-              </option>
-            </select>
-            <span *ngIf="user.permissions && user.permissions.length > 0" class="text-xs text-blue-600 mt-1 block">
-              * Permisos custom activos
-            </span>
-          </td>
-
-          <td class="px-6 py-4 whitespace-nowrap">
-            <span (click)="toggleStatus(user)"
-              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full cursor-pointer select-none"
-              [ngClass]="user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-              {{ user.isActive ? 'Activo' : 'Inactivo' }}
-            </span>
-          </td>
-
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-            <a href="javascript:void(0)" class="text-indigo-600 hover:text-indigo-900">
-              Ver Permisos
-            </a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div *ngIf="loading" class="p-6 text-center text-gray-500">
-      Cargando usuarios...
     </div>
   </div>
+
+  <div class="card">
+    <div class="table-scroll">
+      <table class="excel-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Empresa / NIT</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers; track user._id) {
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar-small">{{ user.name | slice:0:1 }}</div>
+                  <div class="user-info">
+                    <span class="user-name">{{ user.name }}</span>
+                    <span class="user-email">{{ user.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="company-info">
+                  <span class="company-name">{{ user.nombreInmobiliaria || 'N/A' }}</span>
+                  @if (user.nit) { <span class="company-nit">NIT: {{ user.nit }}</span> }
+                </div>
+              </td>
+              <td>
+                <div class="role-selector-wrapper">
+                  <select 
+                    [ngModel]="user.role" 
+                    (ngModelChange)="changeRole(user, $event)"
+                    class="custom-select-sm">
+                    @for (role of availableRoles; track role.value) {
+                      <option [value]="role.value">{{ role.label }}</option>
+                    }
+                  </select>
+                  @if (user.permissions && user.permissions.length > 0) {
+                    <span class="perm-badge" title="Tiene permisos especiales">+ Permisos</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <span (click)="toggleStatus(user)"
+                  class="status-badge"
+                  [class.status-badge--active]="user.isActive"
+                  [class.status-badge--inactive]="!user.isActive">
+                  {{ user.isActive ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td class="text-right">
+                <div class="actions-cell">
+                  <button (click)="openPermissionsModal(user)" class="btn-link" title="Gestionar Permisos">Permisos</button>
+                  <button (click)="openEditModal(user)" class="btn-icon" title="Editar Información">
+                    <i-feather name="edit-2"></i-feather>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          
+          @if (filteredUsers.length === 0 && !loading) {
+            <tr>
+              <td colspan="5" class="text-center p-8 text-gray-500">
+                No se encontraron usuarios que coincidan con "{{ searchTerm }}".
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (loading) { <div class="loading-state"><div class="spinner"></div><p>Cargando...</p></div> }
+  </div>
 </div>
+
+@if (showEditModal && selectedUser) {
+  <div class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>{{ isCreating ? 'Crear Nuevo Usuario' : 'Editar Usuario' }}</h3>
+        <button class="close-btn" (click)="closeModals()"><i-feather name="x"></i-feather></button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="form-group">
+          <label>Nombre Completo *</label>
+          <input [(ngModel)]="selectedUser.name" class="field__input" placeholder="Nombre del usuario">
+        </div>
+
+        <div class="form-group">
+          <label>Correo Electrónico *</label>
+          <input [(ngModel)]="selectedUser.email" class="field__input" placeholder="ejemplo@correo.com" [disabled]="!isCreating">
+        </div>
+
+        @if (isCreating) {
+          <div class="form-group">
+            <label>Contraseña *</label>
+            <input [(ngModel)]="userPassword" type="password" class="field__input" placeholder="Mínimo 8 caracteres">
+          </div>
+          
+          <div class="form-group bg-blue-50 p-3 rounded-md mb-4 border border-blue-100">
+            <label class="text-blue-800">Tipo de Usuario</label>
+            <select [ngModel]="selectedUser.role" 
+                    (ngModelChange)="onRoleChange($event)" 
+                    class="field__input mt-1">
+              @for (role of availableRoles; track role.value) {
+                <option [value]="role.value">{{ role.label }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <div class="divider"></div>
+
+        @if (selectedUser.role === 'inmobiliaria') {
+          <div class="form-group relative"> <label>Seleccionar Inmobiliaria *</label>
+            
+            <div class="custom-select-container">
+              
+              <div class="custom-select" 
+                  [class.open]="isDropdownOpen" 
+                  [class.disabled]="!isCreating && false" 
+                  (click)="toggleDropdown()">
+                
+                <span class="selected-value" [class.placeholder]="!selectedUser.nombreInmobiliaria">
+                  @if (selectedUser.nombreInmobiliaria) {
+                    {{ selectedUser.nombreInmobiliaria }} (NIT: {{ selectedUser.nit }})
+                  } @else {
+                    -- Buscar Inmobiliaria disponible --
+                  }
+                </span>
+                <i-feather name="chevron-down" class="arrow"></i-feather>
+              </div>
+
+              @if (isDropdownOpen) {
+                <div class="dropdown-menu">
+                  
+                  <div class="search-box" (click)="$event.stopPropagation()">
+                    <i-feather name="search" class="search-icon"></i-feather>
+                    <input type="text" 
+                          [(ngModel)]="inmoSearchTerm" 
+                          placeholder="Filtrar por nombre o NIT..."
+                          autofocus>
+                  </div>
+
+                  <div class="options-list">
+                    @for (inmo of searchableInmobiliarias; track inmo._id) {
+                      <div class="option" 
+                          (click)="selectInmobiliaria(inmo)"
+                          [class.selected]="inmo._id === selectedInmoId">
+                        <div class="option-name">{{ inmo.nombreInmobiliaria }}</div>
+                        <div class="option-meta">
+                          <span class="option-nit">NIT: {{ inmo.nit }}</span>
+                          @if (inmo.emailRegistrado) { <span class="badge-current">(Actual)</span> }
+                        </div>
+                      </div>
+                    }
+                    
+                    @if (searchableInmobiliarias.length === 0) {
+                      <div class="option no-data">No se encontraron resultados.</div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (filteredInmobiliarias.length === 0 && isCreating) {
+              <span class="text-xs text-red-500 mt-1">No hay inmobiliarias disponibles sin cuenta.</span>
+            }
+          </div>
+        }
+
+        <div class="form-group">
+          <label>Nombre Empresa (Autocompletado)</label>
+          <input [(ngModel)]="selectedUser.nombreInmobiliaria" class="field__input bg-gray-50" readonly>
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label>NIT</label>
+            <input [(ngModel)]="selectedUser.nit" class="field__input bg-gray-50" readonly>
+          </div>
+          <div class="form-group">
+            <label>Código</label>
+            <input [(ngModel)]="selectedUser.codigoInmobiliaria" class="field__input bg-gray-50" readonly>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--secondary" (click)="closeModals()">Cancelar</button>
+        <button class="btn btn--primary" (click)="saveEditUser()">
+          {{ isCreating ? 'Crear Usuario' : 'Guardar Cambios' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showPermissionsModal && selectedUser) {
+  <div class="modal-overlay">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3>Gestionar Permisos</h3>
+        <button class="close-btn" (click)="closeModals()"><i-feather name="x"></i-feather></button>
+      </div>
+      <div class="modal-body">
+        <p class="helper-text">Permisos adicionales para <strong>{{ selectedUser.name }}</strong>.</p>
+        <div class="permissions-grid">
+          @for (perm of availablePermissions; track perm.key) {
+            <label class="permission-item" [class.active]="hasPermission(perm.key)">
+              <input type="checkbox" [checked]="hasPermission(perm.key)" (change)="togglePermission(perm.key)">
+              <span class="perm-label">{{ perm.label }}</span>
+            </label>
+          }
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--secondary" (click)="closeModals()">Cancelar</button>
+        <button class="btn btn--primary" (click)="savePermissions()">Aplicar</button>
+      </div>
+    </div>
+  </div>
+}

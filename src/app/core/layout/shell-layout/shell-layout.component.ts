@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -17,13 +17,12 @@ import { FeatherModule } from 'angular-feather';
   selector: 'app-shell-layout',
   standalone: true,
   imports: [
-    CommonModule, 
-    RouterOutlet, 
-    RouterLink, 
-    RouterLinkActive, 
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
     FormsModule,
-    FeatherModule // 2. Importamos el módulo para poder usar <i-feather> en el HTML
-  ],
+    FeatherModule
+],
   templateUrl: './shell-layout.component.html',
   styleUrl: './shell-layout.component.scss'
 })
@@ -74,7 +73,7 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
     window.removeEventListener('resize', this.handleResize.bind(this));
   }
 
-  private loadMenuSections() {
+private loadMenuSections() {
     const user = this.authService.getUserData();
     const currentRole = user?.role || 'guest';
     const currentPermissions = user?.permissions || [];
@@ -88,20 +87,29 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
         this.menuSections = sections.map(section => {
           
           const filteredItems = section.items.filter(item => {
+            // 1. Admin ve todo siempre
             if (isAdmin) return true;
 
-            if (item.roles && item.roles.length > 0 && !item.roles.includes(currentRole)) {
-              return false;
-            }
+            // 2. Analizar requisitos del ítem
+            const itemRoles = item.roles || [];
+            // Cast a 'any' para leer permissions si no está en la interfaz base aún, 
+            // aunque ya debería estar si actualizaste el modelo plugin.interface.ts
+            const itemPerms = (item as any).permissions as string[] || []; 
 
-            const itemPerms = (item as any).permissions as string[] | undefined;
-            
-            if (itemPerms && itemPerms.length > 0) {
-               const hasPerm = itemPerms.some(p => currentPermissions.includes(p));
-               if (!hasPerm) return false;
-            }
+            const requiresRoles = itemRoles.length > 0;
+            const requiresPerms = itemPerms.length > 0;
 
-            return true;
+            // 3. Si el ítem es público (sin roles ni permisos), mostrarlo
+            if (!requiresRoles && !requiresPerms) return true;
+
+            // 4. LÓGICA OR (Permisiva): 
+            // Cumple si tiene el Rol correcto O si tiene el Permiso correcto
+            const matchesRole = requiresRoles ? itemRoles.includes(currentRole) : false;
+            const matchesPerms = requiresPerms ? itemPerms.some(p => currentPermissions.includes(p)) : false;
+
+            // Si cumple cualquiera de los dos, pasa.
+            // (Antes el matchesRole false te bloqueaba inmediatamente)
+            return matchesRole || matchesPerms;
           });
 
           return { ...section, items: filteredItems };

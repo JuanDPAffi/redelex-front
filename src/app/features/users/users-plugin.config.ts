@@ -14,11 +14,11 @@ export const USERS_PLUGIN_CONFIG: PluginConfig = {
       label: 'Usuarios',
       icon: 'users', // Asegúrate de tener un ícono 'users' o usa 'user'
       route: '/panel/usuarios',
-      // Solo se muestra si el usuario tiene permiso de ver usuarios
       permissions: ['users:view'],
       roles: ['admin'], // Fallback legacy
       enabled: true,
-      order: 99 // Al final del menú
+      order: 2,
+      sectionId: 'sistema'
     }
   ],
   

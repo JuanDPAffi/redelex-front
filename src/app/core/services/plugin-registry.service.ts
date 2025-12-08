@@ -1,5 +1,3 @@
-// src/app/core/services/plugin-registry.service.ts
-
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { PluginConfig, MenuItem, MenuSection } from '../models/plugin.interface';
@@ -69,17 +67,8 @@ export class PluginRegistryService {
     const sections = this.menuSections$.value;
     
     items.forEach(item => {
-      // 1. Determinar la sección destino
-      let targetSectionId = 'consultas'; // Por defecto
+      const targetSectionId = item.sectionId || 'consultas';
 
-      // Lógica simple para distribuir los items:
-      if (item.id.includes('users') || item.id === 'admin') {
-        targetSectionId = 'sistema'; // Gestión de usuarios va en Sistema
-      } else if (item.id.includes('informe') || item.id.includes('reporte')) {
-        targetSectionId = 'reportes'; // Informes van en Reportes
-      }
-
-      // 2. Buscar la sección correcta
       const sectionIndex = sections.findIndex(s => s.id === targetSectionId);
       
       if (sectionIndex !== -1) {
@@ -93,7 +82,14 @@ export class PluginRegistryService {
             enabled: item.enabled ?? true
           });
         }
+      } else {
+        console.warn(`⚠️ La sección '${targetSectionId}' no existe para el ítem '${item.label}'`);
       }
+    });
+    
+    // Ordenar items por la propiedad 'order'
+    sections.forEach(section => {
+        section.items.sort((a, b) => (a.order || 99) - (b.order || 99));
     });
     
     this.menuSections$.next([...sections]);

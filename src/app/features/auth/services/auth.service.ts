@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../../environments/environment.prod';
 
-// ... Interfaces de Payload se mantienen ...
 export interface LoginPayload {
   email: string;
   password: string;
@@ -13,6 +12,8 @@ export interface RegisterPayload {
     email: string;
     password: string;
     role?: string;
+    nit?: string; 
+    codigoInmobiliaria?: string;
 }
 export interface ResetPasswordPayload {
     email: string;

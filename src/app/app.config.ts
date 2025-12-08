@@ -13,7 +13,8 @@ import { authInterceptor } from './features/auth/interceptors/auth-interceptor';
 // 1. IMPORTAMOS LA LIBRERÍA Y LOS ÍCONOS AQUÍ
 import { FeatherModule } from 'angular-feather';
 import { 
-  Search, LogOut, Menu, X, Users, Folder, BarChart2, FileText 
+  Search, LogOut, Menu, X, Users, Folder, BarChart2, FileText,
+  Plus, Edit2, Info, Shield, Check, Trash, Eye, EyeOff, ChevronDown, Home, UploadCloud, RefreshCw
 } from 'angular-feather/icons';
 
 registerLocaleData(localeEsCo, 'es-CO');
@@ -27,14 +28,8 @@ export const appConfig: ApplicationConfig = {
     // 2. REGISTRAMOS LOS ÍCONOS GLOBALMENTE
     importProvidersFrom(
       FeatherModule.pick({
-        Search,
-        LogOut,
-        Menu,
-        X,
-        Users,
-        Folder,
-        BarChart2,
-        FileText
+        Search, LogOut, Menu, X, Users, Folder, BarChart2, FileText,
+        Plus, Edit2, Info, Shield, Check, Trash, Eye, EyeOff, ChevronDown, Home, UploadCloud, RefreshCw
       })
     ),
 

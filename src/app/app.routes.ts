@@ -44,6 +44,11 @@ export const routes: Routes = [
         path: '',
         redirectTo: 'consultas/mis-procesos', // O la ruta que prefieras por defecto
         pathMatch: 'full'
+      },
+      {
+        path: 'inmobiliarias',
+        loadChildren: () => import('./features/inmobiliaria/inmobiliaria.routes')
+          .then(m => m.INMOBILIARIA_ROUTES)
       }
     ]
   },

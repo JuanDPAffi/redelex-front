@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';
-import { UserData } from '../../auth/services/auth.service';
+import { UserData, RegisterPayload } from '../../auth/services/auth.service';
+import { environment } from '../../../../environments/environment.prod';
 
 // --- CORRECCIÓN AQUÍ ---
 export interface User extends UserData {
@@ -20,6 +20,7 @@ export interface User extends UserData {
 })
 export class UsersService {
   private apiUrl = `${environment.apiUrl}api/users`;
+  private authUrl = `${environment.apiUrl}api/auth`;
 
   constructor(private http: HttpClient) {}
 
@@ -41,5 +42,13 @@ export class UsersService {
 
   updatePermissions(id: string, permissions: string[]): Observable<User> {
     return this.http.put<User>(`${this.apiUrl}/${id}/permissions`, { permissions });
+  }
+
+  updateUser(id: string, data: Partial<User>): Observable<User> {
+    return this.http.put<User>(`${this.apiUrl}/${id}`, data);
+  }
+
+createUser(data: RegisterPayload): Observable<any> {
+    return this.http.post(`${this.authUrl}/register`, data);
   }
 }
