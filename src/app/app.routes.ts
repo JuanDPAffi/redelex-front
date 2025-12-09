@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
-import { roleGuard } from './core/guards/role.guard'; // Usamos el nuevo Guard
+import { roleGuard } from './core/guards/role.guard'; 
+import { panelRedirectGuard } from './core/guards/panel-redirect.guard'; 
 
 export const routes: Routes = [
   // Redirección inicial
@@ -9,7 +10,7 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
 
-  // Rutas Públicas (Login, Registro)
+  // Rutas Públicas (Auth)
   {
     path: 'auth',
     loadChildren: () => 
@@ -22,33 +23,34 @@ export const routes: Routes = [
     loadComponent: () => 
       import('./core/layout/shell-layout/shell-layout.component')
         .then(m => m.ShellLayoutComponent),
-    // Protegemos el panel: Solo entran roles válidos
     canActivate: [roleGuard(['admin', 'affi', 'inmobiliaria'])],
     children: [
-      // Módulo Redelex (Consultas)
+      // Módulos (consultas, usuarios, inmobiliarias)
       {
         path: 'consultas',
         loadChildren: () => 
-          import('./features/redelex/redelex.routes')
-            .then(m => m.REDELEX_ROUTES)
+          import('./features/redelex/redelex.routes').then(m => m.REDELEX_ROUTES)
       },
-      // NUEVO: Módulo Usuarios (Sistema)
       {
         path: 'usuarios',
         loadChildren: () => 
-          import('./features/users/users.routes')
-            .then(m => m.USERS_ROUTES)
-      },
-      // Default del panel
-      {
-        path: '',
-        redirectTo: 'consultas/mis-procesos', // O la ruta que prefieras por defecto
-        pathMatch: 'full'
+          import('./features/users/users.routes').then(m => m.USERS_ROUTES)
       },
       {
         path: 'inmobiliarias',
         loadChildren: () => import('./features/inmobiliaria/inmobiliaria.routes')
           .then(m => m.INMOBILIARIA_ROUTES)
+      },
+      
+      // --- RUTA DEFAULT INTELIGENTE (SOLUCIÓN FINAL) ---
+      {
+        path: '',
+        canActivate: [panelRedirectGuard], // El Guard ejecuta la lógica y navega
+        loadComponent: () => 
+          import('./core/components/empty-redirect/empty-redirect.component')
+            .then(m => m.EmptyRedirectComponent), // Componente estructural vacío para el router
+        pathMatch: 'full' // Mantener full para asegurar que anule los módulos, 
+                          // aunque el loadComponent sea el que satisfaga la necesidad estructural
       }
     ]
   },

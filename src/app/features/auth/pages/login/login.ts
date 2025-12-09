@@ -24,10 +24,14 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private titleService: Title
   ) {
-    // CAMBIO: Si ya está logueado, usar redirección inteligente basada en permisos
+    // Si ya está logueado, redirigir inteligentemente
     if (this.authService.isLoggedIn()) {
-      const defaultRoute = this.authService.getDefaultRoute();
-      this.router.navigate([defaultRoute]);
+      const user = this.authService.getUserData();
+      if (user?.role === 'admin') {
+         this.router.navigate(['/panel/consultas/consultar-proceso']);
+      } else {
+         this.router.navigate(['/panel/consultas/mis-procesos']);
+      }
       return;
     }
 
@@ -66,7 +70,7 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(this.form.value).subscribe({
       next: res => {
-        // Guardamos los datos del usuario (incluye permisos)
+        // Guardamos los datos del usuario
         if (res.user) {
            this.authService.saveUserData(res.user);
         }
@@ -77,16 +81,23 @@ export class LoginComponent implements OnInit {
           text: 'Inicio de sesión exitoso.',
           timer: 1300,
           showConfirmButton: false
-        }).then(() => {
-          // CAMBIO CRÍTICO: Usar redirección inteligente basada en permisos
-          const defaultRoute = this.authService.getDefaultRoute();
-          this.router.navigate([defaultRoute]);
+          }).then(() => {
+          const user = this.authService.getUserData();
+          
+          if (user?.role === 'affi') {
+            this.router.navigate(['/panel/consultas/consultar-proceso']); 
+          } else if (user?.role === 'admin' || user?.role === 'inmobiliaria') {
+            this.router.navigate(['/panel/consultas/mis-procesos']);
+          } else {
+            // Fallback
+            this.router.navigate(['/panel']); 
+          }
         });
       },
       error: err => {
         const mensajeBackend = err.error?.message || '';
 
-        // Manejo de errores específicos del backend
+        // --- CORRECCIÓN AQUÍ: Agregamos 'intento(s)' ---
         if (
           mensajeBackend.toLowerCase().includes('desactivado') || 
           mensajeBackend.toLowerCase().includes('inactivo') ||
