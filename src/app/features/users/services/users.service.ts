@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { UserData, RegisterPayload } from '../../auth/services/auth.service';
-import { environment } from '../../../../environments/environment.prod';
+import { environment } from '../../../../environments/environment';
 
 // --- CORRECCIÓN AQUÍ ---
 export interface User extends UserData {
@@ -11,8 +11,8 @@ export interface User extends UserData {
   createdAt: string;
   loginAttempts: number;
   nombreInmobiliaria?: string;
-  nit?: string;                // <--- Faltaba esto
-  codigoInmobiliaria?: string; // Agreguémoslo por si acaso
+  nit?: string;
+  codigoInmobiliaria?: string;
 }
 
 @Injectable({

@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.estadosprocesales.affi.net/'
+  apiUrl: 'https://api.estadosprocesales.affi.net/' // Tu backend real
 };
