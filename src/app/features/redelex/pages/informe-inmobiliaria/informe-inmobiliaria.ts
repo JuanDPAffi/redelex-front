@@ -34,7 +34,7 @@ export class InformeInmobiliariaComponent implements OnInit {
   private clasePipe = inject(ClaseProcesoPipe); // Inyección
 
   ngOnInit(): void {
-    this.titleService.setTitle('Affi - Informe Inmobiliaria');
+    this.titleService.setTitle('Estados Procesales - Informe Inmobiliaria');
     this.loadInforme();
   }
   

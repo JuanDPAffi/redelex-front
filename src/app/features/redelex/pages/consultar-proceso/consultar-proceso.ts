@@ -98,7 +98,7 @@ export class ConsultarProcesoComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.titleService.setTitle('Affi - Consulta de Procesos');
+    this.titleService.setTitle('Estados Procesales - Consulta de Procesos');
   }
 
   formatObservaciones(obs: string | null | undefined): string {

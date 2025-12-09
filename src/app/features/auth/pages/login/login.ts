@@ -40,7 +40,7 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.titleService.setTitle('Affi - Iniciar Sesión');
+    this.titleService.setTitle('Estados Procesales - Iniciar Sesión');
   }
 
   submit() {

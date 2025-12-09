@@ -12,12 +12,21 @@ export const permissionGuard = (requiredPermission: string): CanActivateFn => {
     const authService = inject(AuthService);
     const router = inject(Router);
     
+    const user = authService.getUserData();
+    
+    // 1. CASO NO LOGUEADO (AUTENTICACIÓN)
+    if (!user) {
+      router.navigate(['/auth/login']);
+      return false;
+    }
+
+    // 2. VALIDAR PERMISOS (AUTORIZACIÓN)
     // Usamos el helper centralizado
     if (authService.hasPermission(requiredPermission)) {
       return true;
     }
 
-    // Bloqueo
+    // 3. DENIEGO Y ALERTA (Usuario logueado pero sin el permiso)
     console.warn(`⛔ Acceso denegado. Se requiere permiso: ${requiredPermission}`);
     AffiAlert.fire({
       icon: 'error',
@@ -25,7 +34,8 @@ export const permissionGuard = (requiredPermission: string): CanActivateFn => {
       text: 'No tienes los permisos necesarios para acceder a esta sección.'
     });
 
-    router.navigate(['/home']); // O al dashboard por defecto
+    // Lo enviamos a una ruta segura
+    router.navigate(['/panel']); 
     return false;
   };
 };

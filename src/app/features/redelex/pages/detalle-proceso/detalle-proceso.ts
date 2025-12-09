@@ -367,7 +367,7 @@ export class DetalleProcesoComponent implements OnInit {
         doc.setFontSize(8);
         doc.setTextColor(150);
         doc.text(`Página ${i} de ${pageCount}`, pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-        doc.text(`Affi - Sistema de Gestión Procesal`, margin, doc.internal.pageSize.height - 10);
+        doc.text(`Estados Procesales - Sistema de Gestión Procesal`, margin, doc.internal.pageSize.height - 10);
       }
 
       doc.save(`Ficha_${this.detalle.numeroRadicacion || 'Proceso'}.pdf`);

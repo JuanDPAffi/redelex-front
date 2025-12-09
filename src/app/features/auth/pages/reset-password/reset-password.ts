@@ -37,7 +37,7 @@ export class ResetPasswordComponent {
     });
   }
   ngOnInit(): void {
-    this.titleService.setTitle('Affi - Nueva Contraseña');
+    this.titleService.setTitle('Estados Procesales - Nueva Contraseña');
   }
 
   submit() {

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, finalize } from 'rxjs';
 import { environment } from '../../../../environments/environment.prod';
 
 export interface LoginPayload {
@@ -60,13 +60,18 @@ export class AuthService {
     );
   }
 
-  logout(): void {
-    this.http.post(`${this.apiUrl}logout`, {}).subscribe({
-      next: () => this.logoutClientSide(),
-      error: () => this.logoutClientSide()
-    });
+  logout(): Observable<any> {
+    // Retornamos el Observable de la petición POST
+    return this.http.post(`${this.apiUrl}logout`, {}).pipe(
+      // finalize asegura que esta función se ejecute cuando el Observable se completa
+      // (ya sea con éxito en el backend o por un error de red).
+      finalize(() => { 
+        this.logoutClientSide();
+      })
+    );
   }
 
+  // La limpieza de local storage debe ser una función síncrona
   logoutClientSide(): void {
     localStorage.removeItem('redelex_user');
   }

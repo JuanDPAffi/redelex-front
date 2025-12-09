@@ -70,7 +70,7 @@ export class MisProcesosComponent implements OnInit {
   ];
 
   ngOnInit() {
-    this.titleService.setTitle('Affi - Mis Procesos');
+    this.titleService.setTitle('Estados Procesales - Mis Procesos');
     this.cargarMisProcesos();
   }
 

@@ -207,7 +207,16 @@ private loadMenuSections() {
   }
 
   logout() {
-    this.authService.logout(); 
-    this.router.navigate(['/auth/login']);
+    // Nos suscribimos al observable de logout
+    this.authService.logout().subscribe({
+      next: () => {
+        // Éxito del backend: La limpieza ya se hizo en el 'finalize' del servicio
+        this.router.navigate(['/auth/login']);
+      },
+      error: () => {
+        // Falla de red: La limpieza local YA SE HIZO. Navegamos igual.
+        this.router.navigate(['/auth/login']);
+      }
+    });
   }
 }

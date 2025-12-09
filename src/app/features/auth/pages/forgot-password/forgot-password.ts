@@ -28,7 +28,7 @@ export class ForgotPasswordComponent {
   }
 
   ngOnInit(): void {
-    this.titleService.setTitle('Affi - Restablecer Contraseña');
+    this.titleService.setTitle('Estados Procesales - Restablecer Contraseña');
   }
 
   submit() {

@@ -11,24 +11,32 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
     const user = authService.getUserData();
     const currentRole = user?.role || '';
     
-    // 1. PODER ABSOLUTO: Si es admin, pasa siempre
+    // 1. CASO NO LOGUEADO (AUTENTICACIÓN)
+    if (!user) {
+      // Redirigir silenciosamente al login
+      router.navigate(['/auth/login']); 
+      return false;
+    }
+    
+    // 2. PODER ABSOLUTO: Si es admin, pasa siempre
     if (currentRole === 'admin') {
       return true;
     }
 
-    // 2. Validar si el rol está permitido
-    if (user && allowedRoles.includes(currentRole)) {
+    // 3. Validar si el rol está permitido (AUTORIZACIÓN)
+    if (allowedRoles.includes(currentRole)) {
       return true;
     }
 
-    // 3. Denegar
+    // 4. DENIEGO Y ALERTA (Usuario logueado pero sin el rol)
     AffiAlert.fire({
       icon: 'error',
       title: 'Acceso Denegado',
       text: `Tu perfil de usuario no tiene acceso a esta sección.`
     });
 
-    router.navigate(['/home']); // Redirigir a un lugar seguro en vez de login si ya está logueado
+    // Lo enviamos a una ruta segura dentro de su panel
+    router.navigate(['/panel']); 
     return false;
   };
 };
