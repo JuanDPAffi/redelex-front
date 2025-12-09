@@ -102,7 +102,7 @@
           </div>
         </div>
 
-        <button class="icon-btn icon-btn--help" title="Ayuda">
+        <button class="icon-btn icon-btn--help" title="Ayuda" (click)="openSupportModal()">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
@@ -119,6 +119,42 @@
       </div>
     </header>
 
+    @if (showSupportModal) {
+      <div class="modal-overlay">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3>Soporte Técnico</h3>
+            <button class="close-btn" (click)="closeSupportModal()">
+              <i-feather name="x"></i-feather>
+            </button>
+          </div>
+          
+          <div class="modal-body">
+            <p class="helper text-left mb-4 px-0">
+              ¿Tienes algún problema o sugerencia? Envíanos un ticket y te responderemos al correo registrado.
+            </p>
+
+            <div class="form-group">
+              <label>Asunto</label>
+              <input [(ngModel)]="ticketData.subject" class="field__input" placeholder="Ej: Error al cargar procesos">
+            </div>
+
+            <div class="form-group">
+              <label>Descripción del problema</label>
+              <textarea [(ngModel)]="ticketData.content" class="field__input" rows="4" placeholder="Describe detalladamente lo que sucede..."></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn--secondary" (click)="closeSupportModal()">Cancelar</button>
+            <button class="btn btn--primary" (click)="sendTicket()" [disabled]="isSendingTicket">
+              {{ isSendingTicket ? 'Enviando...' : 'Crear Ticket' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- CONTENT -->
     <main class="main__content">
       <router-outlet></router-outlet>
@@ -130,7 +166,7 @@
       <div class="footer__links">
         <a href="#">Política de privacidad</a>
         <a href="#" class="footer__links--desktop">Términos de servicio</a>
-        <a href="#" class="footer__links--desktop">Soporte</a>
+        <a (click)="openSupportModal()" class="footer__links--desktop" style="cursor: pointer;">Soporte</a>
       </div>
     </footer>
   </div>

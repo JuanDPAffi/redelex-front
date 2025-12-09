@@ -12,6 +12,8 @@ import { AuthService, UserData } from '../../../features/auth/services/auth.serv
 
 // 1. Importamos solo el módulo base (los íconos ya se registraron en app.config.ts)
 import { FeatherModule } from 'angular-feather';
+import { SupportService } from '../../services/support.service';
+import { AffiAlert } from '../../../shared/services/affi-alert';
 
 @Component({
   selector: 'app-shell-layout',
@@ -32,6 +34,11 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   userName = 'Usuario';
   userRole = 'Invitado';
   userInitials = 'U';
+
+  // VARIABLES NUEVAS PARA SOPORTE
+  showSupportModal = false;
+  isSendingTicket = false;
+  ticketData = { subject: '', content: '' };
   
   menuSections: MenuSection[] = [];
   breadcrumbs: { label: string, active?: boolean }[] = [];
@@ -41,7 +48,8 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private pluginRegistry: PluginRegistryService,
-    private authService: AuthService
+    private authService: AuthService,
+    private supportService: SupportService
   ) {}
 
   ngOnInit() {
@@ -71,6 +79,41 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
     window.removeEventListener('resize', this.handleResize.bind(this));
+  }
+
+  // --- LÓGICA DE SOPORTE ---
+  openSupportModal() {
+    this.ticketData = { subject: '', content: '' };
+    this.showSupportModal = true;
+  }
+
+  closeSupportModal() {
+    this.showSupportModal = false;
+  }
+
+  sendTicket() {
+    if (!this.ticketData.subject || !this.ticketData.content) {
+      AffiAlert.fire({ icon: 'warning', title: 'Campos incompletos', text: 'Por favor completa el asunto y el mensaje.' });
+      return;
+    }
+
+    this.isSendingTicket = true;
+
+    this.supportService.createTicket(this.ticketData.subject, this.ticketData.content).subscribe({
+      next: () => {
+        this.isSendingTicket = false;
+        this.closeSupportModal();
+        AffiAlert.fire({ 
+          icon: 'success', 
+          title: 'Ticket Creado', 
+          text: 'Hemos recibido tu solicitud. Nuestro equipo te contactará pronto.' 
+        });
+      },
+      error: () => {
+        this.isSendingTicket = false;
+        AffiAlert.fire({ icon: 'error', title: 'Error', text: 'No pudimos crear el ticket. Intenta de nuevo más tarde.' });
+      }
+    });
   }
 
 private loadMenuSections() {

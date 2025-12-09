@@ -110,6 +110,10 @@ main {
 // =============================================
 // SweetAlert AFFI Styles
 // =============================================
+.swal2-container {
+  z-index: 20000 !important;
+}
+
 .affi-swal-popup {
   border-radius: var(--border-radius-2xl) !important;
   padding: 22px 24px 20px !important;
