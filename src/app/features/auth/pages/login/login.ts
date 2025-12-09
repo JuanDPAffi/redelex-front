@@ -24,14 +24,10 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private titleService: Title
   ) {
-    // Si ya está logueado, redirigir inteligentemente
+    // CAMBIO: Si ya está logueado, usar redirección inteligente basada en permisos
     if (this.authService.isLoggedIn()) {
-      const user = this.authService.getUserData();
-      if (user?.role === 'admin') {
-         this.router.navigate(['/panel/consultas/consultar-proceso']);
-      } else {
-         this.router.navigate(['/panel/consultas/mis-procesos']);
-      }
+      const defaultRoute = this.authService.getDefaultRoute();
+      this.router.navigate([defaultRoute]);
       return;
     }
 
@@ -70,7 +66,7 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(this.form.value).subscribe({
       next: res => {
-        // Guardamos los datos del usuario
+        // Guardamos los datos del usuario (incluye permisos)
         if (res.user) {
            this.authService.saveUserData(res.user);
         }
@@ -81,20 +77,16 @@ export class LoginComponent implements OnInit {
           text: 'Inicio de sesión exitoso.',
           timer: 1300,
           showConfirmButton: false
-          }).then(() => {
-          const user = this.authService.getUserData();
-          
-          if (user?.role === 'admin') {
-            this.router.navigate(['/panel/consultas/consultar-proceso']); 
-          } else {
-            this.router.navigate(['/panel/consultas/mis-procesos']);
-          }
+        }).then(() => {
+          // CAMBIO CRÍTICO: Usar redirección inteligente basada en permisos
+          const defaultRoute = this.authService.getDefaultRoute();
+          this.router.navigate([defaultRoute]);
         });
       },
       error: err => {
         const mensajeBackend = err.error?.message || '';
 
-        // --- CORRECCIÓN AQUÍ: Agregamos 'intento(s)' ---
+        // Manejo de errores específicos del backend
         if (
           mensajeBackend.toLowerCase().includes('desactivado') || 
           mensajeBackend.toLowerCase().includes('inactivo') ||

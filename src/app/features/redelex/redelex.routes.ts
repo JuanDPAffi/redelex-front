@@ -1,6 +1,39 @@
 import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { roleGuard } from '../../core/guards/role.guard';
-import { permissionGuard } from '../../core/guards/permission.guard'; // Asegúrate de importar esto
+import { permissionGuard } from '../../core/guards/permission.guard';
+import { AuthService } from '../auth/services/auth.service';
+
+/**
+ * Guard inteligente que redirige según permisos del usuario
+ * Evita el bucle infinito al NO bloquear, sino redirigir correctamente
+ */
+const smartDefaultRedirect = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  
+  const user = authService.getUserData();
+  
+  if (!user) {
+    router.navigate(['/auth/login']);
+    return false;
+  }
+
+  // Redirigir según permisos
+  if (authService.hasPermission('procesos:view_all')) {
+    // AFFI o ADMIN -> Consultar Proceso
+    router.navigate(['/panel/consultas/consultar-proceso']);
+  } else if (authService.hasPermission('procesos:view_own')) {
+    // INMOBILIARIA -> Mis Procesos
+    router.navigate(['/panel/consultas/mis-procesos']);
+  } else {
+    // Fallback: Usuario sin permisos de procesos (edge case)
+    router.navigate(['/panel/consultas/consultar-proceso']);
+  }
+  
+  return false; // Siempre retorna false porque ya hicimos la navegación
+};
 
 export const REDELEX_ROUTES: Routes = [
   {
@@ -35,7 +68,6 @@ export const REDELEX_ROUTES: Routes = [
 
       // 4. Detalle Proceso (Compartido)
       // Aquí entran tanto Inmobiliarias como Affis.
-      // Usamos roleGuard para asegurar que sea un usuario válido del sistema.
       // La seguridad de datos (ver propio vs ver todo) la hace el Backend.
       {
         path: 'proceso/:id',
@@ -44,13 +76,11 @@ export const REDELEX_ROUTES: Routes = [
         canActivate: [roleGuard(['admin', 'affi', 'inmobiliaria'])]
       },
 
-      // Default: Redirigir según el rol es complicado en rutas estáticas.
-      // Lo ideal es que el login redirija. Aquí dejamos 'mis-procesos' por defecto
-      // o podrías crear un componente 'Dashboard' inteligente.
+      // CAMBIO CRÍTICO: Ruta default con redirección inteligente
       {
         path: '',
-        redirectTo: 'mis-procesos',
-        pathMatch: 'full'
+        canActivate: [smartDefaultRedirect],
+        children: [] // Necesario para que Angular no crashee
       }
     ]
   }

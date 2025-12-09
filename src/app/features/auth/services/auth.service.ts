@@ -21,13 +21,12 @@ export interface ResetPasswordPayload {
     password: string;
 }
 
-// 1. ACTUALIZAMOS LA INTERFAZ DEL USUARIO
 export interface UserData {
     id?: string;
     name?: string;
     email?: string;
     role?: string;
-    permissions?: string[]; // <--- NUEVO
+    permissions?: string[];
 }
 
 @Injectable({
@@ -53,37 +52,35 @@ export class AuthService {
   login(data: LoginPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}login`, data).pipe(
       tap((response: any) => {
+        // El backend guarda el token en una cookie HTTP-only
+        // Solo guardamos los datos del usuario en localStorage
         if (response.user) {
-           this.saveUserData(response.user);
+          this.saveUserData(response.user);
         }
       })
     );
   }
 
   logout(): Observable<any> {
-    // Retornamos el Observable de la petición POST
     return this.http.post(`${this.apiUrl}logout`, {}).pipe(
-      // finalize asegura que esta función se ejecute cuando el Observable se completa
-      // (ya sea con éxito en el backend o por un error de red).
       finalize(() => { 
         this.logoutClientSide();
       })
     );
   }
 
-  // La limpieza de local storage debe ser una función síncrona
   logoutClientSide(): void {
     localStorage.removeItem('redelex_user');
+    // El token está en una cookie HTTP-only, el backend la eliminará
   }
 
-  // 2. GUARDAR DATOS COMPLETOS (ROL + PERMISOS)
   saveUserData(userData: any): void { 
     const normalizedData: UserData = {
       id: userData.id || userData._id,
       name: userData.name || userData.nombre || '',
       email: userData.email || '',
       role: userData.role || userData.rol || 'inmobiliaria',
-      permissions: userData.permissions || [] // <--- GUARDAMOS PERMISOS
+      permissions: userData.permissions || []
     };
     localStorage.setItem('redelex_user', JSON.stringify(normalizedData));
   }
@@ -101,30 +98,28 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('redelex_user'); 
+    // Solo verificar si hay usuario, el token está en la cookie
+    return !!localStorage.getItem('redelex_user');
   }
 
-  // --- NUEVOS HELPERS DE AUTORIZACIÓN ---
+  // --- HELPERS DE AUTORIZACIÓN ---
 
-  // Verifica si es Super Admin (Pase libre)
   isAdmin(): boolean {
     const user = this.getUserData();
     return user?.role === 'admin';
   }
 
-  // Verifica si tiene un permiso específico (o es admin)
   hasPermission(requiredPermission: string): boolean {
     const user = this.getUserData();
     if (!user) return false;
 
-    // Admin tiene poder absoluto (igual que en backend)
+    // Admin tiene poder absoluto
     if (user.role === 'admin') return true;
 
     // Verificar en el array de permisos
     return user.permissions?.includes(requiredPermission) || false;
   }
 
-  // Verificar si tiene AL MENOS UNO de un array de permisos
   hasAnyPermission(permissions: string[]): boolean {
     if (!permissions || permissions.length === 0) return true;
     const user = this.getUserData();
@@ -134,7 +129,38 @@ export class AuthService {
     return permissions.some(p => user.permissions?.includes(p));
   }
 
-  // ... Resto de métodos (activateAccount, resetPassword) se mantienen igual ...
+  /**
+   * Obtiene la ruta de destino según los permisos del usuario
+   * Previene bucles infinitos al redirigir a rutas accesibles
+   */
+  getDefaultRoute(): string {
+    const user = this.getUserData();
+    
+    if (!user) {
+      return '/auth/login';
+    }
+
+    // Admin y AFFI: Tienen procesos:view_all
+    if (this.hasPermission('procesos:view_all')) {
+      return '/panel/consultas/consultar-proceso';
+    }
+
+    // INMOBILIARIA: Tiene procesos:view_own
+    if (this.hasPermission('procesos:view_own')) {
+      return '/panel/consultas/mis-procesos';
+    }
+
+    // Usuarios con permisos de reportes pero sin procesos
+    if (this.hasPermission('reports:view')) {
+      return '/panel/consultas/informe-inmobiliaria';
+    }
+
+    // Fallback: Ruta segura por defecto
+    return '/panel/consultas/consultar-proceso';
+  }
+
+  // --- OTROS MÉTODOS ---
+
   activateAccount(email: string, token: string): Observable<any> {
     return this.http.post(`${this.apiUrl}activate`, { email, token });
   }
