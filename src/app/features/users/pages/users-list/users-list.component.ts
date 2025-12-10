@@ -16,6 +16,7 @@ import { RegisterPayload } from '../../../auth/services/auth.service';
 })
 export class UsersListComponent implements OnInit {
   users: User[] = [];
+  filteredUsers: User[] = []; // Array filtrado
   inmobiliarias: InmobiliariaLookup[] = []; 
   loading = true;
 
@@ -34,7 +35,14 @@ export class UsersListComponent implements OnInit {
   itemsPerPage = 10;
   pageSizeOptions = [5, 10, 20, 50];
 
-  // --- FILTROS AVANZADOS ---
+  readonly DEFAULT_PERMISSIONS: Record<string, string[]> = {
+    'admin': [],
+    'affi': ['reports:view', 'utils:export', 'procesos:view_all'],
+    'inmobiliaria': ['procesos:view_own', 'utils:export']
+  };
+
+  // --- FILTROS ---
+  // Centralizamos todo aquí para que coincida con el HTML
   filtros = {
     busquedaGeneral: '',
     rol: '',
@@ -43,11 +51,8 @@ export class UsersListComponent implements OnInit {
     nombreInmobiliaria: ''
   };
 
-  // Lista única de roles y estados disponibles
   listaRoles: string[] = [];
   listaEstados = ['Activo', 'Inactivo'];
-
-  // Control de dropdowns
   activeDropdown: string | null = null;
 
   availableRoles = [
@@ -72,7 +77,6 @@ export class UsersListComponent implements OnInit {
   ];
 
   tempPermissions: string[] = [];
-
   isDropdownOpen = false;
   inmoSearchTerm = '';
 
@@ -87,13 +91,13 @@ export class UsersListComponent implements OnInit {
     this.loadInmobiliarias(); 
   }
 
-
   loadUsers() {
     this.loading = true;
     this.usersService.getAllUsers().subscribe({
       next: (data) => {
         this.users = data;
         this.extraerListasUnicas();
+        this.applyFilters(); // Inicializar lista
         this.loading = false;
       },
       error: () => {
@@ -110,7 +114,6 @@ export class UsersListComponent implements OnInit {
     });
   }
 
-  // --- EXTRAER LISTAS ÚNICAS PARA FILTROS ---
   extraerListasUnicas() {
     const rolesSet = new Set<string>();
     this.users.forEach(user => {
@@ -122,40 +125,64 @@ export class UsersListComponent implements OnInit {
     this.listaRoles = Array.from(rolesSet).sort();
   }
 
-  // --- FILTROS ---
-  get filteredUsers() {
-    return this.users.filter(user => {
-      // Búsqueda General
-      if (this.filtros.busquedaGeneral) {
-        const term = this.filtros.busquedaGeneral.toLowerCase();
-        const match = 
-          user.name?.toLowerCase().includes(term) ||
-          user.email?.toLowerCase().includes(term) ||
-          user.nit?.includes(term) ||
-          user.nombreInmobiliaria?.toLowerCase().includes(term);
-        if (!match) return false;
-      }
+  hasCustomPermissions(user: User): boolean {
+    if (!user.role) return false;
+    
+    const defaults = this.DEFAULT_PERMISSIONS[user.role] || [];
+    const current = user.permissions || [];
 
-      // Filtro por Rol
-      if (this.filtros.rol) {
-        const roleLabel = this.availableRoles.find(r => r.value === user.role)?.label || user.role;
-        if (roleLabel !== this.filtros.rol) return false;
-      }
+    // Si la cantidad es diferente, definitivamente son personalizados
+    if (current.length !== defaults.length) return true;
 
-      // Filtro por Estado
-      if (this.filtros.estado) {
-        const estadoUsuario = user.isActive ? 'Activo' : 'Inactivo';
-        if (estadoUsuario !== this.filtros.estado) return false;
-      }
+    // Si la cantidad es igual, comparamos el contenido
+    // Ordenamos ambos arrays para asegurar que la comparación sea exacta
+    const sortedDefaults = [...defaults].sort();
+    const sortedCurrent = [...current].sort();
 
-      // Filtro por NIT
-      if (this.filtros.nit && !user.nit?.includes(this.filtros.nit)) return false;
+    // Convertimos a string para comparar fácil
+    return JSON.stringify(sortedDefaults) !== JSON.stringify(sortedCurrent);
+  }
 
-      // Filtro por Nombre Inmobiliaria
-      if (this.filtros.nombreInmobiliaria && !user.nombreInmobiliaria?.toLowerCase().includes(this.filtros.nombreInmobiliaria.toLowerCase())) return false;
+  // --- MOTOR DE FILTRADO ---
+  applyFilters() {
+    let data = this.users;
 
-      return true;
-    });
+    // 1. Búsqueda General
+    if (this.filtros.busquedaGeneral) {
+      const term = this.filtros.busquedaGeneral.toLowerCase();
+      data = data.filter(user => 
+        user.name?.toLowerCase().includes(term) ||
+        user.email?.toLowerCase().includes(term) ||
+        user.nit?.includes(term) ||
+        user.nombreInmobiliaria?.toLowerCase().includes(term)
+      );
+    }
+
+    // 2. Filtro por Rol (por Label)
+    if (this.filtros.rol) {
+      const roleLabel = (u: User) => this.availableRoles.find(r => r.value === u.role)?.label || u.role;
+      data = data.filter(user => roleLabel(user) === this.filtros.rol);
+    }
+
+    // 3. Filtro por Estado
+    if (this.filtros.estado) {
+      const estadoUsuario = (u: User) => u.isActive ? 'Activo' : 'Inactivo';
+      data = data.filter(user => estadoUsuario(user) === this.filtros.estado);
+    }
+
+    // 4. Filtro por NIT
+    if (this.filtros.nit) {
+      data = data.filter(user => user.nit?.includes(this.filtros.nit));
+    }
+
+    // 5. Filtro por Nombre Inmobiliaria
+    if (this.filtros.nombreInmobiliaria) {
+      const termInmo = this.filtros.nombreInmobiliaria.toLowerCase();
+      data = data.filter(user => user.nombreInmobiliaria?.toLowerCase().includes(termInmo));
+    }
+
+    this.filteredUsers = data;
+    this.currentPage = 1; // IMPORTANTE: Volver a pag 1 al filtrar
   }
 
   limpiarFiltros() {
@@ -166,7 +193,7 @@ export class UsersListComponent implements OnInit {
       nit: '',
       nombreInmobiliaria: ''
     };
-    this.currentPage = 1;
+    this.applyFilters();
   }
 
   // --- PAGINACIÓN ---
@@ -175,25 +202,18 @@ export class UsersListComponent implements OnInit {
     return this.filteredUsers.slice(startIndex, startIndex + this.itemsPerPage);
   }
 
-  get totalPages() {
-    return Math.ceil(this.filteredUsers.length / this.itemsPerPage);
-  }
-
-  nextPage() {
-    if (this.currentPage < this.totalPages) this.currentPage++;
-  }
-
-  prevPage() {
-    if (this.currentPage > 1) this.currentPage--;
-  }
-
+  get totalPages() { return Math.ceil(this.filteredUsers.length / this.itemsPerPage) || 1; }
+  
+  nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; }
+  prevPage() { if (this.currentPage > 1) this.currentPage--; }
+  
   selectPageSize(size: number) {
     this.itemsPerPage = size;
     this.currentPage = 1;
     this.activeDropdown = null;
   }
 
-  // --- CONTROL DE DROPDOWNS ---
+  // --- DROPDOWNS UI ---
   toggleDropdown(name: string, event: Event) {
     event.stopPropagation();
     this.activeDropdown = this.activeDropdown === name ? null : name;
@@ -202,7 +222,7 @@ export class UsersListComponent implements OnInit {
   selectFilterOption(filterKey: 'rol' | 'estado', value: string) {
     this.filtros[filterKey] = value;
     this.activeDropdown = null;
-    this.currentPage = 1; // Reset a página 1 al filtrar
+    this.applyFilters(); // Aplicar filtro al seleccionar opción
   }
 
   @HostListener('document:click', ['$event'])
@@ -213,15 +233,8 @@ export class UsersListComponent implements OnInit {
     }
   }
 
-  get searchableInmobiliarias() {
-    const term = this.inmoSearchTerm.toLowerCase();
-    return this.filteredInmobiliarias.filter(inmo => 
-      inmo.nombreInmobiliaria.toLowerCase().includes(term) || 
-      inmo.nit.includes(term)
-    );
-  }
-
-  get filteredInmobiliarias() {
+  // --- MODAL HELPERS ---
+  get filteredInmobiliarias() { 
     if (this.selectedUser.role !== 'inmobiliaria') return [];
     return this.inmobiliarias.filter(inmo => {
       if (!inmo.emailRegistrado) return true;
@@ -229,17 +242,19 @@ export class UsersListComponent implements OnInit {
       return false;
     });
   }
+  
+  get searchableInmobiliarias() {
+    const term = this.inmoSearchTerm.toLowerCase();
+    return this.filteredInmobiliarias.filter(inmo => 
+      inmo.nombreInmobiliaria.toLowerCase().includes(term) || inmo.nit.includes(term)
+    );
+  }
 
   toggleDropdownInmo() {
-    if (!this.isCreating && this.selectedUser.role === 'inmobiliaria') {
-      this.isDropdownOpen = !this.isDropdownOpen;
-    } else if (this.isCreating) {
+    if (this.selectedUser.role === 'inmobiliaria' || this.isCreating) {
       this.isDropdownOpen = !this.isDropdownOpen;
     }
-    
-    if (this.isDropdownOpen) {
-      this.inmoSearchTerm = '';
-    }
+    if (this.isDropdownOpen) this.inmoSearchTerm = '';
   }
 
   selectInmobiliaria(inmo: InmobiliariaLookup) {
@@ -247,10 +262,10 @@ export class UsersListComponent implements OnInit {
     this.selectedUser.nombreInmobiliaria = inmo.nombreInmobiliaria;
     this.selectedUser.nit = inmo.nit;
     this.selectedUser.codigoInmobiliaria = inmo.codigo;
-    
-    this.isDropdownOpen = false;
+    this.isDropdownOpen = false; 
   }
 
+  // --- ACCIONES CRUD ---
   openEditModal(user: User | null) {
     this.selectedInmoId = ''; 
     if (user) {
@@ -263,22 +278,19 @@ export class UsersListComponent implements OnInit {
       }
     } else {
       this.isCreating = true;
-      this.selectedUser = {
-        role: 'inmobiliaria', isActive: true,
-        name: '', email: '', nit: '', codigoInmobiliaria: '', nombreInmobiliaria: ''
-      };
+      this.selectedUser = { role: 'inmobiliaria', isActive: true, name: '', email: '', nit: '', codigoInmobiliaria: '', nombreInmobiliaria: '' };
       this.userPassword = '';
     }
     this.showEditModal = true;
   }
 
-  onRoleChange(newRole: string) {
+  onRoleChange(newRole: string) { 
     this.selectedUser.role = newRole;
     this.selectedInmoId = ''; 
     if (newRole === 'admin' || newRole === 'affi') {
       this.selectedUser.nit = '900053370';
       this.selectedUser.codigoInmobiliaria = 'AFFI';
-      this.selectedUser.nombreInmobiliaria = 'AFFI UNIVERSAL';
+      this.selectedUser.nombreInmobiliaria = 'AFFI';
     } else {
       this.selectedUser.nit = '';
       this.selectedUser.codigoInmobiliaria = '';
@@ -286,18 +298,11 @@ export class UsersListComponent implements OnInit {
     }
   }
 
-  saveEditUser() { 
-    if (this.isCreating) this.createUser(); 
-    else this.updateUser(); 
-  }
+  saveEditUser() { if (this.isCreating) this.createUser(); else this.updateUser(); }
 
-  createUser() {
+  createUser() { 
     if (!this.selectedUser.email || !this.userPassword || !this.selectedUser.name) {
-      AffiAlert.fire({ icon: 'warning', title: 'Faltan datos', text: 'Nombre, Email y Contraseña son obligatorios.' });
-      return;
-    }
-    if (this.selectedUser.role === 'inmobiliaria' && !this.selectedUser.nit) {
-      AffiAlert.fire({ icon: 'warning', title: 'Selección requerida', text: 'Debes seleccionar una Inmobiliaria de la lista.' });
+      AffiAlert.fire({ icon: 'warning', title: 'Faltan datos', text: 'Campos obligatorios vacíos.' });
       return;
     }
     const payload: RegisterPayload = {
@@ -314,7 +319,7 @@ export class UsersListComponent implements OnInit {
         const inmo = this.inmobiliarias.find(i => i.nit === payload.nit);
         if (inmo) inmo.emailRegistrado = payload.email; 
         AffiAlert.fire({ icon: 'success', title: 'Usuario creado', text: 'Se ha enviado el correo de activación.', timer: 2000 });
-        this.loadUsers();
+        this.loadUsers(); 
       },
       error: (err) => {
         const msg = err.error?.message || 'Error al crear usuario.';
@@ -335,8 +340,9 @@ export class UsersListComponent implements OnInit {
       next: (updatedUser) => {
         const index = this.users.findIndex(u => u._id === updatedUser._id);
         if (index !== -1) {
-          this.users[index] = { ...this.users[index], ...updatedUser };
+          Object.assign(this.users[index], updatedUser);
         }
+        this.applyFilters();
         this.showEditModal = false;
         AffiAlert.fire({ icon: 'success', title: 'Actualizado', timer: 1500, showConfirmButton: false });
       },
@@ -344,6 +350,69 @@ export class UsersListComponent implements OnInit {
     });
   }
 
+  // --- LÓGICA DE ROLES MEJORADA (CON ALERTA) ---
+  changeRole(user: User, newRole: string) {
+    if (user.role === newRole) return;
+
+    const roleLabel = this.availableRoles.find(r => r.value === newRole)?.label || newRole;
+
+    AffiAlert.fire({
+      title: '¿Cambiar rol de usuario?',
+      text: `Estás a punto de cambiar el rol de ${user.name} a ${roleLabel}. Esto reiniciará sus permisos personalizados.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, cambiar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.usersService.changeRole(user._id, newRole).subscribe({
+          next: (updated) => {
+            const index = this.users.findIndex(u => u._id === updated._id);
+            if (index !== -1) {
+              Object.assign(this.users[index], updated);
+            }
+            this.applyFilters();
+            AffiAlert.fire({ icon: 'success', title: 'Rol actualizado', text: 'Permisos reiniciados.', timer: 2000, showConfirmButton: false });
+          },
+          error: () => {
+            AffiAlert.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el rol.' });
+            this.loadUsers(); 
+          }
+        });
+      } else {
+        this.applyFilters(); // Revertir select visualmente
+      }
+    });
+  }
+
+  toggleStatus(user: User) {
+    const accion = user.isActive ? 'desactivar' : 'activar';
+    AffiAlert.fire({
+      title: '¿Estás seguro?',
+      text: `Estás a punto de ${accion} el acceso de ${user.name}.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: user.isActive ? '#d33' : '#10b981',
+      confirmButtonText: `Sí, ${accion}`,
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.usersService.toggleStatus(user._id).subscribe({
+          next: () => {
+            user.isActive = !user.isActive;
+            // No requerimos applyFilters obligatorio aqui a menos que filtres por estado, pero es buena practica
+            this.applyFilters(); 
+            AffiAlert.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+          },
+          error: () => AffiAlert.fire({ icon: 'error', title: 'Error', text: 'Fallo al cambiar estado.' })
+        });
+      }
+    });
+  }
+
+  // --- PERMISOS ---
   openPermissionsModal(user: User) {
     this.selectedUser = { ...user } as User; 
     this.tempPermissions = [...(user.permissions || [])];
@@ -380,40 +449,5 @@ export class UsersListComponent implements OnInit {
     this.showPermissionsModal = false;
     this.selectedUser = {};
     this.userPassword = '';
-  }
-
-  toggleStatus(user: User) {
-    const accion = user.isActive ? 'desactivar' : 'activar';
-    AffiAlert.fire({
-      title: '¿Estás seguro?',
-      text: `Estás a punto de ${accion} el acceso al usuario ${user.name}.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: user.isActive ? '#d33' : '#10b981',
-      confirmButtonText: `Sí, ${accion}`,
-      cancelButtonText: 'Cancelar'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.usersService.toggleStatus(user._id).subscribe({
-          next: () => {
-            user.isActive = !user.isActive;
-            AffiAlert.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
-          },
-          error: () => AffiAlert.fire({ icon: 'error', title: 'Error', text: 'Fallo al cambiar estado.' })
-        });
-      }
-    });
-  }
-
-  changeRole(user: User, newRole: string) {
-    if (!confirm(`¿Estás seguro de cambiar el rol a ${newRole}? Esto reiniciará sus permisos.`)) return;
-    this.usersService.changeRole(user._id, newRole).subscribe({
-      next: (updated) => {
-        const index = this.users.findIndex(u => u._id === updated._id);
-        if (index !== -1) this.users[index] = updated;
-        AffiAlert.fire({ icon: 'success', title: 'Rol actualizado', text: 'Permisos reiniciados.' });
-      },
-      error: () => AffiAlert.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el rol.' })
-    });
   }
 }

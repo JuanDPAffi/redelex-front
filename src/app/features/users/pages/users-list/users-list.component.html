@@ -18,7 +18,6 @@
   </div>
 
   <div class="card">
-    <!-- SECCIÓN DE FILTROS -->
     <div class="filter-section">
       <div class="filters-grid">
 
@@ -29,8 +28,7 @@
             <input 
               type="text" 
               [(ngModel)]="filtros.busquedaGeneral" 
-              (input)="currentPage = 1"
-              placeholder="Buscar por nombre, NIT o email..." 
+              (ngModelChange)="applyFilters()"  placeholder="Buscar por nombre, NIT o email..." 
               class="field__input search-input"
             >
           </div>
@@ -42,8 +40,7 @@
             class="field__input" 
             type="text" 
             [(ngModel)]="filtros.nit" 
-            (input)="currentPage = 1"
-            placeholder="Ej: 900053370"
+            (ngModelChange)="applyFilters()"  placeholder="Ej: 900053370"
           >
         </label>
 
@@ -53,8 +50,7 @@
             class="field__input" 
             type="text" 
             [(ngModel)]="filtros.nombreInmobiliaria" 
-            (input)="currentPage = 1"
-            placeholder="Ej: AFFI"
+            (ngModelChange)="applyFilters()"  placeholder="Ej: AFFI"
           >
         </label>
 
@@ -73,21 +69,9 @@
           @if (activeDropdown === 'rol') {
             <div class="dropdown-menu">
               <div class="options-list">
-                <div 
-                  class="option" 
-                  (click)="selectFilterOption('rol', '')" 
-                  [class.selected]="filtros.rol === ''"
-                >
-                  Todos
-                </div>
+                <div class="option" (click)="selectFilterOption('rol', '')" [class.selected]="filtros.rol === ''">Todos</div>
                 @for (rol of listaRoles; track rol) {
-                  <div 
-                    class="option" 
-                    (click)="selectFilterOption('rol', rol)" 
-                    [class.selected]="filtros.rol === rol"
-                  >
-                    {{ rol }}
-                  </div>
+                  <div class="option" (click)="selectFilterOption('rol', rol)" [class.selected]="filtros.rol === rol">{{ rol }}</div>
                 }
               </div>
             </div>
@@ -109,21 +93,9 @@
           @if (activeDropdown === 'estado') {
             <div class="dropdown-menu">
               <div class="options-list">
-                <div 
-                  class="option" 
-                  (click)="selectFilterOption('estado', '')" 
-                  [class.selected]="filtros.estado === ''"
-                >
-                  Todos
-                </div>
+                <div class="option" (click)="selectFilterOption('estado', '')" [class.selected]="filtros.estado === ''">Todos</div>
                 @for (estado of listaEstados; track estado) {
-                  <div 
-                    class="option" 
-                    (click)="selectFilterOption('estado', estado)" 
-                    [class.selected]="filtros.estado === estado"
-                  >
-                    {{ estado }}
-                  </div>
+                  <div class="option" (click)="selectFilterOption('estado', estado)" [class.selected]="filtros.estado === estado">{{ estado }}</div>
                 }
               </div>
             </div>
@@ -178,8 +150,13 @@
                           <option [value]="role.value">{{ role.label }}</option>
                         }
                       </select>
-                      @if (user.permissions && user.permissions.length > 0) {
-                        <span class="perm-badge" title="Tiene permisos especiales">+ Permisos</span>
+                      
+                      @if (hasCustomPermissions(user)) {
+                        <span 
+                          class="perm-badge" 
+                          title="Este usuario tiene permisos diferentes al estándar de su rol">
+                          Permisos Personalizados
+                        </span>
                       }
                     </div>
                   </td>
@@ -201,38 +178,20 @@
                   </td>
                 </tr>
               }
-              
               @if (filteredUsers.length === 0 && !loading) {
-                <tr>
-                  <td colspan="5" class="text-center p-8 text-gray-500">
-                    No se encontraron usuarios con los filtros aplicados.
-                  </td>
-                </tr>
+                <tr><td colspan="5" class="text-center p-8 text-gray-500">No se encontraron usuarios.</td></tr>
               }
             </tbody>
           </table>
         </div>
 
-        <!-- PAGINACIÓN -->
         @if (filteredUsers.length > 0) {
           <div class="pagination">
-            <button 
-              class="pagination__btn" 
-              [disabled]="currentPage === 1" 
-              (click)="prevPage()"
-            >
-              ← Anterior
-            </button>
-            
+            <button class="pagination__btn" [disabled]="currentPage === 1" (click)="prevPage()">← Anterior</button>
             <div class="pagination__info">
               <span>Página {{ currentPage }} de {{ totalPages }}</span>
-              
               <div class="page-size-selector custom-select-container">
-                <div 
-                  class="custom-select" 
-                  (click)="toggleDropdown('pageSize', $event)" 
-                  [class.open]="activeDropdown === 'pageSize'"
-                >
+                <div class="custom-select" (click)="toggleDropdown('pageSize', $event)" [class.open]="activeDropdown === 'pageSize'">
                   <span class="selected-value">{{ itemsPerPage }} / pág</span>
                   <span class="arrow">▼</span>
                 </div>
@@ -240,27 +199,14 @@
                   <div class="dropdown-menu dropdown-menu--up">
                     <div class="options-list">
                       @for (size of pageSizeOptions; track size) {
-                        <div 
-                          class="option" 
-                          (click)="selectPageSize(size)" 
-                          [class.selected]="itemsPerPage === size"
-                        >
-                          {{ size }}
-                        </div>
+                        <div class="option" (click)="selectPageSize(size)" [class.selected]="itemsPerPage === size">{{ size }}</div>
                       }
                     </div>
                   </div>
                 }
               </div>
             </div>
-            
-            <button 
-              class="pagination__btn" 
-              [disabled]="currentPage === totalPages" 
-              (click)="nextPage()"
-            >
-              Siguiente →
-            </button>
+            <button class="pagination__btn" [disabled]="currentPage === totalPages" (click)="nextPage()">Siguiente →</button>
           </div>
         }
       </div>
@@ -268,7 +214,6 @@
   </div>
 </div>
 
-<!-- MODAL EDITAR/CREAR USUARIO -->
 @if (showEditModal && selectedUser) {
   <div class="modal-overlay">
     <div class="modal-card">
@@ -394,7 +339,6 @@
   </div>
 }
 
-<!-- MODAL PERMISOS -->
 @if (showPermissionsModal && selectedUser) {
   <div class="modal-overlay">
     <div class="modal-card modal-lg">
