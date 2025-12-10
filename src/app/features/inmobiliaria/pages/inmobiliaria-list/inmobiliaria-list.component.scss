@@ -1,9 +1,221 @@
-// Reutilizamos estilos base
-@use '../../../users/pages/users-list/users-list.component.scss' as *;
+/* =============================================
+   INMOBILIARIAS - AFFI LATAM
+   Reutiliza estilos base + Personalizaciones
+   ============================================= */
 
-// =============================================
-// ESTILOS ESPECÍFICOS DE INMOBILIARIAS
-// =============================================
+// NOTA: Asegúrate de tener los estilos base de users-list disponibles globalmente
+// o importa las variables CSS necesarias
+
+/* =============================================
+   ESTRUCTURA BASE (igual que users-list)
+   ============================================= */
+.page {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  animation: fadeIn var(--transition-base);
+}
+
+.page__header {
+  margin-bottom: var(--spacing-2xl);
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--spacing-lg);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-bold);
+    color: var(--color-gray-900);
+    line-height: 1.2;
+  }
+
+  p {
+    margin: var(--spacing-sm) 0 0;
+    font-size: var(--font-size-base);
+    color: var(--color-gray-600);
+    font-weight: var(--font-normal);
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+/* =============================================
+   FILTROS
+   ============================================= */
+.filter-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+.field__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-gray-700);
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+
+  .search-icon {
+    position: absolute;
+    left: var(--spacing-md);
+    width: 18px;
+    height: 18px;
+    color: var(--color-gray-400);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2.75rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-family);
+    outline: none;
+    transition: all var(--transition-base);
+    background: var(--bg-primary);
+
+    &:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(38, 0, 134, 0.08);
+    }
+
+    &::placeholder {
+      color: var(--color-gray-400);
+    }
+  }
+}
+
+/* =============================================
+   CARD Y TABLA
+   ============================================= */
+.card {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-gray-200);
+}
+
+.table-container {
+  width: 100%;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--spacing-lg);
+  background: var(--bg-primary);
+}
+
+.excel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  min-width: 900px;
+
+  thead {
+    background: var(--color-gray-50);
+    
+    th {
+      padding: var(--spacing-md) var(--spacing-lg);
+      text-align: left;
+      font-weight: var(--font-semibold);
+      color: var(--color-gray-700);
+      border-bottom: 2px solid var(--color-gray-200);
+      white-space: nowrap;
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      
+      &.text-right { text-align: right; }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--color-gray-100);
+      transition: all var(--transition-fast);
+      
+      &:hover { 
+        background: var(--bg-secondary);
+        box-shadow: inset 0 0 0 1px var(--color-gray-200);
+      }
+      
+      &:last-child { border-bottom: none; }
+    }
+    
+    td {
+      padding: var(--spacing-md) var(--spacing-lg);
+      vertical-align: middle;
+      color: var(--color-gray-900);
+      
+      &.text-right { text-align: right; }
+      &.text-center { text-align: center; color: var(--color-gray-500); font-style: italic; }
+    }
+  }
+}
+
+/* =============================================
+   ESTILOS ESPECÍFICOS DE INMOBILIARIAS
+   ============================================= */
+.company-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.company-name {
+  font-weight: var(--font-medium);
+  color: var(--color-gray-900);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.company-nit {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-500);
+  font-weight: var(--font-medium);
+}
 
 .codes-cell {
   display: flex;
@@ -26,9 +238,70 @@
   }
 }
 
-// =============================================
-// ZONA DE CARGA (DROPZONE)
-// =============================================
+/* Estado Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition-fast);
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+
+  &--active {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    color: #065f46;
+    border-color: #86efac;
+    
+    &:hover { 
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+  }
+
+  &--inactive {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    color: #991b1b;
+    border-color: #fecaca;
+    
+    &:hover { 
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+  }
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--color-gray-500);
+  padding: var(--spacing-xs);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-md);
+  transition: all var(--transition-fast);
+  
+  svg { width: 18px; height: 18px; }
+  
+  &:hover {
+    color: var(--color-primary);
+    background: var(--bg-tertiary);
+    transform: translateY(-1px);
+  }
+}
+
+/* =============================================
+   ZONA DE CARGA (DROPZONE)
+   ============================================= */
 .upload-area {
   border: 2px dashed var(--color-gray-300);
   border-radius: var(--border-radius-lg);
@@ -78,9 +351,24 @@
   svg { width: 16px; height: 16px; }
 }
 
-// =============================================
-// ESTADO DE SUBIDA
-// =============================================
+.helper-text {
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-gray-600);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  
+  code {
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85em;
+  }
+}
+
+/* =============================================
+   ESTADO DE SUBIDA
+   ============================================= */
 .uploading-state {
   text-align: center;
   padding: 2rem;
@@ -103,9 +391,9 @@
   transition: width 0.3s ease;
 }
 
-// =============================================
-// RESULTADOS
-// =============================================
+/* =============================================
+   RESULTADOS
+   ============================================= */
 .results-state {
   text-align: center;
   padding: 1rem;
@@ -141,4 +429,451 @@
   
   .stat-val { font-size: 1.5rem; font-weight: 700; line-height: 1; }
   .stat-label { font-size: 0.8rem; text-transform: uppercase; font-weight: 600; margin-top: 0.2rem; }
+}
+
+/* =============================================
+   BOTONES
+   ============================================= */
+.btn {
+  border: none;
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  font-weight: var(--font-semibold);
+  font-family: var(--font-family);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-xs);
+  
+  .btn-icon-left { width: 18px; height: 18px; }
+  
+  &:active { transform: scale(0.98); }
+  &:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+}
+
+.btn--primary {
+  background: var(--color-primary-gradient);
+  color: white;
+  box-shadow: var(--shadow-primary);
+  
+  &:hover { box-shadow: var(--shadow-primary-hover); }
+}
+
+.btn--secondary {
+  background: var(--bg-primary);
+  border: 1px solid var(--color-gray-300);
+  color: var(--color-gray-700);
+  
+  &:hover { 
+    background: var(--bg-secondary);
+    border-color: var(--color-gray-400);
+  }
+}
+
+/* =============================================
+   MODALES
+   ============================================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn var(--transition-base);
+  padding: var(--spacing-md);
+}
+
+.modal-card {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-xl);
+  width: 90%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  animation: scaleIn var(--transition-base);
+  border: 1px solid var(--color-gray-200);
+  
+  &.modal-lg { max-width: 700px; }
+}
+
+.modal-header {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid var(--color-gray-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+  
+  h3 { 
+    margin: 0; 
+    font-size: var(--font-size-lg); 
+    color: var(--color-gray-900);
+    font-weight: var(--font-bold);
+  }
+  
+  .close-btn { 
+    background: none; 
+    border: none; 
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer; 
+    color: var(--color-gray-400);
+    border-radius: var(--border-radius-md);
+    transition: all var(--transition-fast);
+    
+    svg { width: 20px; height: 20px; }
+    
+    &:hover { 
+      color: var(--color-error);
+      background: var(--bg-tertiary);
+    } 
+  }
+}
+
+.modal-body {
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.modal-footer {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-top: 1px solid var(--color-gray-200);
+  background: var(--bg-secondary);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+}
+
+/* =============================================
+   FORMULARIOS
+   ============================================= */
+.form-group {
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  
+  label { 
+    font-size: var(--font-size-sm); 
+    font-weight: var(--font-semibold); 
+    color: var(--color-gray-700);
+  }
+}
+
+.field__input {
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  outline: none;
+  background: var(--bg-primary);
+  transition: all var(--transition-fast);
+  color: var(--color-gray-900);
+  
+  &:focus { 
+    border-color: var(--color-primary); 
+    box-shadow: 0 0 0 3px rgba(38, 0, 134, 0.08);
+  }
+
+  &::placeholder {
+    color: var(--color-gray-400);
+  }
+}
+
+.row {
+  display: flex;
+  gap: var(--spacing-lg);
+  
+  .form-group { 
+    flex: 1; 
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+  }
+}
+
+/* =============================================
+   DROPDOWNS PERSONALIZADOS
+   ============================================= */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select {
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-primary);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  min-height: 42px;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    border-color: var(--color-gray-400);
+    background: var(--bg-secondary);
+  }
+
+  &.open {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(38, 0, 134, 0.08);
+  }
+
+  .selected-value {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-gray-900);
+    font-weight: var(--font-medium);
+    flex: 1;
+    
+    &.placeholder { 
+      color: var(--color-gray-400);
+      font-weight: var(--font-normal);
+    }
+  }
+
+  .arrow {
+    width: 16px;
+    height: 16px;
+    color: var(--color-gray-500);
+    transition: transform var(--transition-fast);
+    font-size: 10px;
+  }
+
+  &.open .arrow {
+    transform: rotate(180deg);
+  }
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: var(--bg-primary);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 1050;
+  margin-top: var(--spacing-xs);
+  overflow: hidden;
+  animation: slideDown var(--transition-base);
+  
+  &.dropdown-menu--up {
+    top: auto;
+    bottom: 100%;
+    margin-bottom: var(--spacing-xs);
+    margin-top: 0;
+  }
+}
+
+.options-list {
+  max-height: 200px;
+  overflow-y: auto;
+
+  .option {
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-gray-100);
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-900);
+
+    &:last-child { border-bottom: none; }
+    
+    &:hover {
+      background: var(--bg-tertiary);
+    }
+
+    &.selected {
+      background: var(--bg-tertiary);
+      color: var(--color-primary);
+      font-weight: var(--font-semibold);
+    }
+  }
+}
+
+/* =============================================
+   PAGINACIÓN
+   ============================================= */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+}
+
+.pagination__btn {
+  border: 1px solid var(--color-gray-300);
+  background: var(--bg-primary);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+  transition: all var(--transition-fast);
+  color: var(--color-gray-700);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--bg-secondary);
+    border-color: var(--color-gray-400);
+  }
+}
+
+.pagination__info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-700);
+  font-weight: var(--font-medium);
+}
+
+.page-size-selector {
+  min-width: 100px;
+
+  .custom-select {
+    height: 36px;
+    padding: 0 var(--spacing-sm);
+    background: var(--bg-secondary);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* =============================================
+   ESTADOS: LOADING
+   ============================================= */
+.helper { 
+  text-align: center; 
+  padding: 2rem; 
+  color: #6b7280; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 1rem; 
+}
+
+.spinner { 
+  border: 3px solid #f3f3f3; 
+  border-top: 3px solid var(--color-primary); 
+  border-radius: 50%; 
+  width: 40px; 
+  height: 40px; 
+  animation: spin 1s linear infinite; 
+}
+
+/* =============================================
+   ANIMACIONES
+   ============================================= */
+@keyframes fadeIn { 
+  from { opacity: 0; } 
+  to { opacity: 1; } 
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin { 
+  to { transform: rotate(360deg); } 
+}
+
+/* =============================================
+   CLASES UTILITARIAS
+   ============================================= */
+.text-sm { font-size: var(--font-size-sm); }
+.text-xs { font-size: var(--font-size-xs); }
+.text-gray-700 { color: var(--color-gray-700); }
+.text-gray-400 { color: var(--color-gray-400); }
+.text-gray-500 { color: var(--color-gray-500); }
+.text-green-600 { color: #059669; }
+.font-medium { font-weight: var(--font-medium); }
+.italic { font-style: italic; }
+.mb-4 { margin-bottom: 1rem; }
+.mt-4 { margin-top: 1rem; }
+.bg-blue-50 { background: #eff6ff; }
+.text-blue-700 { color: #1d4ed8; }
+.bg-green-50 { background: #f0fdf4; }
+.text-green-700 { color: #15803d; }
+.bg-yellow-50 { background: #fefce8; }
+.text-yellow-700 { color: #a16207; }
+.bg-red-50 { background: #fef2f2; }
+.text-red-700 { color: #b91c1c; }
+.p-8 { padding: 2rem; }
+
+/* =============================================
+   RESPONSIVE DESIGN
+   ============================================= */
+@media (max-width: 640px) {
+  .page {
+    padding: 0 var(--spacing-sm);
+  }
+
+  .excel-table {
+    font-size: 0.75rem;
+    
+    thead th {
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    tbody td {
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+  }
+
+  .modal-card {
+    width: 95%;
+    max-width: none;
+  }
+
+  .modal-body {
+    padding: var(--spacing-lg);
+  }
+  
+  .pagination {
+    flex-direction: column;
+  }
+
+  .pagination__info {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }

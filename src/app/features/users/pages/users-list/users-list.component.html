@@ -3,20 +3,11 @@
     <div class="header-content">
       <div>
         <h2>Gestión de Usuarios</h2>
-        <p>Administra el acceso, roles y permisos de la plataforma.</p>
+        <p>Administra el acceso, roles y permisos de la plataforma. • Total: {{ filteredUsers.length }}</p>
       </div>
       
       <div class="header-actions">
-        <div class="search-wrapper">
-          <i-feather name="search" class="search-icon"></i-feather>
-          <input 
-            type="text" 
-            [(ngModel)]="searchTerm" 
-            placeholder="Buscar por nombre, NIT o email..." 
-            class="search-input"
-          >
-        </div>
-
+        <button class="btn btn--secondary" (click)="limpiarFiltros()">Limpiar Filtros</button>
         <button class="btn btn--primary" (click)="openEditModal(null)">
           <i-feather name="plus" class="btn-icon-left"></i-feather>
           Crear Usuario
@@ -27,85 +18,257 @@
   </div>
 
   <div class="card">
-    <div class="table-scroll">
-      <table class="excel-table">
-        <thead>
-          <tr>
-            <th>Usuario</th>
-            <th>Empresa / NIT</th>
-            <th>Rol</th>
-            <th>Estado</th>
-            <th class="text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (user of filteredUsers; track user._id) {
-            <tr>
-              <td>
-                <div class="user-cell">
-                  <div class="user-avatar-small">{{ user.name | slice:0:1 }}</div>
-                  <div class="user-info">
-                    <span class="user-name">{{ user.name }}</span>
-                    <span class="user-email">{{ user.email }}</span>
+    <!-- SECCIÓN DE FILTROS -->
+    <div class="filter-section">
+      <div class="filters-grid">
+
+        <label class="field full-width">
+          <span class="field__label">Búsqueda Rápida</span>
+          <div class="search-wrapper">
+            <i-feather name="search" class="search-icon"></i-feather>
+            <input 
+              type="text" 
+              [(ngModel)]="filtros.busquedaGeneral" 
+              (input)="currentPage = 1"
+              placeholder="Buscar por nombre, NIT o email..." 
+              class="field__input search-input"
+            >
+          </div>
+        </label>
+
+        <label class="field">
+          <span class="field__label">NIT</span>
+          <input 
+            class="field__input" 
+            type="text" 
+            [(ngModel)]="filtros.nit" 
+            (input)="currentPage = 1"
+            placeholder="Ej: 900053370"
+          >
+        </label>
+
+        <label class="field">
+          <span class="field__label">Nombre Inmobiliaria</span>
+          <input 
+            class="field__input" 
+            type="text" 
+            [(ngModel)]="filtros.nombreInmobiliaria" 
+            (input)="currentPage = 1"
+            placeholder="Ej: AFFI"
+          >
+        </label>
+
+        <div class="field custom-select-container">
+          <span class="field__label">Rol</span>
+          <div 
+            class="custom-select" 
+            (click)="toggleDropdown('rol', $event)" 
+            [class.open]="activeDropdown === 'rol'"
+          >
+            <span class="selected-value" [class.placeholder]="!filtros.rol">
+              {{ filtros.rol || 'Todos' }}
+            </span>
+            <span class="arrow">▼</span>
+          </div>
+          @if (activeDropdown === 'rol') {
+            <div class="dropdown-menu">
+              <div class="options-list">
+                <div 
+                  class="option" 
+                  (click)="selectFilterOption('rol', '')" 
+                  [class.selected]="filtros.rol === ''"
+                >
+                  Todos
+                </div>
+                @for (rol of listaRoles; track rol) {
+                  <div 
+                    class="option" 
+                    (click)="selectFilterOption('rol', rol)" 
+                    [class.selected]="filtros.rol === rol"
+                  >
+                    {{ rol }}
                   </div>
-                </div>
-              </td>
-              <td>
-                <div class="company-info">
-                  <span class="company-name">{{ user.nombreInmobiliaria || 'N/A' }}</span>
-                  @if (user.nit) { <span class="company-nit">NIT: {{ user.nit }}</span> }
-                </div>
-              </td>
-              <td>
-                <div class="role-selector-wrapper">
-                  <select 
-                    [ngModel]="user.role" 
-                    (ngModelChange)="changeRole(user, $event)"
-                    class="custom-select-sm">
-                    @for (role of availableRoles; track role.value) {
-                      <option [value]="role.value">{{ role.label }}</option>
-                    }
-                  </select>
-                  @if (user.permissions && user.permissions.length > 0) {
-                    <span class="perm-badge" title="Tiene permisos especiales">+ Permisos</span>
-                  }
-                </div>
-              </td>
-              <td>
-                <span (click)="toggleStatus(user)"
-                  class="status-badge"
-                  [class.status-badge--active]="user.isActive"
-                  [class.status-badge--inactive]="!user.isActive">
-                  {{ user.isActive ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td class="text-right">
-                <div class="actions-cell">
-                  <button (click)="openPermissionsModal(user)" class="btn-link" title="Gestionar Permisos">Permisos</button>
-                  <button (click)="openEditModal(user)" class="btn-icon" title="Editar Información">
-                    <i-feather name="edit-2"></i-feather>
-                  </button>
-                </div>
-              </td>
-            </tr>
+                }
+              </div>
+            </div>
           }
-          
-          @if (filteredUsers.length === 0 && !loading) {
-            <tr>
-              <td colspan="5" class="text-center p-8 text-gray-500">
-                No se encontraron usuarios que coincidan con "{{ searchTerm }}".
-              </td>
-            </tr>
+        </div>
+
+        <div class="field custom-select-container">
+          <span class="field__label">Estado</span>
+          <div 
+            class="custom-select" 
+            (click)="toggleDropdown('estado', $event)" 
+            [class.open]="activeDropdown === 'estado'"
+          >
+            <span class="selected-value" [class.placeholder]="!filtros.estado">
+              {{ filtros.estado || 'Todos' }}
+            </span>
+            <span class="arrow">▼</span>
+          </div>
+          @if (activeDropdown === 'estado') {
+            <div class="dropdown-menu">
+              <div class="options-list">
+                <div 
+                  class="option" 
+                  (click)="selectFilterOption('estado', '')" 
+                  [class.selected]="filtros.estado === ''"
+                >
+                  Todos
+                </div>
+                @for (estado of listaEstados; track estado) {
+                  <div 
+                    class="option" 
+                    (click)="selectFilterOption('estado', estado)" 
+                    [class.selected]="filtros.estado === estado"
+                  >
+                    {{ estado }}
+                  </div>
+                }
+              </div>
+            </div>
           }
-        </tbody>
-      </table>
+        </div>
+
+      </div>
     </div>
+
     @if (loading) {
       <div class="helper"><div class="spinner"></div><p>Cargando datos...</p></div>
+    }
+
+    @if (!loading) {
+      <div class="table-container">
+        <div class="table-scroll">
+          <table class="excel-table">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Empresa / NIT</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of paginatedUsers; track user._id) {
+                <tr>
+                  <td>
+                    <div class="user-cell">
+                      <div class="user-avatar-small">{{ user.name | slice:0:1 }}</div>
+                      <div class="user-info">
+                        <span class="user-name">{{ user.name }}</span>
+                        <span class="user-email">{{ user.email }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="company-info">
+                      <span class="company-name">{{ user.nombreInmobiliaria || 'N/A' }}</span>
+                      @if (user.nit) { <span class="company-nit">NIT: {{ user.nit }}</span> }
+                    </div>
+                  </td>
+                  <td>
+                    <div class="role-selector-wrapper">
+                      <select 
+                        [ngModel]="user.role" 
+                        (ngModelChange)="changeRole(user, $event)"
+                        class="custom-select-sm">
+                        @for (role of availableRoles; track role.value) {
+                          <option [value]="role.value">{{ role.label }}</option>
+                        }
+                      </select>
+                      @if (user.permissions && user.permissions.length > 0) {
+                        <span class="perm-badge" title="Tiene permisos especiales">+ Permisos</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <span (click)="toggleStatus(user)"
+                      class="status-badge"
+                      [class.status-badge--active]="user.isActive"
+                      [class.status-badge--inactive]="!user.isActive">
+                      {{ user.isActive ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td class="text-right">
+                    <div class="actions-cell">
+                      <button (click)="openPermissionsModal(user)" class="btn-link" title="Gestionar Permisos">Permisos</button>
+                      <button (click)="openEditModal(user)" class="btn-icon" title="Editar Información">
+                        <i-feather name="edit-2"></i-feather>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+              
+              @if (filteredUsers.length === 0 && !loading) {
+                <tr>
+                  <td colspan="5" class="text-center p-8 text-gray-500">
+                    No se encontraron usuarios con los filtros aplicados.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINACIÓN -->
+        @if (filteredUsers.length > 0) {
+          <div class="pagination">
+            <button 
+              class="pagination__btn" 
+              [disabled]="currentPage === 1" 
+              (click)="prevPage()"
+            >
+              ← Anterior
+            </button>
+            
+            <div class="pagination__info">
+              <span>Página {{ currentPage }} de {{ totalPages }}</span>
+              
+              <div class="page-size-selector custom-select-container">
+                <div 
+                  class="custom-select" 
+                  (click)="toggleDropdown('pageSize', $event)" 
+                  [class.open]="activeDropdown === 'pageSize'"
+                >
+                  <span class="selected-value">{{ itemsPerPage }} / pág</span>
+                  <span class="arrow">▼</span>
+                </div>
+                @if (activeDropdown === 'pageSize') {
+                  <div class="dropdown-menu dropdown-menu--up">
+                    <div class="options-list">
+                      @for (size of pageSizeOptions; track size) {
+                        <div 
+                          class="option" 
+                          (click)="selectPageSize(size)" 
+                          [class.selected]="itemsPerPage === size"
+                        >
+                          {{ size }}
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            <button 
+              class="pagination__btn" 
+              [disabled]="currentPage === totalPages" 
+              (click)="nextPage()"
+            >
+              Siguiente →
+            </button>
+          </div>
+        }
+      </div>
     }
   </div>
 </div>
 
+<!-- MODAL EDITAR/CREAR USUARIO -->
 @if (showEditModal && selectedUser) {
   <div class="modal-overlay">
     <div class="modal-card">
@@ -146,14 +309,15 @@
         <div class="divider"></div>
 
         @if (selectedUser.role === 'inmobiliaria') {
-          <div class="form-group relative"> <label>Seleccionar Inmobiliaria *</label>
+          <div class="form-group relative">
+            <label>Seleccionar Inmobiliaria *</label>
             
             <div class="custom-select-container">
               
               <div class="custom-select" 
                   [class.open]="isDropdownOpen" 
                   [class.disabled]="!isCreating && false" 
-                  (click)="toggleDropdown()">
+                  (click)="toggleDropdownInmo()">
                 
                 <span class="selected-value" [class.placeholder]="!selectedUser.nombreInmobiliaria">
                   @if (selectedUser.nombreInmobiliaria) {
@@ -230,6 +394,7 @@
   </div>
 }
 
+<!-- MODAL PERMISOS -->
 @if (showPermissionsModal && selectedUser) {
   <div class="modal-overlay">
     <div class="modal-card modal-lg">

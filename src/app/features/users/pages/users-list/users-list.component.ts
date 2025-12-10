@@ -29,16 +29,34 @@ export class UsersListComponent implements OnInit {
   isCreating = false;
   selectedInmoId: string = '';
 
-  // --- NUEVO: Variable para el buscador ---
-  searchTerm: string = '';
+  // --- PAGINACIÓN ---
+  currentPage = 1;
+  itemsPerPage = 10;
+  pageSizeOptions = [5, 10, 20, 50];
 
-  availableRoles = [ /* ... tus roles ... */
+  // --- FILTROS AVANZADOS ---
+  filtros = {
+    busquedaGeneral: '',
+    rol: '',
+    estado: '',
+    nit: '',
+    nombreInmobiliaria: ''
+  };
+
+  // Lista única de roles y estados disponibles
+  listaRoles: string[] = [];
+  listaEstados = ['Activo', 'Inactivo'];
+
+  // Control de dropdowns
+  activeDropdown: string | null = null;
+
+  availableRoles = [
     { value: 'admin', label: 'Administrador' },
     { value: 'affi', label: 'Colaborador Affi' },
     { value: 'inmobiliaria', label: 'Inmobiliaria' }
   ];
 
-  availablePermissions = [ /* ... tus permisos ... */
+  availablePermissions = [
     { key: 'users:view', label: 'Ver Usuarios' },
     { key: 'users:create', label: 'Crear Usuarios' },
     { key: 'users:edit', label: 'Editar Usuarios' },
@@ -69,12 +87,13 @@ export class UsersListComponent implements OnInit {
     this.loadInmobiliarias(); 
   }
 
-  // ... (loadUsers y loadInmobiliarias se mantienen igual) ...
+
   loadUsers() {
     this.loading = true;
     this.usersService.getAllUsers().subscribe({
       next: (data) => {
         this.users = data;
+        this.extraerListasUnicas();
         this.loading = false;
       },
       error: () => {
@@ -91,22 +110,107 @@ export class UsersListComponent implements OnInit {
     });
   }
 
-  // --- NUEVO: Getter para filtrar la tabla ---
-  get filteredUsers() {
-    // Si no hay término de búsqueda, devolvemos todos
-    if (!this.searchTerm) return this.users;
-
-    const term = this.searchTerm.toLowerCase();
-
-    return this.users.filter(user => {
-      // Buscamos por Nombre, Email, NIT o Nombre de Inmobiliaria
-      return (
-        user.name?.toLowerCase().includes(term) ||
-        user.email?.toLowerCase().includes(term) ||
-        user.nit?.includes(term) ||
-        user.nombreInmobiliaria?.toLowerCase().includes(term)
-      );
+  // --- EXTRAER LISTAS ÚNICAS PARA FILTROS ---
+  extraerListasUnicas() {
+    const rolesSet = new Set<string>();
+    this.users.forEach(user => {
+      if (user.role) {
+        const roleLabel = this.availableRoles.find(r => r.value === user.role)?.label || user.role;
+        rolesSet.add(roleLabel);
+      }
     });
+    this.listaRoles = Array.from(rolesSet).sort();
+  }
+
+  // --- FILTROS ---
+  get filteredUsers() {
+    return this.users.filter(user => {
+      // Búsqueda General
+      if (this.filtros.busquedaGeneral) {
+        const term = this.filtros.busquedaGeneral.toLowerCase();
+        const match = 
+          user.name?.toLowerCase().includes(term) ||
+          user.email?.toLowerCase().includes(term) ||
+          user.nit?.includes(term) ||
+          user.nombreInmobiliaria?.toLowerCase().includes(term);
+        if (!match) return false;
+      }
+
+      // Filtro por Rol
+      if (this.filtros.rol) {
+        const roleLabel = this.availableRoles.find(r => r.value === user.role)?.label || user.role;
+        if (roleLabel !== this.filtros.rol) return false;
+      }
+
+      // Filtro por Estado
+      if (this.filtros.estado) {
+        const estadoUsuario = user.isActive ? 'Activo' : 'Inactivo';
+        if (estadoUsuario !== this.filtros.estado) return false;
+      }
+
+      // Filtro por NIT
+      if (this.filtros.nit && !user.nit?.includes(this.filtros.nit)) return false;
+
+      // Filtro por Nombre Inmobiliaria
+      if (this.filtros.nombreInmobiliaria && !user.nombreInmobiliaria?.toLowerCase().includes(this.filtros.nombreInmobiliaria.toLowerCase())) return false;
+
+      return true;
+    });
+  }
+
+  limpiarFiltros() {
+    this.filtros = {
+      busquedaGeneral: '',
+      rol: '',
+      estado: '',
+      nit: '',
+      nombreInmobiliaria: ''
+    };
+    this.currentPage = 1;
+  }
+
+  // --- PAGINACIÓN ---
+  get paginatedUsers() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredUsers.slice(startIndex, startIndex + this.itemsPerPage);
+  }
+
+  get totalPages() {
+    return Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) this.currentPage++;
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) this.currentPage--;
+  }
+
+  selectPageSize(size: number) {
+    this.itemsPerPage = size;
+    this.currentPage = 1;
+    this.activeDropdown = null;
+  }
+
+  // --- CONTROL DE DROPDOWNS ---
+  toggleDropdown(name: string, event: Event) {
+    event.stopPropagation();
+    this.activeDropdown = this.activeDropdown === name ? null : name;
+  }
+
+  selectFilterOption(filterKey: 'rol' | 'estado', value: string) {
+    this.filtros[filterKey] = value;
+    this.activeDropdown = null;
+    this.currentPage = 1; // Reset a página 1 al filtrar
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: Event) {
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      this.activeDropdown = null;
+      this.isDropdownOpen = false;
+    }
   }
 
   get searchableInmobiliarias() {
@@ -117,7 +221,7 @@ export class UsersListComponent implements OnInit {
     );
   }
 
-  get filteredInmobiliarias() { /* ... tu lógica existente ... */
+  get filteredInmobiliarias() {
     if (this.selectedUser.role !== 'inmobiliaria') return [];
     return this.inmobiliarias.filter(inmo => {
       if (!inmo.emailRegistrado) return true;
@@ -126,16 +230,13 @@ export class UsersListComponent implements OnInit {
     });
   }
 
-  toggleDropdown() {
+  toggleDropdownInmo() {
     if (!this.isCreating && this.selectedUser.role === 'inmobiliaria') {
-        // En modo edición (no creando), permitimos abrir. 
-        // Si quisieras bloquearlo en algún caso, pon la condición aquí.
-        this.isDropdownOpen = !this.isDropdownOpen;
+      this.isDropdownOpen = !this.isDropdownOpen;
     } else if (this.isCreating) {
-        this.isDropdownOpen = !this.isDropdownOpen;
+      this.isDropdownOpen = !this.isDropdownOpen;
     }
     
-    // Al abrir, limpiar búsqueda y enfocar (opcional)
     if (this.isDropdownOpen) {
       this.inmoSearchTerm = '';
     }
@@ -147,18 +248,10 @@ export class UsersListComponent implements OnInit {
     this.selectedUser.nit = inmo.nit;
     this.selectedUser.codigoInmobiliaria = inmo.codigo;
     
-    this.isDropdownOpen = false; // Cerrar al seleccionar
+    this.isDropdownOpen = false;
   }
 
-  // Cerrar dropdown si hago clic fuera
-  @HostListener('document:click', ['$event'])
-  onClickOutside(event: Event) {
-    if (!this.elementRef.nativeElement.contains(event.target)) {
-      this.isDropdownOpen = false;
-    }
-  }
-
-  openEditModal(user: User | null) { /* ... tu lógica existente ... */ 
+  openEditModal(user: User | null) {
     this.selectedInmoId = ''; 
     if (user) {
       this.isCreating = false;
@@ -179,16 +272,7 @@ export class UsersListComponent implements OnInit {
     this.showEditModal = true;
   }
 
-  onInmobiliariaSelect(inmoId: string) { /* ... */ 
-    const selected = this.inmobiliarias.find(i => i._id === inmoId);
-    if (selected) {
-      this.selectedUser.nombreInmobiliaria = selected.nombreInmobiliaria;
-      this.selectedUser.nit = selected.nit;
-      this.selectedUser.codigoInmobiliaria = selected.codigo;
-    }
-  }
-
-  onRoleChange(newRole: string) { /* ... */ 
+  onRoleChange(newRole: string) {
     this.selectedUser.role = newRole;
     this.selectedInmoId = ''; 
     if (newRole === 'admin' || newRole === 'affi') {
@@ -202,9 +286,12 @@ export class UsersListComponent implements OnInit {
     }
   }
 
-  saveEditUser() { if (this.isCreating) this.createUser(); else this.updateUser(); }
+  saveEditUser() { 
+    if (this.isCreating) this.createUser(); 
+    else this.updateUser(); 
+  }
 
-  createUser() { /* ... tu lógica existente ... */ 
+  createUser() {
     if (!this.selectedUser.email || !this.userPassword || !this.selectedUser.name) {
       AffiAlert.fire({ icon: 'warning', title: 'Faltan datos', text: 'Nombre, Email y Contraseña son obligatorios.' });
       return;
@@ -236,7 +323,7 @@ export class UsersListComponent implements OnInit {
     });
   }
 
-  updateUser() { /* ... tu lógica existente ... */ 
+  updateUser() {
     if (!this.selectedUser._id) return;
     const cleanPayload = {
       name: this.selectedUser.name,
@@ -257,13 +344,13 @@ export class UsersListComponent implements OnInit {
     });
   }
 
-  openPermissionsModal(user: User) { /* ... */ 
+  openPermissionsModal(user: User) {
     this.selectedUser = { ...user } as User; 
     this.tempPermissions = [...(user.permissions || [])];
     this.showPermissionsModal = true;
   }
 
-  togglePermission(permKey: string) { /* ... */ 
+  togglePermission(permKey: string) {
     if (this.tempPermissions.includes(permKey)) {
       this.tempPermissions = this.tempPermissions.filter(p => p !== permKey);
     } else {
@@ -275,7 +362,7 @@ export class UsersListComponent implements OnInit {
     return this.tempPermissions.includes(permKey);
   }
 
-  savePermissions() { /* ... */ 
+  savePermissions() {
     if (!this.selectedUser._id) return;
     this.usersService.updatePermissions(this.selectedUser._id, this.tempPermissions).subscribe({
       next: (updatedUser) => {
@@ -295,7 +382,7 @@ export class UsersListComponent implements OnInit {
     this.userPassword = '';
   }
 
-  toggleStatus(user: User) { /* ... */ 
+  toggleStatus(user: User) {
     const accion = user.isActive ? 'desactivar' : 'activar';
     AffiAlert.fire({
       title: '¿Estás seguro?',
@@ -318,7 +405,7 @@ export class UsersListComponent implements OnInit {
     });
   }
 
-  changeRole(user: User, newRole: string) { /* ... */ 
+  changeRole(user: User, newRole: string) {
     if (!confirm(`¿Estás seguro de cambiar el rol a ${newRole}? Esto reiniciará sus permisos.`)) return;
     this.usersService.changeRole(user._id, newRole).subscribe({
       next: (updated) => {

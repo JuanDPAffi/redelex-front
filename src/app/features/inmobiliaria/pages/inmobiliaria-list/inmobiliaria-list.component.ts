@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpEventType, HttpResponse } from '@angular/common/http';
@@ -17,7 +17,6 @@ import { AuthService } from '../../../auth/services/auth.service';
 export class InmobiliariaListComponent implements OnInit {
   inmobiliarias: Inmobiliaria[] = [];
   loading = true;
-  searchTerm = '';
 
   // Estados de Modales
   showEditModal = false;
@@ -31,9 +30,32 @@ export class InmobiliariaListComponent implements OnInit {
   importResult: ImportResult | null = null;
   dragOver = false;
 
+  // --- PAGINACIÓN ---
+  currentPage = 1;
+  itemsPerPage = 10;
+  pageSizeOptions = [5, 10, 20, 50];
+
+  // --- FILTROS AVANZADOS ---
+  filtros = {
+    busquedaGeneral: '',
+    nit: '',
+    codigo: '',
+    nombreInmobiliaria: '',
+    estado: '',
+    tieneUsuario: ''
+  };
+
+  // Lista única de estados
+  listaEstados = ['Activo', 'Inactivo'];
+  listaTieneUsuario = ['Con Usuario', 'Sin Usuario'];
+
+  // Control de dropdowns
+  activeDropdown: string | null = null;
+
   constructor(
     private inmoService: InmobiliariaService,
-    public authService: AuthService // Para verificar permisos en el HTML
+    public authService: AuthService,
+    private elementRef: ElementRef
   ) {}
 
   ngOnInit() {
@@ -54,14 +76,98 @@ export class InmobiliariaListComponent implements OnInit {
     });
   }
 
+  // --- FILTROS ---
   get filteredInmobiliarias() {
-    if (!this.searchTerm) return this.inmobiliarias;
-    const term = this.searchTerm.toLowerCase();
-    return this.inmobiliarias.filter(i => 
-      i.nombreInmobiliaria.toLowerCase().includes(term) ||
-      i.nit.includes(term) ||
-      i.codigo.toLowerCase().includes(term)
-    );
+    return this.inmobiliarias.filter(inmo => {
+      // Búsqueda General
+      if (this.filtros.busquedaGeneral) {
+        const term = this.filtros.busquedaGeneral.toLowerCase();
+        const match = 
+          inmo.nombreInmobiliaria.toLowerCase().includes(term) ||
+          inmo.nit.includes(term) ||
+          inmo.codigo.toLowerCase().includes(term) ||
+          inmo.emailRegistrado?.toLowerCase().includes(term);
+        if (!match) return false;
+      }
+
+      // Filtro por NIT
+      if (this.filtros.nit && !inmo.nit.includes(this.filtros.nit)) return false;
+
+      // Filtro por Código
+      if (this.filtros.codigo && !inmo.codigo.toLowerCase().includes(this.filtros.codigo.toLowerCase())) return false;
+
+      // Filtro por Nombre Inmobiliaria
+      if (this.filtros.nombreInmobiliaria && !inmo.nombreInmobiliaria.toLowerCase().includes(this.filtros.nombreInmobiliaria.toLowerCase())) return false;
+
+      // Filtro por Estado
+      if (this.filtros.estado) {
+        const estadoInmo = inmo.isActive ? 'Activo' : 'Inactivo';
+        if (estadoInmo !== this.filtros.estado) return false;
+      }
+
+      // Filtro por Tiene Usuario
+      if (this.filtros.tieneUsuario) {
+        const tieneUsuario = inmo.emailRegistrado ? 'Con Usuario' : 'Sin Usuario';
+        if (tieneUsuario !== this.filtros.tieneUsuario) return false;
+      }
+
+      return true;
+    });
+  }
+
+  limpiarFiltros() {
+    this.filtros = {
+      busquedaGeneral: '',
+      nit: '',
+      codigo: '',
+      nombreInmobiliaria: '',
+      estado: '',
+      tieneUsuario: ''
+    };
+    this.currentPage = 1;
+  }
+
+  // --- PAGINACIÓN ---
+  get paginatedInmobiliarias() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredInmobiliarias.slice(startIndex, startIndex + this.itemsPerPage);
+  }
+
+  get totalPages() {
+    return Math.ceil(this.filteredInmobiliarias.length / this.itemsPerPage);
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) this.currentPage++;
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) this.currentPage--;
+  }
+
+  selectPageSize(size: number) {
+    this.itemsPerPage = size;
+    this.currentPage = 1;
+    this.activeDropdown = null;
+  }
+
+  // --- CONTROL DE DROPDOWNS ---
+  toggleDropdown(name: string, event: Event) {
+    event.stopPropagation();
+    this.activeDropdown = this.activeDropdown === name ? null : name;
+  }
+
+  selectFilterOption(filterKey: 'estado' | 'tieneUsuario', value: string) {
+    this.filtros[filterKey] = value;
+    this.activeDropdown = null;
+    this.currentPage = 1;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: Event) {
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      this.activeDropdown = null;
+    }
   }
 
   // --- LÓGICA DE IMPORTACIÓN ---
@@ -95,7 +201,6 @@ export class InmobiliariaListComponent implements OnInit {
   }
 
   validateAndSetFile(file: File) {
-    // Validar extensión simple
     if (!file.name.match(/\.(xlsx|xls)$/)) {
       AffiAlert.fire({ icon: 'warning', title: 'Archivo inválido', text: 'Solo se permiten archivos Excel (.xlsx, .xls)' });
       return;
@@ -116,7 +221,7 @@ export class InmobiliariaListComponent implements OnInit {
         } else if (event instanceof HttpResponse) {
           this.isUploading = false;
           this.importResult = event.body as ImportResult;
-          this.loadData(); // Recargar tabla de fondo
+          this.loadData();
           AffiAlert.fire({ 
             icon: 'success', 
             title: 'Importación Exitosa', 

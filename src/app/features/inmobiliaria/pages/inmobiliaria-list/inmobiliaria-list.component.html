@@ -3,15 +3,11 @@
     <div class="header-content">
       <div>
         <h2>Inmobiliarias</h2>
-        <p>Base de datos de clientes. Sincroniza masivamente desde Excel.</p>
+        <p>Base de datos de clientes. Sincroniza masivamente desde Excel. • Total: {{ filteredInmobiliarias.length }}</p>
       </div>
       
       <div class="header-actions">
-        <div class="search-wrapper">
-          <i-feather name="search" class="search-icon"></i-feather>
-          <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar NIT, Código o Nombre..." class="search-input">
-        </div>
-
+        <button class="btn btn--secondary" (click)="limpiarFiltros()">Limpiar Filtros</button>
         <button class="btn btn--primary" 
                 (click)="openImportModal()" 
                 *ngIf="authService.hasPermission('inmo:import') || authService.isAdmin()">
@@ -23,68 +19,259 @@
   </div>
 
   <div class="card">
-    <div class="table-scroll">
-      <table class="excel-table">
-        <thead>
-          <tr>
-            <th>Inmobiliaria</th>
-            <th>NIT</th>
-            <th>Código</th>
-            <th>Correo Usuario</th>
-            <th>Estado</th>
-            <th class="text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (inmo of filteredInmobiliarias; track inmo._id) {
-            <tr>
-              <td>
-                <div class="company-info">
-                  <span class="company-name">{{ inmo.nombreInmobiliaria }}</span>
-                  <span class="company-nit">Actualizado: {{ inmo.updatedAt | date:'shortDate' }}</span>
+    <!-- SECCIÓN DE FILTROS -->
+    <div class="filter-section">
+      <div class="filters-grid">
+
+        <label class="field full-width">
+          <span class="field__label">Búsqueda Rápida</span>
+          <div class="search-wrapper">
+            <i-feather name="search" class="search-icon"></i-feather>
+            <input 
+              type="text" 
+              [(ngModel)]="filtros.busquedaGeneral" 
+              (input)="currentPage = 1"
+              placeholder="Buscar NIT, Código, Nombre o Email..." 
+              class="field__input search-input"
+            >
+          </div>
+        </label>
+
+        <label class="field">
+          <span class="field__label">NIT</span>
+          <input 
+            class="field__input" 
+            type="text" 
+            [(ngModel)]="filtros.nit" 
+            (input)="currentPage = 1"
+            placeholder="Ej: 900053370"
+          >
+        </label>
+
+        <label class="field">
+          <span class="field__label">Código</span>
+          <input 
+            class="field__input" 
+            type="text" 
+            [(ngModel)]="filtros.codigo" 
+            (input)="currentPage = 1"
+            placeholder="Ej: AFFI"
+          >
+        </label>
+
+        <label class="field">
+          <span class="field__label">Nombre Inmobiliaria</span>
+          <input 
+            class="field__input" 
+            type="text" 
+            [(ngModel)]="filtros.nombreInmobiliaria" 
+            (input)="currentPage = 1"
+            placeholder="Ej: AFFI"
+          >
+        </label>
+
+        <div class="field custom-select-container">
+          <span class="field__label">Estado</span>
+          <div 
+            class="custom-select" 
+            (click)="toggleDropdown('estado', $event)" 
+            [class.open]="activeDropdown === 'estado'"
+          >
+            <span class="selected-value" [class.placeholder]="!filtros.estado">
+              {{ filtros.estado || 'Todos' }}
+            </span>
+            <span class="arrow">▼</span>
+          </div>
+          @if (activeDropdown === 'estado') {
+            <div class="dropdown-menu">
+              <div class="options-list">
+                <div 
+                  class="option" 
+                  (click)="selectFilterOption('estado', '')" 
+                  [class.selected]="filtros.estado === ''"
+                >
+                  Todos
                 </div>
-              </td>
-              <td>
-                <div class="codes-cell">
-                  <span class="code-pill">NIT: {{ inmo.nit }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="codes-cell">
-                  <span class="code-pill code-pill--blue">COD: {{ inmo.codigo }}</span>
-                </div>
-              </td>
-              <td>
-                @if (inmo.emailRegistrado) {
-                  <span class="text-sm text-gray-700 font-medium">{{ inmo.emailRegistrado }}</span>
-                } @else {
-                  <span class="text-xs text-gray-400 italic">Sin asignar</span>
+                @for (estado of listaEstados; track estado) {
+                  <div 
+                    class="option" 
+                    (click)="selectFilterOption('estado', estado)" 
+                    [class.selected]="filtros.estado === estado"
+                  >
+                    {{ estado }}
+                  </div>
                 }
-              </td>
-              <td>
-                <span (click)="toggleStatus(inmo)"
-                  class="status-badge"
-                  [class.status-badge--active]="inmo.isActive"
-                  [class.status-badge--inactive]="!inmo.isActive">
-                  {{ inmo.isActive ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td class="text-right">
-                <button (click)="openEditModal(inmo)" class="btn-icon" title="Editar">
-                  <i-feather name="edit-2"></i-feather>
-                </button>
-              </td>
-            </tr>
+              </div>
+            </div>
           }
-        </tbody>
-      </table>
+        </div>
+
+        <div class="field custom-select-container">
+          <span class="field__label">Usuario Asignado</span>
+          <div 
+            class="custom-select" 
+            (click)="toggleDropdown('tieneUsuario', $event)" 
+            [class.open]="activeDropdown === 'tieneUsuario'"
+          >
+            <span class="selected-value" [class.placeholder]="!filtros.tieneUsuario">
+              {{ filtros.tieneUsuario || 'Todos' }}
+            </span>
+            <span class="arrow">▼</span>
+          </div>
+          @if (activeDropdown === 'tieneUsuario') {
+            <div class="dropdown-menu">
+              <div class="options-list">
+                <div 
+                  class="option" 
+                  (click)="selectFilterOption('tieneUsuario', '')" 
+                  [class.selected]="filtros.tieneUsuario === ''"
+                >
+                  Todos
+                </div>
+                @for (tipo of listaTieneUsuario; track tipo) {
+                  <div 
+                    class="option" 
+                    (click)="selectFilterOption('tieneUsuario', tipo)" 
+                    [class.selected]="filtros.tieneUsuario === tipo"
+                  >
+                    {{ tipo }}
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+      </div>
     </div>
+
     @if (loading) {
       <div class="helper"><div class="spinner"></div><p>Cargando datos...</p></div>
+    }
+
+    @if (!loading) {
+      <div class="table-container">
+        <div class="table-scroll">
+          <table class="excel-table">
+            <thead>
+              <tr>
+                <th>Inmobiliaria</th>
+                <th>NIT</th>
+                <th>Código</th>
+                <th>Correo Usuario</th>
+                <th>Estado</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (inmo of paginatedInmobiliarias; track inmo._id) {
+                <tr>
+                  <td>
+                    <div class="company-info">
+                      <span class="company-name">{{ inmo.nombreInmobiliaria }}</span>
+                      <span class="company-nit">Actualizado: {{ inmo.updatedAt | date:'shortDate' }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="codes-cell">
+                      <span class="code-pill">NIT: {{ inmo.nit }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="codes-cell">
+                      <span class="code-pill code-pill--blue">COD: {{ inmo.codigo }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    @if (inmo.emailRegistrado) {
+                      <span class="text-sm text-gray-700 font-medium">{{ inmo.emailRegistrado }}</span>
+                    } @else {
+                      <span class="text-xs text-gray-400 italic">Sin asignar</span>
+                    }
+                  </td>
+                  <td>
+                    <span (click)="toggleStatus(inmo)"
+                      class="status-badge"
+                      [class.status-badge--active]="inmo.isActive"
+                      [class.status-badge--inactive]="!inmo.isActive">
+                      {{ inmo.isActive ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td class="text-right">
+                    <button (click)="openEditModal(inmo)" class="btn-icon" title="Editar">
+                      <i-feather name="edit-2"></i-feather>
+                    </button>
+                  </td>
+                </tr>
+              }
+
+              @if (filteredInmobiliarias.length === 0 && !loading) {
+                <tr>
+                  <td colspan="6" class="text-center p-8 text-gray-500">
+                    No se encontraron inmobiliarias con los filtros aplicados.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINACIÓN -->
+        @if (filteredInmobiliarias.length > 0) {
+          <div class="pagination">
+            <button 
+              class="pagination__btn" 
+              [disabled]="currentPage === 1" 
+              (click)="prevPage()"
+            >
+              ← Anterior
+            </button>
+            
+            <div class="pagination__info">
+              <span>Página {{ currentPage }} de {{ totalPages }}</span>
+              
+              <div class="page-size-selector custom-select-container">
+                <div 
+                  class="custom-select" 
+                  (click)="toggleDropdown('pageSize', $event)" 
+                  [class.open]="activeDropdown === 'pageSize'"
+                >
+                  <span class="selected-value">{{ itemsPerPage }} / pág</span>
+                  <span class="arrow">▼</span>
+                </div>
+                @if (activeDropdown === 'pageSize') {
+                  <div class="dropdown-menu dropdown-menu--up">
+                    <div class="options-list">
+                      @for (size of pageSizeOptions; track size) {
+                        <div 
+                          class="option" 
+                          (click)="selectPageSize(size)" 
+                          [class.selected]="itemsPerPage === size"
+                        >
+                          {{ size }}
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            <button 
+              class="pagination__btn" 
+              [disabled]="currentPage === totalPages" 
+              (click)="nextPage()"
+            >
+              Siguiente →
+            </button>
+          </div>
+        }
+      </div>
     }
   </div>
 </div>
 
+<!-- MODAL IMPORTACIÓN -->
 @if (showImportModal) {
   <div class="modal-overlay">
     <div class="modal-card modal-lg">
@@ -176,6 +363,7 @@
   </div>
 }
 
+<!-- MODAL EDITAR -->
 @if (showEditModal && selectedInmo) {
   <div class="modal-overlay">
     <div class="modal-card">
