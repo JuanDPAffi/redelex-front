@@ -37,12 +37,12 @@
   </div>
 
   <!-- LOADING STATE -->
-  @if (loading) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Cargando ficha del proceso...</p>
-    </div>
-  }
+    @if (loading) {
+      <div class="helper"><div class="spinner"></div><p>Cargando datos...</p></div>
+    }
+    @if (error) {
+      <div class="helper error-text"><p>❌ {{ error }}</p></div>
+    }
 
   <!-- ERROR STATE -->
   @if (error) {
