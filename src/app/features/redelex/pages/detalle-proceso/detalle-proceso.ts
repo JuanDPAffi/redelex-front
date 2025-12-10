@@ -49,8 +49,8 @@ export class DetalleProcesoComponent implements OnInit {
     this.redelexService.getProcesoDetalleById(id).subscribe({
       next: (res) => {
         this.detalle = res.data || res;
-        this.titleService.setTitle(`Radicado ${this.detalle.numeroRadicacion || id}`);
-        this.loading = false;
+        const nombreDemandado = this.getNombreSujeto('DEMANDADO');
+        this.titleService.setTitle(`Estados Procesales - Demandado ${nombreDemandado}`);        this.loading = false;
       },
       error: (err) => {
         console.error(err);

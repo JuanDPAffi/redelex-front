@@ -1,4 +1,4 @@
-import { HostListener, ElementRef, Component, OnInit } from '@angular/core';
+import { HostListener, ElementRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UsersService, User } from '../../services/users.service';
@@ -6,6 +6,7 @@ import { InmobiliariaLookupService, InmobiliariaLookup } from '../../services/in
 import { AffiAlert } from '../../../../shared/services/affi-alert';
 import { FeatherModule } from 'angular-feather';
 import { RegisterPayload } from '../../../auth/services/auth.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-users-list',
@@ -15,6 +16,7 @@ import { RegisterPayload } from '../../../auth/services/auth.service';
   styleUrls: ['./users-list.component.scss']
 })
 export class UsersListComponent implements OnInit {
+  private titleService = inject(Title);
   users: User[] = [];
   filteredUsers: User[] = []; // Array filtrado
   inmobiliarias: InmobiliariaLookup[] = []; 
@@ -87,6 +89,7 @@ export class UsersListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.titleService.setTitle('Estados Procesales - Usuarios');
     this.loadUsers();
     this.loadInmobiliarias(); 
   }

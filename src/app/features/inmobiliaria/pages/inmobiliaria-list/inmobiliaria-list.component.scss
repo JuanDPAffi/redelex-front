@@ -43,11 +43,24 @@
   }
 }
 
+.actions-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Empuja el contenido a la derecha */
+  width: 100%;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 /* =============================================
@@ -289,6 +302,7 @@
   justify-content: center;
   border-radius: var(--border-radius-md);
   transition: all var(--transition-fast);
+  flex-shrink: 0;
   
   svg { width: 18px; height: 18px; }
   

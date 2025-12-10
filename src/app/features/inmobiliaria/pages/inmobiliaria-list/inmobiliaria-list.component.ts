@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, ElementRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpEventType, HttpResponse } from '@angular/common/http';
@@ -6,6 +6,7 @@ import { FeatherModule } from 'angular-feather';
 import { InmobiliariaService, Inmobiliaria, ImportResult } from '../../services/inmobiliaria.service';
 import { AffiAlert } from '../../../../shared/services/affi-alert';
 import { AuthService } from '../../../auth/services/auth.service';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-inmobiliaria-list',
@@ -45,6 +46,9 @@ export class InmobiliariaListComponent implements OnInit {
     tieneUsuario: ''
   };
 
+  private titleService = inject(Title);
+
+
   // Lista única de estados
   listaEstados = ['Activo', 'Inactivo'];
   listaTieneUsuario = ['Con Usuario', 'Sin Usuario'];
@@ -59,6 +63,7 @@ export class InmobiliariaListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.titleService.setTitle('Estados Procesales - Inmobiliarias');
     this.loadData();
   }
 
