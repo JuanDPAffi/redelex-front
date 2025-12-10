@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { of, Subject, takeUntil } from 'rxjs';
+import { catchError, filter } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 
 // Servicios y Modelos
@@ -41,6 +41,24 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   
   menuSections: MenuSection[] = [];
   breadcrumbs: { label: string, active?: boolean }[] = [];
+
+  currentTip = '';
+
+  // TIPS PARA ADMINISTRADORES Y AFFI
+  readonly tipsAdmin = [
+    'Usa la búsqueda global para localizar procesos de cualquier inmobiliaria rápidamente.',
+    'Recuerda que puedes gestionar los accesos de las inmobiliarias desde el módulo de Usuarios.',
+    'Al exportar informes masivos, usa el formato Excel para facilitar el análisis de datos.',
+    'Recuerda usar los filtros para buscar información específica'
+  ];
+
+  // TIPS PARA INMOBILIARIAS
+  readonly tipsInmobiliaria = [
+    'Revisa diariamente la sección "Mis Procesos" para ver las últimas actualizaciones.',
+    'Usa el filtro de "Radicado" para encontrar rápidamente un expediente específico.',
+    'Descarga la Ficha Técnica en PDF para entregar reportes formales a tus propietarios.',
+    'Si tienes dudas sobre un movimiento procesal, contáctanos desde el botón de Soporte.'
+  ];
   
   private destroy$ = new Subject<void>();
 
@@ -53,12 +71,25 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadUserData();
+
+    this.selectRandomTip();
     
     this.authService.refreshUserProfile()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (user) => this.updateUserView(user),
-        error: () => console.log('No se pudo refrescar el perfil')
+      .pipe(
+        catchError((err: { status: number; }) => {
+          if (err.status === 401) {
+            this.authService.logoutClientSide();
+            this.router.navigate(['/auth/login']);
+          }
+          return of(null);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((user) => {
+        if (user) {
+          this.updateUserView(user);
+          this.selectRandomTip(); 
+        }
       });
 
     this.loadMenuSections();
@@ -72,6 +103,20 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
     ).subscribe(() => {
       this.updateBreadcrumbs();
     });
+  }
+
+  selectRandomTip() {
+    const user = this.authService.getUserData();
+    const role = user?.role || 'guest';
+    
+    let sourceTips = this.tipsInmobiliaria;
+
+    if (role === 'admin' || role === 'affi') {
+      sourceTips = this.tipsAdmin;
+    }
+
+    const randomIndex = Math.floor(Math.random() * sourceTips.length);
+    this.currentTip = sourceTips[randomIndex];
   }
 
   isItemActive(item: MenuItem): boolean {

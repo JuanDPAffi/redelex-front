@@ -1,5 +1,5 @@
 // Reutilizamos estilos base
-@import '../../../users/pages/users-list/users-list.component.scss';
+@use '../../../users/pages/users-list/users-list.component.scss' as *;
 
 // =============================================
 // ESTILOS ESPECÍFICOS DE INMOBILIARIAS
