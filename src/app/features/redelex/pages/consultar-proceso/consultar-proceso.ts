@@ -384,7 +384,7 @@ export class ConsultarProcesoComponent implements OnInit {
        { Seccion: 'Datos del Proceso', Campo: 'Despacho actual', Valor: p.despacho || '' },
        { Seccion: 'Datos del Proceso', Campo: 'Despacho de origen', Valor: p.despachoOrigen || '' },
        { Seccion: 'Datos del proceso', Campo: 'Número de radicación', Valor: p.numeroRadicacion || '' },
-       { Seccion: 'Datos del proceso', Campo: 'Código alterno', Valor: p.codigoAlterno || '' },
+       { Seccion: 'Datos del proceso', Campo: 'Cuenta', Valor: p.codigoAlterno || '' },
        { Seccion: 'Datos del proceso', Campo: 'Clase de proceso', Valor: this.clasePipe.transform(p.claseProceso) },
        { Seccion: 'Datos del proceso', Campo: 'Etapa procesal', Valor: p.etapaProcesal || '' },
        { Seccion: 'Datos del proceso', Campo: 'Estado', Valor: p.estado || '' },
@@ -400,6 +400,10 @@ export class ConsultarProcesoComponent implements OnInit {
        { Seccion: 'Datos del proceso', Campo: 'Calificación', Valor: p.calificacion || '' },
        { Seccion: 'Datos del proceso', Campo: 'Última actuación', Valor: [p.ultimaActuacionTipo || '', p.ultimaActuacionFecha || '', p.ultimaActuacionObservacion || ''].filter(Boolean).join(' | ') }
      );
+     rows.push({ Seccion: 'Abogados', Campo: 'Abogado principal', Valor: this.abogadoPrincipal?.Nombre || 'Sin asignar' });
+     if (this.abogadosInternos.length) rows.push({ Seccion: 'Abogados', Campo: 'Abogados internos', Valor: this.abogadosInternos.map(ab => ab.Nombre).join(', ') });
+     this.otrosAbogados.forEach((ab, idx) => { rows.push({ Seccion: 'Abogados', Campo: `Otro abogado ${idx + 1} (${ab.ActuaComo || 'N/A'})`, Valor: ab.Nombre || '-' }); });
+     
      if (this.medidas.length) {
        this.medidas.forEach((m, idx) => {
          rows.push(
@@ -409,13 +413,10 @@ export class ConsultarProcesoComponent implements OnInit {
            { Seccion: `Medidas cautelares ${idx + 1}`, Campo: 'Tipo bien', Valor: m.tipoBien || '' },
            { Seccion: `Medidas cautelares ${idx + 1}`, Campo: 'Avalúo judicial', Valor: m.avaluoJudicial ?? '' },
            { Seccion: `Medidas cautelares ${idx + 1}`, Campo: 'Observaciones', Valor: m.observaciones || '' }
-         );
-       });
-     }
-     rows.push({ Seccion: 'Abogados', Campo: 'Abogado principal', Valor: this.abogadoPrincipal?.Nombre || 'Sin asignar' });
-     if (this.abogadosInternos.length) rows.push({ Seccion: 'Abogados', Campo: 'Abogados internos', Valor: this.abogadosInternos.map(ab => ab.Nombre).join(', ') });
-     this.otrosAbogados.forEach((ab, idx) => { rows.push({ Seccion: 'Abogados', Campo: `Otro abogado ${idx + 1} (${ab.ActuaComo || 'N/A'})`, Valor: ab.Nombre || '-' }); });
-     return rows;
+          );
+        });
+      }
+      return rows;
   }
 
   // ==========================================================================
@@ -516,7 +517,7 @@ export class ConsultarProcesoComponent implements OnInit {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
       });
 
-      const fileName = `proceso-${this.proceso.idProceso || 'detalle'}.xlsx`;
+      const fileName = `PROCESO ${this.proceso.idProceso || 'detalle'}.xlsx`;
       saveAs(blob, fileName);
     } catch (error) {
       console.error(error);
@@ -605,7 +606,7 @@ export class ConsultarProcesoComponent implements OnInit {
         body: [[
           'Demandante', demandanteNombres,
           'Identificación', demandanteIdentificaciones,
-          'Cód. Alterno', p.codigoAlterno || '-'
+          'Cuenta', p.codigoAlterno || '-'
         ]],
         columnStyles: {
           0: { fontStyle: 'bold', cellWidth: 25, fillColor: [240, 240, 240] },
@@ -673,9 +674,34 @@ export class ConsultarProcesoComponent implements OnInit {
       });
       currentY = (doc as any).lastAutoTable.finalY + 10;
 
+      // --- ABOGADOS ---
+      if (currentY > 170) { doc.addPage(); currentY = 20; }
+
+      const abogadosBody: any[] = [['Abogado Principal', this.abogadoPrincipal?.Nombre || 'Sin asignar']];
+
+      if (this.abogadosInternos.length) {
+        const internos = this.abogadosInternos.map(ab => ab.Nombre || '-').join(', ');
+        abogadosBody.push(['Abogados Internos', internos]);
+      }
+
+      this.otrosAbogados.forEach(ab => {
+        abogadosBody.push([`${ab.ActuaComo || 'Otro Abogado'}`, ab.Nombre || '-']);
+      });
+      
+      autoTable(doc, {
+        startY: currentY,
+        ...commonTableStyles,
+        head: [['Rol', 'Nombre del Abogado']],
+        body: abogadosBody,
+        columnStyles: { 0: { cellWidth: 60, fontStyle: 'bold' } }
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 10; 
+
+
       // --- MEDIDAS CAUTELARES ---
       if (this.medidas.length) {
         this.medidas.forEach((m, idx) => {
+          // Chequeo de salto de página
           if (currentY > 170) { doc.addPage(); currentY = 20; } 
 
           autoTable(doc, {
@@ -696,35 +722,14 @@ export class ConsultarProcesoComponent implements OnInit {
         });
       }
 
-      // --- ABOGADOS ---
-      if (currentY > 170) { doc.addPage(); currentY = 20; }
-
-      const abogadosBody: any[] = [['Abogado Principal', this.abogadoPrincipal?.Nombre || 'Sin asignar']];
-
-      if (this.abogadosInternos.length) {
-        const internos = this.abogadosInternos.map(ab => ab.Nombre || '-').join(', ');
-        abogadosBody.push(['Abogados Internos', internos]);
-      }
-
-      this.otrosAbogados.forEach(ab => {
-        abogadosBody.push([`${ab.ActuaComo || 'Otro Abogado'}`, ab.Nombre || '-']);
-      });
-
-      autoTable(doc, {
-        startY: currentY,
-        ...commonTableStyles,
-        head: [['Rol', 'Nombre del Abogado']],
-        body: abogadosBody,
-        columnStyles: { 0: { cellWidth: 60, fontStyle: 'bold' } }
-      });
-
-      const fileName = `proceso-${p.idProceso || 'detalle'}.pdf`;
+      const fileName = `PROCESO ${p.idProceso || 'detalle'}.pdf`;
       doc.save(fileName);
+
     } catch (error) {
       console.error(error);
       AffiAlert.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el PDF.' });
     } finally {
-      this.exportState = 'idle'; // Resetear siempre
+      this.exportState = 'idle';
     }
   }
 }
