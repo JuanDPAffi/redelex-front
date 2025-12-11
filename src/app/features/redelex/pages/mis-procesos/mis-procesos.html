@@ -6,8 +6,8 @@
         <h2>Mis Procesos Jurídicos</h2>
         @if (identificacionUsuario) {
           <p>
-            Inmobiliaria: <strong style="color: #111827;">{{ nombreInmobiliaria | titlecase }}</strong> &bull;
-            NIT: <strong>{{ identificacionUsuario }}</strong> &bull;
+            Inmobiliaria: {{ nombreInmobiliaria | titlecase }} &bull;
+            NIT: {{ identificacionUsuario }} &bull;
             Total: {{ filteredData.length }}
           </p>
         }
