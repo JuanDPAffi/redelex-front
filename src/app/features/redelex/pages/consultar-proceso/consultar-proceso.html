@@ -276,9 +276,55 @@
 
             @if (sectionOpen.proceso) {
               <div class="detail-section__body">
+                
+                <div class="stepper-wrapper">
+                  <div class="stepper-track">
+                    @for (etapa of etapasStepper; track etapa.orden; let i = $index) {
+                      <div class="step-item" 
+                           [class.completed]="i < etapaActualIndex"
+                           [class.active]="i === etapaActualIndex"
+                           [class.future]="i > etapaActualIndex">
+                        
+                        @if (i < etapasStepper.length - 1) {
+                          <div class="step-line" [class.filled]="i < etapaActualIndex"></div>
+                        }
+
+                        <div class="step-circle" 
+                             [style.background-color]="i <= etapaActualIndex ? etapa.color : '#E5E7EB'"
+                             [style.border-color]="i === etapaActualIndex ? etapa.color : 'transparent'">
+                          
+                          @if (i < etapaActualIndex) {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: #333"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          } @else {
+                            <span class="step-number" [style.color]="i === etapaActualIndex ? '#333' : '#9CA3AF'">{{ etapa.orden }}</span>
+                          }
+                        </div>
+
+                        <div class="step-label" [class.highlight]="i === etapaActualIndex">
+                          {{ etapa.nombreCliente }}
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+                @if (etapaActualConfig) {
+                  <div class="etapa-banner" [style.border-left-color]="etapaActualConfig.color">
+                    <div class="banner-icon" [style.color]="etapaActualConfig.color">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                    </div>
+                    <div class="banner-content">
+                      <strong>ETAPA ACTUAL: {{ proceso.etapaProcesal || etapaActualConfig.nombreCliente }}</strong>
+                      
+                      <p>{{ etapaActualConfig.definicion }}</p>
+                    </div>
+                  </div>
+                }
                 <div class="proceso-card">
                   <div class="detail-grid">
-                    <div><p class="detail-label">Etapa Procesal</p><p class="detail-value">{{ proceso.etapaProcesal || '-' }}</p></div>
                     <div><p class="detail-label">Despacho actual</p><p class="detail-value">{{ proceso.despacho || '-' }}</p></div>
                     <div><p class="detail-label">Tema</p><p class="detail-value">{{ proceso.tema || '-' }}</p></div>
                     <div><p class="detail-label">Ubicación contrato</p><p class="detail-value">{{ proceso.ubicacionContrato || '-' }}</p></div>

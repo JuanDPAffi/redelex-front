@@ -1074,3 +1074,197 @@
   border-top: 1px solid var(--color-gray-100);
   background: white;
 }
+
+/* =============================================
+   STEPPER DE PROCESO (RESPONSIVE)
+   ============================================= */
+.stepper-wrapper {
+  margin-bottom: 1.5rem;
+  padding: 1rem 0;
+  width: 100%;
+}
+
+.stepper-track {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+}
+
+.step-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1; 
+  z-index: 1;
+
+  /* --- LÍNEA CONECTORA (Base Desktop) --- */
+  .step-line {
+    position: absolute;
+    top: 15px; /* Mitad del círculo de 30px */
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background-color: #E5E7EB;
+    z-index: -1; /* Detrás del círculo */
+    transition: background-color 0.4s ease;
+    
+    &.filled {
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    }
+  }
+
+  /* --- CÍRCULO --- */
+  .step-circle {
+    width: 30px;
+    height: 30px;
+    min-width: 30px; /* Evita que se aplaste en flex */
+    border-radius: 50%;
+    background-color: #E5E7EB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    
+    .step-number {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #9CA3AF;
+    }
+  }
+
+  /* --- ETIQUETA --- */
+  .step-label {
+    margin-top: 0.75rem;
+    font-size: 0.65rem;
+    color: #9CA3AF;
+    text-align: center;
+    font-weight: 600;
+    line-height: 1.2;
+    text-transform: uppercase;
+    max-width: 90px;
+    transition: color 0.3s ease;
+  }
+
+  /* --- ESTADOS --- */
+  &.active {
+    .step-circle {
+      transform: scale(1.2);
+      box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
+      border-color: white;
+    }
+    .step-label {
+      color: #111827;
+      font-weight: 800;
+      font-size: 0.7rem;
+    }
+    .step-number { color: #333; }
+  }
+
+  &.completed {
+    .step-label { color: #4B5563; }
+  }
+
+  /* Ocultar línea del último elemento */
+  &:last-child .step-line {
+    display: none;
+  }
+}
+
+/* =============================================
+   MEDIA QUERY: MÓVIL (TRANSFORMACIÓN VERTICAL)
+   ============================================= */
+@media (max-width: 900px) {
+  
+  .stepper-track {
+    flex-direction: column; /* Cambia a vertical */
+    padding-left: 10px;     /* Espacio para la línea izquierda */
+  }
+
+  .step-item {
+    flex-direction: row;    /* Círculo a la izq, texto a la derecha */
+    align-items: flex-start;
+    text-align: left;
+    padding-bottom: 2rem;   /* Espacio vertical entre pasos */
+    width: 100%;
+    overflow: visible;
+
+    /* Ajustar línea para ser vertical */
+    .step-line {
+      top: 30px;          /* Empieza debajo del círculo */
+      left: 13px;         /* Centrada con el círculo (30px/2 - mitad de linea) */
+      width: 3px;         /* Grosor vertical */
+      height: 100%;       /* Conecta hasta abajo */
+      
+      &.filled {
+        background: #10b981; /* Color sólido vertical */
+      }
+    }
+
+    /* Quitar línea del último elemento en vertical también */
+    &:last-child {
+      padding-bottom: 0;
+      .step-line { display: none; }
+    }
+
+    /* Ajustar etiqueta */
+    .step-label {
+      margin-top: 5px;      /* Alinear con el círculo */
+      margin-left: 1rem;    /* Separar del círculo */
+      text-align: left;
+      max-width: none;      /* Permitir ancho completo */
+      font-size: 0.8rem;    /* Texto un poco más grande en móvil */
+    }
+  }
+}
+
+/* =============================================
+   BANNER DE DESCRIPCIÓN (RESPONSIVE)
+   ============================================= */
+.etapa-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background-color: #F9FAFB;
+  border-left: 5px solid #ccc;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  animation: slideDown 0.3s ease-out;
+
+  .banner-icon {
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .banner-content {
+    strong {
+      display: block;
+      font-size: 0.85rem;
+      color: #374151;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    
+    p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #6B7280;
+      line-height: 1.5;
+    }
+  }
+
+  /* Ajuste Banner Móvil */
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 0.5rem;
+    
+    .banner-icon {
+      margin-bottom: 0.5rem;
+    }
+  }
+}

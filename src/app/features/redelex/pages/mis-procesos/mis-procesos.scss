@@ -54,11 +54,13 @@
   font-size: 0.9rem;
   width: 100%;
   outline: none;
+  height: 42px; /* Altura fija para alinearse con los selects */
   &:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 }
 
-/* SELECT CUSTOM (Igual que informe) */
+/* SELECT CUSTOM */
 .custom-select-container { position: relative; }
+
 .custom-select {
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -73,6 +75,20 @@
   &:hover { border-color: #9ca3af; }
   &.open { border-color: var(--color-primary); }
 }
+
+/* --- CORRECCIÓN BUG DROPDOWN --- */
+/* Esto hace que el texto largo se corte con "..." en lugar de dañar el diseño */
+.selected-value {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #111827;
+  margin-right: 8px; /* Espacio con la flecha */
+  
+  &.placeholder { color: #9ca3af; }
+}
+/* ------------------------------- */
 
 .dropdown-menu {
   position: absolute;
@@ -120,7 +136,6 @@
 /* UTILS */
 .helper { text-align: center; padding: 2rem; color: #6b7280; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--color-primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-/* Spinner pequeño para botones */
 .spinner-loader {
   display: inline-block;
   width: 12px;
@@ -133,7 +148,6 @@
   vertical-align: middle;
 }
 
-/* Estado deshabilitado para botones */
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -171,16 +185,29 @@
   text-overflow: ellipsis;
 }
 
-/* Badges de Estado (Etapa Procesal) - ACTUALIZADOS SEGÚN ESPECIFICACIÓN */
+/* --- CORRECCIÓN BUG BADGES TABLA --- */
+/* Actualizado a estilo "robusto" para soportar nombres largos */
 .status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.6rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  display: inline-flex; /* Flex para centrar */
+  align-items: center;
+  justify-content: center;
+  
+  padding: 0.35rem 0.8rem;
+  border-radius: 12px; /* Borde más suave para multilínea */
+  
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
-  background: #e5e7eb; /* Default gris */
+  background: #e5e7eb;
   color: #374151;
+
+  /* Clave para nombres largos: */
+  white-space: normal; /* Permite salto de línea */
+  text-align: center;
+  line-height: 1.1;
+  max-width: 120px; /* Fuerza el salto si es muy ancho */
+  min-width: 90px;
+  height: auto;
 
   // Recolección y Validación Documental - Amarillo claro (#FFFF99)
   &--recoleccion { 
@@ -249,7 +276,6 @@
   }
 }
 
-/* Ajustes adicionales para igualar cabeceras */
 .header-actions {
   display: flex;
   gap: 10px;
