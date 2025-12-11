@@ -87,7 +87,7 @@ export class MisProcesosComponent implements OnInit {
     { key: 'sentencia', label: 'Sentencia', selected: true },
     { key: 'etapaProcesal', label: 'Etapa', selected: true },
     { key: 'sentenciaPrimeraInstancia', label: 'Sentencia 1ra', selected: true },
-    { key: 'fechaRecepcionProceso', label: 'Fecha Pres.', selected: true },
+    { key: 'fechaRecepcionProceso', label: 'Fecha Presentación', selected: true },
     { key: 'ciudadInmueble', label: 'Ciudad', selected: true },
   ];
 
