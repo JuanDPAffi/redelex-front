@@ -173,11 +173,11 @@
                   <td class="cell-nombre">{{ item.demandanteNombre }}</td>
                   <td>{{ item.fechaRecepcionProceso | date:'dd/MM/yyyy' }}</td>
                   <td>
-                <span class="status-badge" [ngClass]="{
-                  'status-badge--active': item.etapaProcesal === 'LIQUIDACION',
-                  'status-badge--pending': item.etapaProcesal === 'EJECUCION DEL ACUERDO',
-                  'status-badge--inactive': item.etapaProcesal === 'TERMINACION'
-                }">{{ item.etapaProcesal }}</span>
+                    @let config = getEtapaConfig(item.etapaProcesal);
+                    <span class="status-badge" 
+                          [style.background-color]="config ? config.colorHex : '#eee'"
+                          [style.color]="'#000'"> {{ item.etapaProcesal }}
+                    </span>
                   </td>
                   <td>{{ item.claseProceso | claseProceso }}</td>
                   <td>{{ item.sentenciaPrimeraInstancia }}</td>

@@ -288,12 +288,32 @@
 .cell-despacho { color: #6b7280; font-size: 0.8rem; }
 
 .status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.6rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  display: inline-flex;       
+  align-items: center;
+  justify-content: center;
+  
+  /* Ajuste de padding para que se vea bien con 1 o 2 líneas */
+  padding: 0.4rem 0.8rem;    
+  
+  /* Forma redondeada completa */
+  border-radius: 12px;        /* Usamos 12px en lugar de 50px para que si hay 2 líneas se vea más natural */
+  
+  font-size: 0.65rem;         /* Un pelín más pequeño ayuda a que encaje mejor */
+  font-weight: 700;           
+  letter-spacing: 0.02em;
   text-transform: uppercase;
+  
+  /* --- CAMBIOS CLAVE PARA EL SALTO DE LÍNEA --- */
+  white-space: normal;        /* Permite que el texto baje a la siguiente línea */
+  text-align: center;         /* Centra el texto cuando hay dos líneas */
+  line-height: 1.1;           /* Espaciado entre líneas compacto */
+  max-width: 110px;           /* Fuerza el salto si el texto supera este ancho */
+  /* -------------------------------------------- */
+
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+  min-width: 80px;            
+  height: auto;               /* Permite que crezca verticalmente */
+  
   &--active { background: #dcfce7; color: #166534; }
   &--pending { background: #fef3c7; color: #92400e; }
   &--inactive { background: #fee2e2; color: #991b1b; }

@@ -7,7 +7,7 @@ import { Title } from '@angular/platform-browser';
 import * as ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { ClaseProcesoPipe } from '../../../../shared/pipes/clase-proceso.pipe'; // Asegura ruta
+import { ClaseProcesoPipe } from '../../../../shared/pipes/clase-proceso.pipe';
 import { AFFI_LOGO_BASE64 } from '../../../../shared/assets/affi-logo-base64';
 
 registerLocaleData(localeEsCo, 'es-CO');
@@ -16,6 +16,83 @@ interface DemandanteOption {
   nombre: string;
   identificacion: string;
 }
+
+// --- CONFIGURACIÓN CENTRALIZADA SEGÚN IMAGEN DE EXCEL ---
+interface EtapaConfig {
+  triggers: string[]; // Nombres que vienen de la BD
+  summaryTitle: string; // Nombre para mostrar en las cajitas de resumen
+  colorHex: string; // Color Hex con #
+  desc: string; // Descripción para el resumen
+}
+
+const ETAPAS_CONFIG: EtapaConfig[] = [
+  {
+    triggers: ['ALISTAMIENTO MES', 'ALISTAMIENTO MESES ANTERIORES', 'DOCUMENTACION COMPLETA', 'ASIGNACION'],
+    summaryTitle: 'RECOLECCION Y VALIDACION DOCUMENTAL',
+    colorHex: '#FFFF99',
+    desc: 'Se está completando y revisando la información necesaria para iniciar los procesos.'
+  },
+  {
+    triggers: ['DEMANDA'],
+    summaryTitle: 'DEMANDA',
+    colorHex: '#F1A983',
+    desc: 'Hemos iniciado el proceso judicial.'
+  },
+  {
+    triggers: ['MANDAMIENTO DE PAGO'],
+    summaryTitle: 'MANDAMIENTO DE PAGO',
+    colorHex: '#FBE2D5',
+    desc: 'El juez acepta tramitar la demanda'
+  },
+  {
+    triggers: ['ADMISION DEMANDA'],
+    summaryTitle: 'ADMISION DEMANDA',
+    colorHex: '#92D050',
+    desc: 'El juez acepta tramitar la demanda'
+  },
+  {
+    triggers: ['NOTIFICACION'],
+    summaryTitle: 'NOTIFICACION',
+    colorHex: '#B5E6A2',
+    desc: 'Etapa en la que se comunica la existencia del proceso.'
+  },
+  {
+    triggers: ['EXCEPCIONES'],
+    summaryTitle: 'EXCEPCIONES',
+    colorHex: '#00B0F0',
+    desc: 'Demandado presentó objeciones a la demanda'
+  },
+  {
+    triggers: ['AUDIENCIA'],
+    summaryTitle: 'AUDIENCIA',
+    colorHex: '#C0E6F5',
+    desc: 'Diligencia donde el juez escucha a las partes.'
+  },
+  {
+    triggers: ['SENTENCIA'],
+    summaryTitle: 'SENTENCIA',
+    colorHex: '#D86DCD',
+    desc: 'El juez decidió sobre la demanda.'
+  },
+  {
+    triggers: ['LIQUIDACION', 'AVALUO DE BIENES', 'REMATE'],
+    summaryTitle: 'LIQUIDACION',
+    colorHex: '#E49EDD',
+    desc: 'Etapa en la que se cuantifica con exactitud las obligaciones.'
+  },
+  {
+    triggers: ['LANZAMIENTO'],
+    summaryTitle: 'LANZAMIENTO',
+    colorHex: '#FFC000',
+    desc: 'Se está gestionando el desalojo de los inquilinos.'
+  },
+  {
+    triggers: ['TERMINACION', 'TERMINADO DESISTIMIENTO'],
+    summaryTitle: 'TERMINACION',
+    colorHex: '#FF6D6D',
+    desc: 'Terminación del proceso'
+  }
+];
 
 @Component({
   selector: 'app-informe-inmobiliaria',
@@ -31,7 +108,7 @@ export class InformeInmobiliariaComponent implements OnInit {
   private elementRef = inject(ElementRef);
   private datePipe = inject(DatePipe);
   private titleService = inject(Title);
-  private clasePipe = inject(ClaseProcesoPipe); // Inyección
+  private clasePipe = inject(ClaseProcesoPipe);
 
   ngOnInit(): void {
     this.titleService.setTitle('Estados Procesales - Informe Inmobiliaria');
@@ -184,7 +261,6 @@ export class InformeInmobiliariaComponent implements OnInit {
       if (item.etapaProcesal) etapasSet.add(item.etapaProcesal);
       if (item.despacho) despachosSet.add(item.despacho);
       
-      // CORRECCIÓN: Guardar nombre transformado
       if (item.claseProceso) {
         clasesSet.add(this.clasePipe.transform(item.claseProceso));
       }
@@ -210,7 +286,6 @@ export class InformeInmobiliariaComponent implements OnInit {
     this.filteredData = this.rawData.filter(item => {
       if (this.filtros.busquedaGeneral) {
         const term = this.filtros.busquedaGeneral.toLowerCase();
-        // Incluimos clase transformada en búsqueda general
         const claseTransformada = this.clasePipe.transform(item.claseProceso).toLowerCase();
 
         const generalMatch = 
@@ -232,7 +307,6 @@ export class InformeInmobiliariaComponent implements OnInit {
       if (this.filtros.etapa && item.etapaProcesal !== this.filtros.etapa) return false;
       if (this.filtros.despacho && item.despacho !== this.filtros.despacho) return false;
       
-      // Filtro Clase (CORRECCIÓN CRÍTICA)
       if (this.filtros.claseProceso) {
         const valTransformado = this.clasePipe.transform(item.claseProceso);
         if (valTransformado !== this.filtros.claseProceso) return false;
@@ -272,22 +346,6 @@ export class InformeInmobiliariaComponent implements OnInit {
   }
   selectAllColumns(select: boolean) { this.exportColumns.forEach(c => c.selected = select); }
 
-  getSummaryCounts() {
-    return {
-      demanda: this.filteredData.filter(i => i.etapaProcesal?.toUpperCase() === 'DEMANDA').length,
-      admisionDemanda: this.filteredData.filter(i => i.etapaProcesal?.toUpperCase().includes('ADMISION DEMANDA')).length,
-      notificacion: this.filteredData.filter(i => i.etapaProcesal?.toUpperCase().includes('NOTIFICACION')).length,
-      sentencia: this.filteredData.filter(i => i.etapaProcesal?.toUpperCase().includes('SENTENCIA')).length,
-      lanzamiento: this.filteredData.filter(i => i.etapaProcesal?.toUpperCase().includes('LANZAMIENTO')).length,
-      excepciones: this.filteredData.filter(i => i.etapaProcesal?.toUpperCase().includes('EXCEPCIONES')).length
-    };
-  }
-
-  private getReportFullTitle(): string {
-    const clase = this.filtros.claseProceso ? this.filtros.claseProceso.toUpperCase() : 'TODOS LOS PROCESOS';
-    return `INFORME ESTADO PROCESAL - ${clase}`;
-  }
-
   private getReportInmobiliariaName(): string {
     return this.filtros.demandante ? this.filtros.demandante.nombre : 'TODAS LAS INMOBILIARIAS';
   }
@@ -296,45 +354,41 @@ export class InformeInmobiliariaComponent implements OnInit {
     return this.filtros.demandante ? this.filtros.demandante.identificacion : 'N/A';
   }
 
+  // --- HELPER PARA OBTENER CONFIGURACIÓN DE UNA ETAPA ---
+  getEtapaConfig(nombreEtapa: string | undefined): EtapaConfig | undefined {
+    if (!nombreEtapa) return undefined;
+    const nombreNormalizado = nombreEtapa.toUpperCase();
+    return ETAPAS_CONFIG.find(conf => conf.triggers.includes(nombreNormalizado));
+  }
+
+  // --- HELPER PARA CALCULAR LOS CONTADORES DINÁMICAMENTE ---
+  getDynamicCounts() {
+    return ETAPAS_CONFIG.map(config => {
+      const count = this.filteredData.filter(item => {
+        const etapa = item.etapaProcesal ? item.etapaProcesal.toUpperCase() : '';
+        return config.triggers.includes(etapa);
+      }).length;
+
+      return {
+        ...config,
+        count
+      };
+    });
+  }
+
   async exportToExcel() {
     this.exportState = 'excel';
     await new Promise(resolve => setTimeout(resolve, 100));
     try {
-      console.log('Generando Excel con Contadores Automáticos...');
+      console.log('Generando Excel con Configuración Dinámica...');
       const activeColumns = this.exportColumns.filter(c => c.selected);
       if (activeColumns.length === 0) { alert('Selecciona columnas'); return; }
 
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Informe Estado Procesal');
 
-      // --- 0. CALCULAR CONTADORES AUTOMÁTICAMENTE ---
-      // Función auxiliar para contar ocurrencias en la etapa procesal (ignorando mayúsculas/minúsculas)
-      const contarEtapa = (termino: string, exacto: boolean = false) => {
-        return this.filteredData.filter(item => {
-          const etapa = item.etapaProcesal ? item.etapaProcesal.toUpperCase() : '';
-          const busqueda = termino.toUpperCase();
-          return exacto ? etapa === busqueda : etapa.includes(busqueda);
-        }).length;
-      };
-
-      // Calculamos los valores reales para usarlos abajo
-      const counts = {
-        // Fila 1
-        demanda: contarEtapa('DEMANDA', true), // Exacto, según tu lógica original
-        admision: contarEtapa('ADMISION DEMANDA'),
-        notificacion: contarEtapa('NOTIFICACION'),
-        sentencia: contarEtapa('SENTENCIA'),
-        lanzamiento: contarEtapa('LANZAMIENTO'),
-        excepciones: contarEtapa('EXCEPCIONES'),
-        
-        // Fila 2 (Nuevos contadores basados en el nombre de la etapa)
-        // terminacion: contarEtapa('TERMINACION'),
-        // archivo: contarEtapa('ARCHIVO'), // O 'DESISTIMIENTO' si prefieres
-        // liquidacion: contarEtapa('LIQUIDACION'),
-        // acuerdo: contarEtapa('ACUERDO'),
-        // embargo: contarEtapa('EMBARGO'),
-        // secuestro: contarEtapa('SECUESTRO')
-      };
+      // --- 0. OBTENER DATOS DE RESUMEN ---
+      const summaryData = this.getDynamicCounts();
 
       // --- 1. CONFIGURACIÓN ESTRUCTURAL ---
       const colSpans: { [key: string]: number } = {
@@ -344,17 +398,9 @@ export class InformeInmobiliariaComponent implements OnInit {
       
       let totalPhysicalColumns = 0;
       activeColumns.forEach(col => { totalPhysicalColumns += (colSpans[col.key] || 1); });
-
       for (let i = 1; i <= 50; i++) { sheet.getColumn(i).width = UNIFORM_WIDTH; }
 
-      // --- 2. ESTILOS Y COLORES ---
-      const colors = {
-        yellow: 'FFFFC000', pink: 'FFDA9694', orange: 'FFFCD5B4',
-        green: 'FF92D050', blue: 'FFB7DEE8', gray: 'FFBFBFBF',
-        headerBlue: 'FF1F4E78', textDark: 'FF333333'
-      };
-
-      // --- 3. LOGO Y ENCABEZADOS ---
+      // --- 2. LOGO Y ENCABEZADOS ---
       const imageId = workbook.addImage({ base64: AFFI_LOGO_BASE64, extension: 'png' });
       sheet.addImage(imageId, { tl: { col: 0.1, row: 0.1 }, ext: { width: 90, height: 90 } });
 
@@ -381,36 +427,21 @@ export class InformeInmobiliariaComponent implements OnInit {
       setInfo(8, `NIT Inmobiliaria: ${this.getReportInmobiliariaNit()}`);
       setInfo(10, `Cantidad de procesos: ${this.filteredData.length}`);
 
-
-      // --- 4. CAJAS DE RESUMEN (CON CONTADORES REALES) ---
-
-      // DATOS FILA 1 (Usando counts.variable)
-      const datosFila1 = [
-        { title: 'Demanda', desc: 'Hemos iniciado el proceso judicial de restitución', count: counts.demanda, color: colors.yellow },
-        { title: 'Admisión Demanda', desc: 'El juez acepta tramitar la demanda', count: counts.admision, color: colors.pink },
-        { title: 'Notificación', desc: 'Etapa en la que se notifica al arrendatario', count: counts.notificacion, color: colors.orange },
-        { title: 'Sentencia', desc: 'El juez decidió sobre la demanda', count: counts.sentencia, color: colors.green },
-        { title: 'Lanzamiento', desc: 'Se está gestionando el desalojo de los inquilinos', count: counts.lanzamiento, color: colors.blue },
-        { title: 'Excepciones', desc: 'Demandado presentó objeciones a la demanda', count: counts.excepciones, color: colors.gray },
-      ];
-
-      // DATOS FILA 2 (Usando counts.variable)
-      // const datosFila2 = [
-      //   { title: 'Terminación', desc: 'Procesos terminados por pago o acuerdo', count: counts.terminacion, color: colors.blue }, 
-      //   { title: 'Archivo', desc: 'Procesos archivados por desistimiento', count: counts.archivo, color: colors.gray },
-      //   { title: 'Liquidación', desc: 'Etapa de liquidación del crédito', count: counts.liquidacion, color: colors.yellow },
-      //   { title: 'Acuerdo Pago', desc: 'Se ha llegado a un acuerdo de pago', count: counts.acuerdo, color: colors.green },
-      //   { title: 'Embargo', desc: 'Medidas cautelares aplicadas', count: counts.embargo, color: colors.pink },
-      //   { title: 'Secuestro', desc: 'Diligencia de secuestro programada', count: counts.secuestro, color: colors.orange },
-      // ];
+      // --- 3. CAJAS DE RESUMEN DINÁMICAS ---
+      // Dividimos las etapas en dos filas para que se vean bien
+      const splitIndex = 6; // Primeras 6 en fila 1, resto en fila 2
+      const row1Data = summaryData.slice(0, splitIndex);
+      const row2Data = summaryData.slice(splitIndex);
 
       const drawBoxRow = (startRow: number, datos: any[]) => {
         let currentBoxCol = 4;
         datos.forEach(box => {
-          // Título
+          const argbColor = 'FF' + box.colorHex.replace('#', ''); // Convertir #RGB a FFRGB
+
+          // Título (Usa summaryTitle)
           const cellTitle = sheet.getCell(startRow, currentBoxCol);
-          cellTitle.value = box.title;
-          cellTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: box.color } };
+          cellTitle.value = box.summaryTitle;
+          cellTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: argbColor } };
           cellTitle.font = { bold: true, size: 8, name: 'Calibri' };
           cellTitle.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
           cellTitle.border = { top: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
@@ -419,15 +450,15 @@ export class InformeInmobiliariaComponent implements OnInit {
           sheet.mergeCells(startRow + 1, currentBoxCol, startRow + 2, currentBoxCol);
           const cellDesc = sheet.getCell(startRow + 1, currentBoxCol);
           cellDesc.value = box.desc;
-          cellDesc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: box.color } };
+          cellDesc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: argbColor } };
           cellDesc.font = { size: 7, name: 'Calibri' };
           cellDesc.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
           cellDesc.border = { left: {style:'thin'}, right: {style:'thin'} };
 
           // Contador
           const cellCount = sheet.getCell(startRow + 3, currentBoxCol);
-          cellCount.value = box.count; // ¡AQUÍ SE PONE EL VALOR CALCULADO!
-          cellCount.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: box.color } };
+          cellCount.value = box.count; 
+          cellCount.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: argbColor } };
           cellCount.font = { bold: true, size: 11, name: 'Calibri' };
           cellCount.alignment = { horizontal: 'center', vertical: 'middle' };
           cellCount.border = { bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
@@ -436,11 +467,14 @@ export class InformeInmobiliariaComponent implements OnInit {
         });
       };
 
-      drawBoxRow(6, datosFila1);
-      // drawBoxRow(11, datosFila2);
+      drawBoxRow(6, row1Data);
+      if (row2Data.length > 0) {
+        drawBoxRow(11, row2Data);
+      }
 
-      // --- 5. TABLA DE DATOS (Igual que antes) ---
-      const tableStartRow = 16;
+      // --- 4. TABLA DE DATOS ---
+      // Si hay fila 2 de cajas, la tabla baja, si no, se queda donde estaba (aprox fila 16)
+      const tableStartRow = row2Data.length > 0 ? 16 : 11; 
       const headerRow = sheet.getRow(tableStartRow);
       let currentPhysicalCol = 1;
 
@@ -450,7 +484,7 @@ export class InformeInmobiliariaComponent implements OnInit {
 
         const cell = sheet.getCell(tableStartRow, currentPhysicalCol);
         cell.value = col.label;
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.headerBlue } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E78' } };
         cell.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
         cell.border = { top: {style:'thin', color: {argb:'FFFFFFFF'}}, left: {style:'thin', color: {argb:'FFFFFFFF'}}, right: {style:'thin', color: {argb:'FFFFFFFF'}} };
@@ -479,33 +513,16 @@ export class InformeInmobiliariaComponent implements OnInit {
 
           const cell = sheet.getCell(currentRowIndex, rowPhysicalCol);
           cell.value = val || '';
-          cell.font = { size: 8, name: 'Calibri', color: { argb: colors.textDark } };
+          cell.font = { size: 8, name: 'Calibri', color: { argb: 'FF333333' } };
           cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
           cell.border = borderStyle;
 
-          // PINTAR CELDA ETAPA
+          // PINTAR CELDA ETAPA SEGÚN LA CONFIGURACIÓN (NOMBRE REAL PERO COLOR DE GRUPO)
           if (col.key === 'etapaProcesal') {
-             const etapaVal = val ? String(val).toUpperCase() : '';
-             let cellArgb = null;
-             
-             // Revisamos coincidencias para pintar la celda (Fila 1)
-             if (etapaVal === 'DEMANDA') cellArgb = colors.yellow;
-             else if (etapaVal.includes('ADMISION DEMANDA')) cellArgb = colors.pink;
-             else if (etapaVal.includes('NOTIFICACION')) cellArgb = colors.orange;
-             else if (etapaVal.includes('SENTENCIA')) cellArgb = colors.green;
-             else if (etapaVal.includes('LANZAMIENTO')) cellArgb = colors.blue;
-             else if (etapaVal.includes('EXCEPCIONES')) cellArgb = colors.gray;
-             
-             // Revisamos coincidencias para pintar la celda (Fila 2 - Nuevos colores)
-            //  else if (etapaVal.includes('TERMINACION')) cellArgb = colors.blue;
-            //  else if (etapaVal.includes('ARCHIVO') || etapaVal.includes('DESISTIMIENTO')) cellArgb = colors.gray;
-            //  else if (etapaVal.includes('LIQUIDACION')) cellArgb = colors.yellow;
-            //  else if (etapaVal.includes('ACUERDO')) cellArgb = colors.green;
-            //  else if (etapaVal.includes('EMBARGO')) cellArgb = colors.pink;
-            //  else if (etapaVal.includes('SECUESTRO')) cellArgb = colors.orange;
-
-             if (cellArgb) {
-               cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cellArgb } };
+             const config = this.getEtapaConfig(item.etapaProcesal);
+             if (config) {
+               const argbColor = 'FF' + config.colorHex.replace('#', '');
+               cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: argbColor } };
              }
           }
           rowPhysicalCol += span;
@@ -524,51 +541,45 @@ export class InformeInmobiliariaComponent implements OnInit {
     }
   }
 
+  private saveFile(buffer: any, extension: string) {
+    const blob = new Blob([buffer], { type: extension === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `INFORME INMOBILIARIA ${this.getReportInmobiliariaName()}.${extension}`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   async exportToPdf() { 
     this.exportState = 'pdf';
     await new Promise(resolve => setTimeout(resolve, 100));
     try {
-      console.log('Exportando PDF con cajas de resumen centradas y con margen...');
+      console.log('Exportando PDF Dinámico...');
       
-      // 1. PREPARACIÓN DE DATOS (Contadores)
+      // 1. PREPARACIÓN DE DATOS
       const activeColumns = this.exportColumns.filter(c => c.selected);
       const etapaColIndex = activeColumns.findIndex(c => c.key === 'etapaProcesal');
+      const summaryData = this.getDynamicCounts();
 
-      const contarEtapa = (termino: string, exacto: boolean = false) => {
-        return this.filteredData.filter(item => {
-          const etapa = item.etapaProcesal ? item.etapaProcesal.toUpperCase() : '';
-          const busqueda = termino.toUpperCase();
-          return exacto ? etapa === busqueda : etapa.includes(busqueda);
-        }).length;
-      };
-
-      const counts = {
-        demanda: contarEtapa('DEMANDA', true),
-        admision: contarEtapa('ADMISION DEMANDA'),
-        notificacion: contarEtapa('NOTIFICACION'),
-        sentencia: contarEtapa('SENTENCIA'),
-        lanzamiento: contarEtapa('LANZAMIENTO'),
-        excepciones: contarEtapa('EXCEPCIONES'),
-        // terminacion: contarEtapa('TERMINACION'),
-        // archivo: contarEtapa('ARCHIVO'),
-        // liquidacion: contarEtapa('LIQUIDACION'),
-        // acuerdo: contarEtapa('ACUERDO'),
-        // embargo: contarEtapa('EMBARGO'),
-        // secuestro: contarEtapa('SECUESTRO')
-      };
-
-      const colorsRGB: { [key: string]: [number, number, number] } = {
-        yellow: [255, 192, 0], pink: [218, 150, 148], orange: [255, 213, 180],
-        green: [146, 208, 80], blue: [183, 222, 232], gray: [191, 191, 191]
+      // Helper Hex to RGB
+      const hexToRgb = (hex: string): [number, number, number] => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? [
+          parseInt(result[1], 16),
+          parseInt(result[2], 16),
+          parseInt(result[3], 16)
+        ] : [255, 255, 255];
       };
 
       // 2. CONFIGURACIÓN DE PÁGINA
       const doc = new jsPDF('landscape', 'mm', 'a4'); 
-      const pageWidth = doc.internal.pageSize.width; // ~297mm
+      const pageWidth = doc.internal.pageSize.width; 
       const margin = 5; 
       const usableWidth = pageWidth - (margin * 2);
 
-      // --- CÁLCULO PROPORCIONAL DE ANCHOS TABLA (1x vs 2x) ---
       const doubleColumns = ['numeroRadicacion', 'demandadoNombre', 'despacho'];
       let totalUnits = 0;
       activeColumns.forEach(c => { totalUnits += doubleColumns.includes(c.key) ? 2 : 1; });
@@ -594,63 +605,60 @@ export class InformeInmobiliariaComponent implements OnInit {
       doc.text(`NIT Inmobiliaria: ${this.getReportInmobiliariaNit()}`, margin, infoY + 4);
       doc.text(`Cantidad de procesos: ${this.filteredData.length}`, margin, infoY + 8);
 
-      // --- 4. CAJAS DE RESUMEN (NUEVO DISEÑO: CENTRADO CON MARGEN) ---
-      const numBoxes = 6;
-      const boxGap = 4; // Espacio entre cajas (mm)
-      const boxWidth = 42; // Ancho fijo estético para cada caja
-      const boxHeight = 14; 
-      const startBoxY = 42; 
-
-      // Cálculo para centrar el bloque total de cajas en la página
-      const totalBlockWidth = (numBoxes * boxWidth) + ((numBoxes - 1) * boxGap);
-      // El punto X donde empieza la primera caja para que todo el bloque quede centrado
-      const startX = margin + (usableWidth - totalBlockWidth) / 2;
-
-      // Datos Filas
-      const boxesRow1 = [
-        { title: 'Demanda', desc: 'Iniciado proceso restitución', count: counts.demanda, color: colorsRGB['yellow'] },
-        { title: 'Admisión', desc: 'Juez acepta demanda', count: counts.admision, color: colorsRGB['pink'] },
-        { title: 'Notificación', desc: 'Notificación al arrendatario', count: counts.notificacion, color: colorsRGB['orange'] },
-        { title: 'Sentencia', desc: 'Decisión sobre la demanda', count: counts.sentencia, color: colorsRGB['green'] },
-        { title: 'Lanzamiento', desc: 'Gestionando desalojo', count: counts.lanzamiento, color: colorsRGB['blue'] },
-        { title: 'Excepciones', desc: 'Objeciones presentadas', count: counts.excepciones, color: colorsRGB['gray'] },
-      ];
-
-      // const boxesRow2 = [
-      //   { title: 'Terminación', desc: 'Terminado por pago/acuerdo', count: counts.terminacion, color: colorsRGB['blue'] },
-      //   { title: 'Archivo', desc: 'Archivado / Desistimiento', count: counts.archivo, color: colorsRGB['gray'] },
-      //   { title: 'Liquidación', desc: 'Etapa liquidación crédito', count: counts.liquidacion, color: colorsRGB['yellow'] },
-      //   { title: 'Acuerdo Pago', desc: 'Acuerdo logrado', count: counts.acuerdo, color: colorsRGB['green'] },
-      //   { title: 'Embargo', desc: 'Medidas cautelares', count: counts.embargo, color: colorsRGB['pink'] },
-      //   { title: 'Secuestro', desc: 'Diligencia secuestro', count: counts.secuestro, color: colorsRGB['orange'] },
-      // ];
-
+      // --- 4. CAJAS DE RESUMEN DINÁMICAS (CORREGIDO) ---
+      
+      const boxWidth = 42; 
+      // CAMBIO 1: Aumentamos altura para que quepa todo el texto
+      const boxHeight = 22; 
+      const boxGap = 4;
+      
       const drawPDFBoxRow = (y: number, items: any[]) => {
+        const numBoxes = items.length;
+        const totalBlockWidth = (numBoxes * boxWidth) + ((numBoxes - 1) * boxGap);
+        const startX = margin + (usableWidth - totalBlockWidth) / 2;
+
         items.forEach((item, i) => {
-          // Cálculo de la posición X de cada caja usando el inicio centrado y el gap
           const x = startX + (i * (boxWidth + boxGap)); 
-          
-          // Rectángulo relleno y borde
-          doc.setFillColor(item.color[0], item.color[1], item.color[2]);
+          const rgb = hexToRgb(item.colorHex);
+
+          // Fondo y Borde
+          doc.setFillColor(rgb[0], rgb[1], rgb[2]);
           doc.rect(x, y, boxWidth, boxHeight, 'F');
           doc.setDrawColor(100); doc.setLineWidth(0.1);
           doc.rect(x, y, boxWidth, boxHeight, 'S');
 
           // Textos
           doc.setTextColor(0);
+          
+          // Título (Arriba)
           doc.setFontSize(6); doc.setFont('helvetica', 'bold');
-          doc.text(item.title, x + (boxWidth/2), y + 3, { align: 'center' }); 
+          // CAMBIO 2: maxWidth un poco más pequeño (boxWidth - 4) para márgenes laterales
+          doc.text(item.summaryTitle, x + (boxWidth/2), y + 4, { align: 'center', maxWidth: boxWidth - 4 }); 
 
+          // Descripción (En medio)
           doc.setFontSize(5); doc.setFont('helvetica', 'normal');
-          doc.text(item.desc, x + (boxWidth/2), y + 6.5, { align: 'center', maxWidth: boxWidth - 2 });
+          // CAMBIO 3: Bajamos la posición Y a (y + 11) para dar espacio al título si ocupa 2 líneas
+          doc.text(item.desc, x + (boxWidth/2), y + 11, { align: 'center', maxWidth: boxWidth - 4 });
 
-          doc.setFontSize(8); doc.setFont('helvetica', 'bold');
-          doc.text(item.count.toString(), x + (boxWidth/2), y + 11.5, { align: 'center' });
+          // Contador (Abajo)
+          doc.setFontSize(9); doc.setFont('helvetica', 'bold'); // Un poco más grande el número
+          // CAMBIO 4: Bajamos el número al fondo de la caja nueva (y + 22)
+          doc.text(item.count.toString(), x + (boxWidth/2), y + 18, { align: 'center' });
         });
       };
 
-      drawPDFBoxRow(startBoxY, boxesRow1);
-      // drawPDFBoxRow(startBoxY + boxHeight + boxGap, boxesRow2); // Añadimos gap vertical también
+      const splitIndex = 6; 
+      const row1Data = summaryData.slice(0, splitIndex);
+      const row2Data = summaryData.slice(splitIndex);
+      
+      let currentY = 42; // startBoxY
+
+      drawPDFBoxRow(currentY, row1Data);
+      
+      if (row2Data.length > 0) {
+        currentY += boxHeight + boxGap;
+        drawPDFBoxRow(currentY, row2Data);
+      }
 
       // 5. TABLA DE DATOS
       const bodyData = this.filteredData.map(item => {
@@ -662,8 +670,12 @@ export class InformeInmobiliariaComponent implements OnInit {
         });
       });
 
+      // CAMBIO 5: Calculamos dinámicamente dónde empieza la tabla
+      // currentY es la posición Y de la última fila de cajas dibujada
+      const tableStartY = currentY + boxHeight + 4; 
+
       autoTable(doc, {
-        startY: startBoxY + (boxHeight * 2) + (boxGap * 2) + 2, // Posición debajo de las cajas
+        startY: tableStartY, 
         head: [activeColumns.map(c => c.label)],
         body: bodyData,
         theme: 'grid',
@@ -674,29 +686,18 @@ export class InformeInmobiliariaComponent implements OnInit {
         columnStyles: dynamicColumnStyles,
         didParseCell: (data) => {
           if (data.section === 'body' && etapaColIndex !== -1 && data.column.index === etapaColIndex) {
-            const cellValue = data.cell.raw; 
-            const etapa = cellValue ? String(cellValue).toUpperCase() : '';
-            let colorRGB: [number, number, number] | null = null;
+            const rawEtapa = data.cell.raw as string;
+            const config = this.getEtapaConfig(rawEtapa);
             
-            if (etapa === 'DEMANDA') colorRGB = colorsRGB['yellow'];
-            else if (etapa.includes('ADMISION DEMANDA')) colorRGB = colorsRGB['pink'];
-            else if (etapa.includes('NOTIFICACION')) colorRGB = colorsRGB['orange'];
-            else if (etapa.includes('SENTENCIA')) colorRGB = colorsRGB['green'];
-            else if (etapa.includes('LANZAMIENTO')) colorRGB = colorsRGB['blue'];
-            else if (etapa.includes('EXCEPCIONES')) colorRGB = colorsRGB['gray'];
-            // else if (etapa.includes('TERMINACION')) colorRGB = colorsRGB['blue'];
-            // else if (etapa.includes('ARCHIVO') || etapa.includes('DESISTIMIENTO')) colorRGB = colorsRGB['gray'];
-            // else if (etapa.includes('LIQUIDACION')) colorRGB = colorsRGB['yellow'];
-            // else if (etapa.includes('ACUERDO')) colorRGB = colorsRGB['green'];
-            // else if (etapa.includes('EMBARGO')) colorRGB = colorsRGB['pink'];
-            // else if (etapa.includes('SECUESTRO')) colorRGB = colorsRGB['orange'];
-
-            if (colorRGB) data.cell.styles.fillColor = colorRGB;
+            if (config) {
+              const rgb = hexToRgb(config.colorHex);
+              data.cell.styles.fillColor = rgb;
+            }
           }
         }
       });
 
-    doc.save(`Informe_Inmobiliaria_${new Date().getTime()}.pdf`);
+    doc.save(`INFORME INMOBILIARIA ${this.getReportInmobiliariaName()}.pdf`);
     this.closeExportModal();
 
     } catch (error) {
@@ -706,15 +707,5 @@ export class InformeInmobiliariaComponent implements OnInit {
       this.exportState = 'idle';
     }
   }
-    private saveFile(buffer: any, extension: string) {
-    const blob = new Blob([buffer], { type: extension === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Informe_Inmobiliaria_${new Date().getTime()}.${extension}`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+
 }
