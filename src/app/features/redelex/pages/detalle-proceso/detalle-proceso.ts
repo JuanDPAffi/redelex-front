@@ -14,6 +14,7 @@ import {
   getEtapasParaStepper, 
   EtapaProcesal 
 } from './etapas-procesales.config';
+import { AffiAlert } from '../../../../shared/services/affi-alert';
 
 @Component({
   selector: 'app-detalle-proceso',
@@ -122,7 +123,16 @@ export class DetalleProcesoComponent implements OnInit {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
-      if (!this.detalle) return;
+      if (!this.detalle) {
+        AffiAlert.fire({
+          icon: 'warning',
+          title: 'Sin datos',
+          text: 'No hay información del proceso para exportar.',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
+
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Ficha Técnica');
 
@@ -244,9 +254,24 @@ export class DetalleProcesoComponent implements OnInit {
 
       const buffer = await workbook.xlsx.writeBuffer();
       this.saveFile(buffer, 'xlsx', `FICHA ${ddoNombre}`);
+
+      AffiAlert.fire({
+        icon: 'success',
+        title: 'Excel generado',
+        text: 'La ficha técnica se ha descargado correctamente.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
     } catch (e) {
-      console.error(e);
-      alert('Error exportando Excel: ' + e); 
+      console.error('Error exportando Excel:', e);
+      
+      AffiAlert.fire({
+        icon: 'error',
+        title: 'Error al exportar',
+        text: 'No se pudo generar el archivo Excel. Intenta nuevamente.',
+        confirmButtonText: 'Cerrar'
+      });
     } finally {
       this.exportState = 'idle';
     }
@@ -260,7 +285,15 @@ export class DetalleProcesoComponent implements OnInit {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
-      if (!this.detalle) return;
+      if (!this.detalle) {
+        AffiAlert.fire({
+          icon: 'warning',
+          title: 'Sin datos',
+          text: 'No hay información del proceso para exportar.',
+          confirmButtonText: 'Entendido'
+        });
+        return;
+      }
       const doc = new jsPDF('p', 'mm', 'a4'); 
       const pageWidth = doc.internal.pageSize.width;
       const margin = 15;
@@ -409,9 +442,23 @@ export class DetalleProcesoComponent implements OnInit {
 
       doc.save(`FICHA ${ddoNombre}.pdf`);
 
+      AffiAlert.fire({
+        icon: 'success',
+        title: 'PDF generado',
+        text: 'La ficha técnica se ha descargado correctamente.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
     } catch (e) {
-      console.error(e);
-      alert('Error exportando PDF: ' + e);
+      console.error('Error exportando PDF:', e);
+      
+      AffiAlert.fire({
+        icon: 'error',
+        title: 'Error al exportar',
+        text: 'No se pudo generar el archivo PDF. Intenta nuevamente.',
+        confirmButtonText: 'Cerrar'
+      });
     } finally {
       this.exportState = 'idle';
     }

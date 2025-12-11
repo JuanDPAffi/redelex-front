@@ -10,6 +10,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ClaseProcesoPipe } from '../../../../shared/pipes/clase-proceso.pipe';
 import { AFFI_LOGO_BASE64 } from '../../../../shared/assets/affi-logo-base64';
+import { AffiAlert } from '../../../../shared/services/affi-alert';
 
 registerLocaleData(localeEsCo, 'es-CO');
 
@@ -226,13 +227,26 @@ export class MisProcesosComponent implements OnInit {
     }).length;
   }
 
+  get hasSelectedColumns(): boolean {
+    return this.exportColumns.some(col => col.selected);
+  }
+
   async exportToExcel() {
+    if (!this.hasSelectedColumns) {
+      AffiAlert.fire({
+        icon: 'warning',
+        title: 'Selecciona columnas',
+        text: 'Debes seleccionar al menos una columna para exportar.',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
     this.exportState = 'excel';
     await new Promise(resolve => setTimeout(resolve, 100));
     
     try {
       const activeColumns = this.exportColumns.filter(c => c.selected);
-      if (activeColumns.length === 0) { alert('Selecciona columnas'); return; }
 
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Mis Procesos');
@@ -425,15 +439,38 @@ export class MisProcesosComponent implements OnInit {
       this.saveFile(buffer, 'xlsx');
       this.closeExportModal();
 
+      AffiAlert.fire({
+        icon: 'success',
+        title: 'Excel generado',
+        text: 'El archivo se ha descargado correctamente.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
     } catch (error) {
       console.error('Error Excel:', error);
-      alert('Error al generar Excel: ' + error);
+      AffiAlert.fire({
+        icon: 'error',
+        title: 'Error al exportar',
+        text: 'No se pudo generar el archivo Excel. Intenta nuevamente.',
+        confirmButtonText: 'Cerrar'
+      });
     } finally {
       this.exportState = 'idle';
     }
   }
 
   async exportToPdf() {
+    if (!this.hasSelectedColumns) {
+      AffiAlert.fire({
+        icon: 'warning',
+        title: 'Selecciona columnas',
+        text: 'Debes seleccionar al menos una columna para exportar.',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
     this.exportState = 'pdf';
     await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -595,9 +632,23 @@ export class MisProcesosComponent implements OnInit {
       doc.save(`Mis_Procesos_${new Date().getTime()}.pdf`);
       this.closeExportModal();
 
+      // Alerta de éxito
+      AffiAlert.fire({
+        icon: 'success',
+        title: 'PDF generado',
+        text: 'El archivo se ha descargado correctamente.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
     } catch (error) {
       console.error('Error PDF:', error);
-      alert('Error al generar PDF: ' + error);
+      AffiAlert.fire({
+        icon: 'error',
+        title: 'Error al exportar',
+        text: 'No se pudo generar el archivo PDF. Intenta nuevamente.',
+        confirmButtonText: 'Cerrar'
+      });
     } finally {
       this.exportState = 'idle';
     }

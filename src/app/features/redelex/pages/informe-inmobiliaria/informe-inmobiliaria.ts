@@ -9,6 +9,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ClaseProcesoPipe } from '../../../../shared/pipes/clase-proceso.pipe';
 import { AFFI_LOGO_BASE64 } from '../../../../shared/assets/affi-logo-base64';
+import { AffiAlert } from '../../../../shared/services/affi-alert';
 
 registerLocaleData(localeEsCo, 'es-CO');
 
@@ -376,13 +377,26 @@ export class InformeInmobiliariaComponent implements OnInit {
     });
   }
 
+  get hasSelectedColumns(): boolean {
+    return this.exportColumns.some(col => col.selected);
+  }
+
   async exportToExcel() {
+    if (!this.hasSelectedColumns) {
+      AffiAlert.fire({
+        icon: 'warning',
+        title: 'Selecciona columnas',
+        text: 'Debes seleccionar al menos una columna para exportar.',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
     this.exportState = 'excel';
     await new Promise(resolve => setTimeout(resolve, 100));
     try {
       console.log('Generando Excel con Configuración Dinámica...');
       const activeColumns = this.exportColumns.filter(c => c.selected);
-      if (activeColumns.length === 0) { alert('Selecciona columnas'); return; }
 
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Informe Estado Procesal');
@@ -533,9 +547,22 @@ export class InformeInmobiliariaComponent implements OnInit {
       this.saveFile(buffer, 'xlsx');
       this.closeExportModal();
 
+      AffiAlert.fire({
+        icon: 'success',
+        title: 'Excel generado',
+        text: 'El archivo se ha descargado correctamente.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
     } catch (error) {
-      console.error('Error al exportar a Excel:', error);
-      alert('Error: ' + error);
+      console.error('Error Excel:', error);
+      AffiAlert.fire({
+        icon: 'error',
+        title: 'Error al exportar',
+        text: 'No se pudo generar el archivo Excel. Intenta nuevamente.',
+        confirmButtonText: 'Cerrar'
+      });
     } finally {
       this.exportState = 'idle';
     }
@@ -554,6 +581,16 @@ export class InformeInmobiliariaComponent implements OnInit {
   }
 
   async exportToPdf() { 
+    if (!this.hasSelectedColumns) {
+      AffiAlert.fire({
+        icon: 'warning',
+        title: 'Selecciona columnas',
+        text: 'Debes seleccionar al menos una columna para exportar.',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
     this.exportState = 'pdf';
     await new Promise(resolve => setTimeout(resolve, 100));
     try {
@@ -700,12 +737,24 @@ export class InformeInmobiliariaComponent implements OnInit {
     doc.save(`INFORME INMOBILIARIA ${this.getReportInmobiliariaName()}.pdf`);
     this.closeExportModal();
 
+    AffiAlert.fire({
+      icon: 'success',
+      title: 'PDF generado',
+      text: 'El archivo se ha descargado correctamente.',
+      timer: 2000,
+      showConfirmButton: false
+    });
+
     } catch (error) {
-      console.error('Error al exportar a PDF:', error);
-      alert('Error al generar PDF: ' + error);
+      console.error('Error PDF:', error);
+      AffiAlert.fire({
+        icon: 'error',
+        title: 'Error al exportar',
+        text: 'No se pudo generar el archivo PDF. Intenta nuevamente.',
+        confirmButtonText: 'Cerrar'
+      });
     } finally {
       this.exportState = 'idle';
     }
   }
-
 }

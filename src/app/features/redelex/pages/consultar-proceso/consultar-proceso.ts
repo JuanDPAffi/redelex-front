@@ -519,9 +519,18 @@ export class ConsultarProcesoComponent implements OnInit {
 
       const fileName = `PROCESO ${this.proceso.idProceso || 'detalle'}.xlsx`;
       saveAs(blob, fileName);
+
+      AffiAlert.fire({
+        icon: 'success',
+        title: 'Excel generado',
+        text: 'Proceso descargado correctamente.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
     } catch (error) {
       console.error(error);
-      AffiAlert.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el Excel.' });
+      AffiAlert.fire({ icon: 'error', title: 'Error al exportar', text: 'No se pudo generar el Excel. Intenta nuevamente.', confirmButtonText: 'Cerrar' });
     } finally {
       this.exportState = 'idle';
     }
@@ -724,10 +733,18 @@ export class ConsultarProcesoComponent implements OnInit {
 
       const fileName = `PROCESO ${p.idProceso || 'detalle'}.pdf`;
       doc.save(fileName);
+ 
+      AffiAlert.fire({
+        icon: 'success',
+        title: 'PDF generado',
+        text: 'Proceso descargado correctamente.',
+        timer: 2000,
+        showConfirmButton: false
+      });
 
     } catch (error) {
       console.error(error);
-      AffiAlert.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el PDF.' });
+      AffiAlert.fire({ icon: 'error', title: 'Error al exportar', text: 'No se pudo generar el PDF. Intenta nuevamente.', confirmButtonText: 'Cerrar' });
     } finally {
       this.exportState = 'idle';
     }
