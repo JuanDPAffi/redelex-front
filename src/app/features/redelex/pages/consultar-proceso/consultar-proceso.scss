@@ -28,9 +28,15 @@
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  grid-template-columns: 300px 1fr;
   gap: var(--spacing-xl);
   align-items: flex-start;
+
+  @media (max-width: 1500px) {
+    grid-template-columns: 280px 1fr;
+    gap: var(--spacing-md);
+  }
+
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -713,6 +719,11 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem 1.5rem;
 
+  @media (max-width: 1500px) {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 1rem;
+  }
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -738,8 +749,8 @@
   color: var(--color-gray-900);
   font-weight: var(--font-medium);
 
-  @media (max-width: 768px) {
-    font-size: 0.95rem;
+  @media (max-width: 1500px) {
+    font-size: 0.8rem;
   }
 }
 
@@ -1176,7 +1187,7 @@
 /* =============================================
    MEDIA QUERY: MÓVIL (TRANSFORMACIÓN VERTICAL)
    ============================================= */
-@media (max-width: 900px) {
+@media (max-width: 1500px) {
   
   .stepper-track {
     flex-direction: column; /* Cambia a vertical */
