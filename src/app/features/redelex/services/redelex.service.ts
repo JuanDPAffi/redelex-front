@@ -77,8 +77,11 @@ export interface MedidasDto {
     sujeto: string | null;
     tipoMedida: string | null;
     medidaEfectiva: string | null;
-    avaluoJudicial: number | null;
+    avaluoJudicial: number;
     observaciones: string | null;
+    identificacionSujeto: string | null;
+    area: string | null;
+    fecha: string | null;
 }
 
 export interface AbogadoDto {

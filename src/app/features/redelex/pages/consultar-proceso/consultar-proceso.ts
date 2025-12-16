@@ -121,6 +121,15 @@ export class ConsultarProcesoComponent implements OnInit {
       : '';
   }
 
+  formatMoney(value?: number | string): string {
+    if (value === null || value === undefined || value === '') return '-';
+
+    const numberValue = Number(value);
+    if (isNaN(numberValue)) return '-';
+
+    return numberValue.toLocaleString('es-CO');
+  }
+
   toggleActuacion(index: number) {
     if (this.openActuaciones.has(index)) {
       this.openActuaciones.delete(index);
@@ -233,7 +242,6 @@ export class ConsultarProcesoComponent implements OnInit {
     this.etapaActualConfig = null;
   }
 
-  // ... (Resto de métodos: procesarDatosProceso, buscarPorCedula, filtrarProcesos, paginación, etc. SE MANTIENEN IGUAL)
   private procesarDatosProceso() {
     if (!this.proceso) return;
     const raw = this.proceso as any;
@@ -265,6 +273,9 @@ export class ConsultarProcesoComponent implements OnInit {
       medidaEfectiva: m.medidaEfectiva ?? null,
       avaluoJudicial: typeof m.avaluoJudicial === 'number' ? m.avaluoJudicial : m.avaluoJudicial ? Number(m.avaluoJudicial) : null,
       observaciones: m.observaciones ?? null,
+      identificacionSujeto: m.identificacionSujeto ?? null,
+      area: m.area ?? null,
+      fecha: m.fecha ?? null,
     }));
     (this.proceso as any).medidasCautelares = this.medidas;
   }

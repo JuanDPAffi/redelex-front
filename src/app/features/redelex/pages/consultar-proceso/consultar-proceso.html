@@ -480,9 +480,12 @@
                       @if (openMedidas.has(i)) {
                         <div class="medida-body fade-in">
                           <div class="detail-grid">
+                            <div><p class="detail-label">Fecha</p><p class="detail-value">{{ m.fecha | date:'dd/MM/yyyy' }}</p></div>
                             <div><p class="detail-label">Sujeto</p><p class="detail-value">{{ m.sujeto || '-' }}</p></div>
+                            <div><p class="detail-label">Identificación</p><p class="detail-value">{{ m.identificacionSujeto || '-' }}</p></div>
                             <div><p class="detail-label">Etapa - Medida cautelar</p><p class="detail-value">{{ m.tipoMedida || '-' }}</p></div>
-                            <div><p class="detail-label">Vr. Títulos/Avaluo</p><p class="detail-value">{{ m.avaluoJudicial || '-' }}</p></div>
+                            <div><p class="detail-label">Vr. Títulos/Avaluo</p><p class="detail-value">${{ formatMoney(m.avaluoJudicial) || '-' }}</p></div>
+                            <div><p class="detail-label">Area</p><p class="detail-value">{{ m.area || '-' }}</p></div>
                             <div class="detail-grid--full"><p class="detail-label">Observaciones</p><p class="detail-value" [innerHTML]="formatObservaciones(m.observaciones || '')"></p></div>
                           </div>
                         </div>
