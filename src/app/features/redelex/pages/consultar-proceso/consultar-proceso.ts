@@ -270,6 +270,7 @@ export class ConsultarProcesoComponent implements OnInit {
       tipoBien: m.tipoBien ?? null,
       sujeto: m.sujeto ?? null,
       tipoMedida: m.tipoMedida ?? null,
+      descripcion: m.descripcion ?? null,
       medidaEfectiva: m.medidaEfectiva ?? null,
       avaluoJudicial: typeof m.avaluoJudicial === 'number' ? m.avaluoJudicial : m.avaluoJudicial ? Number(m.avaluoJudicial) : null,
       observaciones: m.observaciones ?? null,

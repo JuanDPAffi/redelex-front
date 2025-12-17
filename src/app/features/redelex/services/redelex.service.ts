@@ -75,6 +75,7 @@ export interface ProcesoDetalleDto {
 export interface MedidasDto {
     tipoBien: string | null;
     sujeto: string | null;
+    descripcion: string | null;
     tipoMedida: string | null;
     medidaEfectiva: string | null;
     avaluoJudicial: number;
