@@ -25,8 +25,8 @@ const smartDefaultRedirect = () => {
     // AFFI o ADMIN -> Consultar Proceso
     router.navigate(['/panel/consultas/consultar-proceso']);
   } else if (authService.hasPermission('procesos:view_own')) {
-    // INMOBILIARIA -> Mis Procesos
-    router.navigate(['/panel/consultas/mis-procesos']);
+    // INMOBILIARIA -> Dashboard
+    router.navigate(['/panel/consultas/dashboard']);
   } else {
     // Fallback: Usuario sin permisos de procesos (edge case)
     router.navigate(['/panel/consultas/consultar-proceso']);
@@ -39,6 +39,12 @@ export const REDELEX_ROUTES: Routes = [
   {
     path: '',
     children: [
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./pages/dashboard-inmobiliaria/dashboard-inmobiliaria.component')
+          .then(m => m.DashboardInmobiliariaComponent),
+        canActivate: [permissionGuard('procesos:view_own')] 
+      },
       // 1. Mis Procesos (Solo para Inmobiliarias)
       // Requiere permiso: 'procesos:view_own'
       {

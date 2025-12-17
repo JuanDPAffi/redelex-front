@@ -13,6 +13,17 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
   // Items que se agregarán automáticamente al menú
   menuItems: [
     {
+      id: 'redelex-dashboard',
+      label: 'Tablero de Control',
+      icon: 'pie-chart',
+      route: '/panel/consultas/dashboard',
+      roles: ['inmobiliaria', 'admin'],
+      permissions: ['procesos:view_own'],
+      enabled: true,
+      order: 1, 
+      sectionId: 'consultas'
+    },
+    {
       id: 'redelex-mis-procesos',
       label: 'Mis Procesos',
       icon: 'folder',
@@ -21,7 +32,7 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
       roles: ['inmobiliaria', 'admin'],
       permissions: ['procesos:view_own'],
       enabled: true,
-      order: 1,
+      order: 2,
       sectionId: 'consultas'
     },
     {
@@ -32,7 +43,7 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
       roles: ['admin', 'affi'], 
       permissions: ['procesos:view_all'],
       enabled: true,
-      order: 2,
+      order: 3,
       sectionId: 'consultas'
     },
     {
@@ -43,7 +54,7 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
       roles: ['admin', 'affi'],
       permissions: ['reports:view'],
       enabled: true,
-      order: 3,
+      order: 4,
       sectionId: 'reportes'
     }
   ],
