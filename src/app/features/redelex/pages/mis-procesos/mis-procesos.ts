@@ -59,6 +59,20 @@ export class MisProcesosComponent implements OnInit {
   identificacionUsuario = '';
   nombreInmobiliaria = '';
 
+  // --- ESTADÍSTICAS KPI ---
+  stats = {
+    total: 0,
+    topClase: 'N/A',
+    topClaseCount: 0,
+    topClasePct: 0,
+    topEtapa: 'N/A',
+    topEtapaCount: 0,
+    topEtapaPct: 0,
+    topCiudad: 'N/A',
+    topCiudadCount: 0,
+    topCiudadPct: 0,
+  };
+
   currentPage = 1;
   itemsPerPage = 10;
   pageSizeOptions = [5, 10, 20, 50, 100];
@@ -96,7 +110,6 @@ export class MisProcesosComponent implements OnInit {
     this.cargarMisProcesos();
   }
 
-  // Función helper para normalizar y obtener etapa display
   getEtapaDisplay(etapaRaw: string): string {
     const etapaNormalizada = etapaRaw ? etapaRaw.toUpperCase().trim() : '';
     return ETAPA_MAPPING[etapaNormalizada]?.display || etapaRaw || 'EN TRÁMITE';
@@ -117,8 +130,6 @@ export class MisProcesosComponent implements OnInit {
           if (newItem.demandanteNombre?.includes(',')) newItem.demandanteNombre = newItem.demandanteNombre.split(',')[0].trim();
           
           newItem.numeroRadicacion = newItem.numeroRadicacion || 'N/A';
-          
-          // Normalizar etapa usando el mapeo
           newItem.etapaProcesal = this.getEtapaDisplay(newItem.etapaProcesal);
           
           return newItem;
@@ -126,6 +137,7 @@ export class MisProcesosComponent implements OnInit {
         
         this.rawData = datosLimpios;
         this.extraerListasUnicas();
+        this.calculateStats();
         this.applyFilters();
         this.loading = false;
       },
@@ -137,17 +149,69 @@ export class MisProcesosComponent implements OnInit {
     });
   }
 
+  // --- LÓGICA DE CÁLCULO DE KPIs ---
+  calculateStats() {
+    const data = this.rawData;
+    const total = data.length;
+    this.stats.total = total;
+
+    if (total === 0) return;
+
+    // 1. Clase más común
+    const claseCounts: Record<string, number> = {};
+    data.forEach(item => {
+      const c = this.clasePipe.transform(item.claseProceso) || 'Sin Clase';
+      claseCounts[c] = (claseCounts[c] || 0) + 1;
+    });
+    
+    const sortedClases = Object.entries(claseCounts).sort((a,b) => b[1] - a[1]);
+    if (sortedClases.length > 0) {
+      this.stats.topClase = sortedClases[0][0];
+      this.stats.topClaseCount = sortedClases[0][1];
+      this.stats.topClasePct = Math.round((sortedClases[0][1] / total) * 100);
+    }
+
+    // 2. Etapa más frecuente
+    const etapaCounts: Record<string, number> = {};
+    data.forEach(item => {
+      const e = item.etapaProcesal || 'Sin Etapa';
+      etapaCounts[e] = (etapaCounts[e] || 0) + 1;
+    });
+
+    const sortedEtapas = Object.entries(etapaCounts).sort((a,b) => b[1] - a[1]);
+    if (sortedEtapas.length > 0) {
+      this.stats.topEtapa = sortedEtapas[0][0];
+      this.stats.topEtapaCount = sortedEtapas[0][1];
+      this.stats.topEtapaPct = Math.round((sortedEtapas[0][1] / total) * 100);
+    }
+
+    // 3. Activos vs Terminados
+    // Se asume que "No se muestran al cliente" son terminados según el mapping
+    const ciudadCounts: Record<string, number> = {};
+    data.forEach(item => {
+      const c = item.ciudadInmueble ? item.ciudadInmueble.trim() : 'Sin Ciudad';
+      ciudadCounts[c] = (ciudadCounts[c] || 0) + 1;
+    });
+
+    const sortedCiudades = Object.entries(ciudadCounts).sort((a,b) => b[1] - a[1]);
+    if (sortedCiudades.length > 0) {
+      this.stats.topCiudad = sortedCiudades[0][0];
+      this.stats.topCiudadCount = sortedCiudades[0][1];
+      this.stats.topCiudadPct = Math.round((sortedCiudades[0][1] / total) * 100);
+    }
+  }
+
   extraerListasUnicas() {
     const clasesSet = new Set<string>();
-    const etapasSet = new Set<string>(); // <--- NUEVO
+    const etapasSet = new Set<string>();
 
     this.rawData.forEach(item => {
       if (item.claseProceso) clasesSet.add(this.clasePipe.transform(item.claseProceso));
-      if (item.etapaProcesal) etapasSet.add(item.etapaProcesal); // <--- NUEVO
+      if (item.etapaProcesal) etapasSet.add(item.etapaProcesal);
     });
 
     this.listaClaseProceso = Array.from(clasesSet).sort();
-    this.listaEtapas = Array.from(etapasSet).sort(); // <--- NUEVO
+    this.listaEtapas = Array.from(etapasSet).sort();
   }
 
   applyFilters() {
@@ -219,7 +283,6 @@ export class MisProcesosComponent implements OnInit {
   toggleColumn(key: string) { const col = this.exportColumns.find(c => c.key === key); if (col) col.selected = !col.selected; }
   selectAllColumns(select: boolean) { this.exportColumns.forEach(c => c.selected = select); }
 
-  // Función helper para contar etapas usando el display name
   private contarEtapaDisplay(displayName: string): number {
     return this.filteredData.filter(item => {
       const etapa = item.etapaProcesal || '';
@@ -247,11 +310,9 @@ export class MisProcesosComponent implements OnInit {
     
     try {
       const activeColumns = this.exportColumns.filter(c => c.selected);
-
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Mis Procesos');
 
-      // Contadores basados en nombres display
       const counts = {
         recoleccion: this.contarEtapaDisplay('RECOLECCION Y VALIDACION DOCUMENTAL'),
         demanda: this.contarEtapaDisplay('DEMANDA'),
@@ -293,7 +354,6 @@ export class MisProcesosComponent implements OnInit {
         textDark: 'FF333333'
       };
 
-      // Logo y encabezados
       const imageId = workbook.addImage({ base64: AFFI_LOGO_BASE64, extension: 'png' });
       sheet.addImage(imageId, { tl: { col: 0.1, row: 0.1 }, ext: { width: 90, height: 90 } });
 
@@ -320,7 +380,6 @@ export class MisProcesosComponent implements OnInit {
       setInfo(8, `Inmobiliaria: ${this.nombreInmobiliaria || 'N/A'}`);
       setInfo(10, `Total Procesos: ${this.filteredData.length}`);
 
-      // Cajas de resumen actualizadas
       const datosFila1 = [
         { title: 'Recolección y Validación Documental', desc: 'Se está completando y revisando la información necesaria para iniciar los procesos.', count: counts.recoleccion, color: colors.yellow99 },
         { title: 'Demanda', desc: 'Hemos iniciado el proceso judicial.', count: counts.demanda, color: colors.orangeF1 },
@@ -369,7 +428,6 @@ export class MisProcesosComponent implements OnInit {
       drawBoxRow(6, datosFila1);
       drawBoxRow(11, datosFila2);
 
-      // Tabla de datos
       const tableStartRow = 16;
       const headerRow = sheet.getRow(tableStartRow);
       let currentPhysicalCol = 1;
@@ -394,7 +452,6 @@ export class MisProcesosComponent implements OnInit {
         right: { style: 'thin', color: { argb: 'FFCCCCCC' } }
       };
 
-      // Filas de datos
       this.filteredData.forEach((item, index) => {
         const currentRowIndex = tableStartRow + 1 + index;
         let rowPhysicalCol = 1;
@@ -414,12 +471,10 @@ export class MisProcesosComponent implements OnInit {
           cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
           cell.border = borderStyle;
 
-          // Colorear celda de etapa según mapeo
           if (col.key === 'etapaProcesal') {
             const etapaDisplay = val || '';
             let cellColor = null;
 
-            // Buscar el color correspondiente en el mapeo
             for (const [key, value] of Object.entries(ETAPA_MAPPING)) {
               if (value.display === etapaDisplay) {
                 cellColor = value.color;
@@ -478,7 +533,6 @@ export class MisProcesosComponent implements OnInit {
       const activeColumns = this.exportColumns.filter(c => c.selected);
       const etapaColIndex = activeColumns.findIndex(c => c.key === 'etapaProcesal');
 
-      // Contadores basados en nombres display
       const counts = {
         recoleccion: this.contarEtapaDisplay('RECOLECCION Y VALIDACION DOCUMENTAL'),
         demanda: this.contarEtapaDisplay('DEMANDA'),
@@ -526,7 +580,6 @@ export class MisProcesosComponent implements OnInit {
         };
       });
 
-      // Encabezado
       doc.addImage(AFFI_LOGO_BASE64, 'PNG', margin, 5, 20, 20);
       doc.setFontSize(12); doc.setFont('helvetica', 'bold');
       doc.text('REPORTE MIS PROCESOS JURÍDICOS', pageWidth / 2, 10, { align: 'center' });
@@ -541,7 +594,6 @@ export class MisProcesosComponent implements OnInit {
       doc.text(`Inmobiliaria: ${this.nombreInmobiliaria || 'N/A'}`, margin, infoY + 4);
       doc.text(`Total Procesos: ${this.filteredData.length}`, margin, infoY + 8);
 
-      // Cajas de resumen actualizadas
       const numBoxes = 5;
       const boxGap = 4;
       const boxWidth = 52;
@@ -590,7 +642,6 @@ export class MisProcesosComponent implements OnInit {
       drawPDFBoxRow(startBoxY, boxesRow1);
       drawPDFBoxRow(startBoxY + boxHeight + boxGap, boxesRow2);
 
-      // Tabla de datos
       const bodyData = this.filteredData.map(item => {
         return activeColumns.map(col => {
           let val = item[col.key];
@@ -616,7 +667,6 @@ export class MisProcesosComponent implements OnInit {
             const etapaDisplay = cellValue ? String(cellValue) : '';
             let colorRGB: [number, number, number] | null = null;
 
-            // Buscar el color correspondiente en el mapeo
             for (const [key, value] of Object.entries(ETAPA_MAPPING)) {
               if (value.display === etapaDisplay) {
                 colorRGB = value.colorRGB;
@@ -632,7 +682,6 @@ export class MisProcesosComponent implements OnInit {
       doc.save(`Mis_Procesos_${new Date().getTime()}.pdf`);
       this.closeExportModal();
 
-      // Alerta de éxito
       AffiAlert.fire({
         icon: 'success',
         title: 'PDF generado',
