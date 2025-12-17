@@ -2,27 +2,27 @@
 // Vista Detalle de Proceso - Affi Design System
 // =============================================
 
-.page-container {
-  padding: var(--spacing-2xl);
+.page {
   max-width: 100%;
   margin: 0 auto;
-  animation: fadeIn 0.4s ease;
-
-  @media (max-width: 768px) {
-    padding: var(--spacing-lg);
-  }
+  padding: 0 1rem;
 }
 
-// =============================================
-// TOOLBAR SUPERIOR
-// =============================================
-.toolbar {
+.page__header {
+  margin-bottom: 2rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-2xl);
-  border-bottom: 2px solid var(--color-gray-100);
-  animation: slideIn 0.3s ease;
+  flex-direction: column;
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  h2 { margin: 0; font-size: 1.5rem; font-weight: 700; color: #111827; }
+  p { margin: 0.5rem 0 0; font-size: 0.95rem; color: #6b7280; }
 }
 
 .back-link {
@@ -52,9 +52,17 @@
   }
 }
 
-.toolbar-actions {
+.header-actions {
   display: flex;
-  gap: var(--spacing-sm);
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .btn {
@@ -173,14 +181,26 @@
 // =============================================
 .main-layout {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: var(--spacing-xl);
   animation: slideIn 0.4s ease 0.1s backwards;
+}
 
-  @media (max-width: 1024px) {
+.main-column,
+.sidebar-column {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .main-layout {
     grid-template-columns: 1fr;
   }
+
+  /* Evita que la sidebar se monte/tape en mobile */
+  .main-column { order: 1; }
+  .sidebar-column { order: 2; }
 }
+
 
 // =============================================
 // COLUMNA IZQUIERDA
@@ -1026,4 +1046,152 @@
   .process-meta h1 {
     font-size: var(--font-size-xl);
   }
+}
+
+// ... Tus estilos existentes ...
+
+// BOTÓN NUEVO
+.btn--support {
+  background: white;
+  color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-300);
+  margin-right: var(--spacing-sm); // Separarlo del Excel
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+// ESTILOS MODAL
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-card {
+  background: white;
+  width: 95%;
+  max-width: 500px;
+  border-radius: var(--border-radius-xl);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--color-gray-100);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--color-gray-900);
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-gray-400);
+    padding: 4px;
+    
+    &:hover { color: var(--color-gray-800); }
+  }
+}
+
+.modal-body {
+  padding: 20px;
+
+  .context-info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    
+    span { font-weight: bold; }
+  }
+
+  .helper-text {
+    font-size: 0.85rem;
+    color: var(--color-gray-500);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+}
+
+.form-group {
+  margin-bottom: 16px;
+
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--color-gray-700);
+  }
+
+  .field__input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--color-gray-300);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+    }
+  }
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid var(--color-gray-100);
+}
+
+// Botones del modal
+.btn--primary {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  
+  &:hover { background: var(--color-primary-dark); }
+  &:disabled { opacity: 0.7; cursor: not-allowed; }
+}
+
+.btn--secondary {
+  background: white;
+  border: 1px solid var(--color-gray-300);
+  color: var(--color-gray-700);
+  
+  &:hover { background: var(--color-gray-100); }
 }

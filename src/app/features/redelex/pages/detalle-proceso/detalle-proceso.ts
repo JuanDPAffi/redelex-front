@@ -3,6 +3,8 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RedelexService } from '../../services/redelex.service';
 import { Title } from '@angular/platform-browser';
+import { SupportService } from '../../../../core/services/support.service';
+import { AuthService } from '../../../auth/services/auth.service';
 import { ClaseProcesoPipe } from '../../../../shared/pipes/clase-proceso.pipe';
 import * as ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
@@ -15,11 +17,12 @@ import {
   EtapaProcesal 
 } from './etapas-procesales.config';
 import { AffiAlert } from '../../../../shared/services/affi-alert';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-detalle-proceso',
   standalone: true,
-  imports: [CommonModule, RouterLink, ClaseProcesoPipe],
+  imports: [CommonModule, RouterLink, ClaseProcesoPipe, FormsModule],
   providers: [DatePipe, ClaseProcesoPipe], 
   templateUrl: './detalle-proceso.html',
   styleUrls: ['./detalle-proceso.scss']
@@ -39,10 +42,16 @@ export class DetalleProcesoComponent implements OnInit {
   etapaActualIndex: number = 0;
   etapasStepper: { nombre: string; color: string }[] = [];
 
+  showSupportModal = false;
+  isSendingTicket = false;
+  ticketData = { subject: '', content: '' };
+
   constructor(
     private route: ActivatedRoute,
     private redelexService: RedelexService,
-    private titleService: Title
+    private titleService: Title,
+    private supportService: SupportService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -77,6 +86,58 @@ export class DetalleProcesoComponent implements OnInit {
         console.error(err);
         this.error = 'No tienes permisos o el proceso no existe.';
         this.loading = false;
+      }
+    });
+  }
+
+  openSupportModal() {
+    const radicado = this.detalle?.numeroRadicacion || 'Sin Radicado';
+    this.ticketData = { 
+      subject: '', 
+      content: '' 
+    };
+    this.showSupportModal = true;
+  }
+
+  closeSupportModal() {
+    this.showSupportModal = false;
+  }
+
+  sendTicket() {
+    if (!this.ticketData.subject || !this.ticketData.content) {
+      AffiAlert.fire({ icon: 'warning', title: 'Campos vacíos', text: 'Por favor completa el asunto y el mensaje.' });
+      return;
+    }
+
+    this.isSendingTicket = true;
+
+    // Construimos la METADATA del proceso
+    const metadata = {
+      procesoId: this.procesoId!,
+      radicado: this.detalle?.numeroRadicacion,
+      cuenta: this.detalle?.codigoAlterno || 'N/A', 
+      etapa: this.detalle?.etapaProcesal,
+      clase: this.detalle?.claseProceso || 'N/A'    
+    };
+
+    // Llamamos al servicio enviando la metadata (El backend sabrá que es tipo PROCESO)
+    this.supportService.createTicket(
+      this.ticketData.subject, 
+      this.ticketData.content, 
+      metadata
+    ).subscribe({
+      next: () => {
+        this.isSendingTicket = false;
+        this.closeSupportModal();
+        AffiAlert.fire({ 
+          icon: 'success', 
+          title: 'Solicitud Recibida', 
+          text: 'El equipo jurídico ha recibido los datos del proceso. Nuestro equipo te contactará pronto.' 
+        });
+      },
+      error: () => {
+        this.isSendingTicket = false;
+        AffiAlert.fire({ icon: 'error', title: 'Error', text: 'No pudimos crear el ticket. Intenta nuevamente.' });
       }
     });
   }
