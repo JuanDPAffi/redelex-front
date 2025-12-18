@@ -172,7 +172,7 @@
               <div class="detail-section__header" (click)="toggleSection('demandante')">
                 <h4>
                   <span class="section-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/></svg></span>
-                  Datos de los Sujetos
+                  Datos Sujetos
                 </h4>
                 <span class="detail-section__chevron">{{ sectionOpen.demandante ? '▾' : '▸' }}</span>
               </div>
@@ -480,13 +480,13 @@
                       @if (openMedidas.has(i)) {
                         <div class="medida-body fade-in">
                           <div class="detail-grid">
-                            <div><p class="detail-label">Fecha</p><p class="detail-value">{{ m.fecha | date:'dd/MM/yyyy' }}</p></div>
+                            <div><p class="detail-label">Fecha Creación Medida</p><p class="detail-value">{{ m.fecha | date:'dd/MM/yyyy' }}</p></div>
                             <div><p class="detail-label">Sujeto</p><p class="detail-value">{{ m.sujeto || '-' }}</p></div>
-                            <div><p class="detail-label">Identificación</p><p class="detail-value">{{ m.identificacionSujeto || '-' }}</p></div>
+                            <div><p class="detail-label">Dirección</p><p class="detail-value">{{ m.identificacionSujeto || '-' }}</p></div>
                             <div><p class="detail-label">Etapa - Medida cautelar</p><p class="detail-value">{{ m.tipoMedida || '-' }}</p></div>
                             <div><p class="detail-label">Vr. Títulos/Avaluo</p><p class="detail-value">${{ formatMoney(m.avaluoJudicial) || '-' }}</p></div>
-                            <div><p class="detail-label">Area</p><p class="detail-value">{{ m.area || '-' }}</p></div>
-                            <div class="detail-grid--full"><p class="detail-label">Descripción</p><p class="detail-value">{{ m.descripcion || '-' }}</p></div>
+                            <div><p class="detail-label">Área</p><p class="detail-value">{{ m.area || '-' }}</p></div>
+                            <div class="detail-grid--full"><p class="detail-label">Última Actuación Medida</p><p class="detail-value">{{ m.descripcion || '-' }}</p></div>
                             <div class="detail-grid--full"><p class="detail-label">Observaciones</p><p class="detail-value" [innerHTML]="formatObservaciones(m.observaciones || '')"></p></div>
                           </div>
                         </div>

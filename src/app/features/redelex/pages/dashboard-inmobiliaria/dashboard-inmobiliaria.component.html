@@ -25,7 +25,7 @@
       <div class="kpi-card total">
         <div class="icon-wrapper"><i-feather name="layers"></i-feather></div>
         <div class="kpi-data">
-          <span class="label">Total Cartera</span>
+          <span class="label">Obligaciones Cartera Avanzada</span>
           <span class="value">{{ kpis.total }}</span>
         </div>
       </div>
@@ -33,9 +33,8 @@
       <div class="kpi-card prep">
         <div class="icon-wrapper"><i-feather name="file-text"></i-feather></div>
         <div class="kpi-data">
-          <span class="label">En Preparación</span>
+          <span class="label">RECOLECCION Y VALIDACION DOCUMENTAL</span>
           <span class="value">{{ kpis.enPreparacion }}</span>
-          <span class="sub-label">Recolección documental</span>
         </div>
       </div>
 
@@ -44,7 +43,6 @@
         <div class="kpi-data">
           <span class="label">En Juzgado</span>
           <span class="value">{{ kpis.enJuzgado }}</span>
-          <span class="sub-label">Radicados</span>
         </div>
       </div>
 
@@ -53,16 +51,6 @@
         <div class="kpi-data">
           <span class="label">Con Sentencia</span>
           <span class="value">{{ kpis.conSentencia }}</span>
-          <span class="sub-label">Etapas avanzadas</span>
-        </div>
-      </div>
-
-      <div class="kpi-card new-cases">
-        <div class="icon-wrapper"><i-feather name="calendar"></i-feather></div>
-        <div class="kpi-data">
-          <span class="label">Nuevos este Mes</span>
-          <span class="value">+{{ kpis.nuevosEsteMes }}</span>
-          <span class="sub-label">Recibidos recientemente</span>
         </div>
       </div>
     </div>
@@ -93,23 +81,6 @@
             </div>
           </div>
         </div>
-
-        <div class="chart-card">
-          <div class="card-header"><h3>Ingreso Histórico (Por Año)</h3></div>
-          <div class="card-body">
-            <div class="timeline-chart">
-              @for (time of timelineStats; track time.year) {
-                <div class="time-col" title="{{ time.count }} procesos en {{ time.year }}">
-                  <span class="time-val">{{ time.count }}</span>
-                  <div class="time-bar" [style.height.%]="time.heightPct"></div>
-                  <span class="time-lbl">{{ time.year }}</span>
-                </div>
-              }
-              @if (timelineStats.length === 0) { <p class="no-data">Sin datos de fecha</p> }
-            </div>
-          </div>
-        </div>
-
       </div>
 
       <div class="right-column">
@@ -150,22 +121,6 @@
             </div>
           </div>
         </div>
-
-        <div class="chart-card">
-          <div class="card-header"><h3>Juzgados Principales</h3></div>
-          <div class="card-body">
-            <div class="ranking-list">
-              @for (desp of despachosStats; track desp.label; let i = $index) {
-                <div class="rank-item">
-                  <span class="rank-num">#{{ i + 1 }}</span>
-                  <span class="rank-name" title="{{ desp.label }}">{{ desp.label }}</span>
-                  <span class="rank-val">{{ desp.count }}</span>
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   }

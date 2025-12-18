@@ -54,8 +54,6 @@ export class DashboardInmobiliariaComponent implements OnInit {
   etapasStats: StatItem[] = [];
   clasesStats: StatItem[] = [];
   ciudadesStats: StatItem[] = [];
-  despachosStats: StatItem[] = [];
-  timelineStats: TimeStat[] = [];
 
   readonly ETAPA_COLORS: Record<string, string> = {
     'RECOLECCION Y VALIDACION DOCUMENTAL': '#fbbf24',
@@ -163,17 +161,11 @@ export class DashboardInmobiliariaComponent implements OnInit {
       .map(item => ({ ...item, color: this.ETAPA_COLORS[item.label] || '#cbd5e1' }));
 
     this.clasesStats = this.mapToSortedArray(clasesMap, total).slice(0, 5);
-    this.ciudadesStats = this.mapToSortedArray(ciudadesMap, total).slice(0, 5);
-    this.despachosStats = this.mapToSortedArray(despachosMap, total).slice(0, 5);
+    this.ciudadesStats = this.mapToSortedArray(ciudadesMap, total).slice(0, 10);
 
     const aniosArray = Array.from(aniosMap.entries()).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
     const maxCountYear = Math.max(...aniosArray.map(a => a[1]), 1);
-    
-    this.timelineStats = aniosArray.map(([year, count]) => ({
-      year,
-      count,
-      heightPct: Math.round((count / maxCountYear) * 100)
-    }));
+
   }
 
   private mapToSortedArray(map: Map<string, number>, total: number): StatItem[] {
