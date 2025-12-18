@@ -64,6 +64,12 @@ export const REDELEX_ROUTES: Routes = [
         // Aquí está bien usar roleGuard o permissionGuard según prefieras
         canActivate: [roleGuard(['admin', 'affi', 'inmobiliaria'])]
       },
+      {
+        path: 'llamada', // /panel/consultas/llamada
+        loadComponent: () => import('./pages/call-center/call-center.component')
+          .then(m => m.CallCenterComponent),
+        canActivate: [permissionGuard('call:create')]
+      },
       // RUTA DEFAULT
       {
         path: '',

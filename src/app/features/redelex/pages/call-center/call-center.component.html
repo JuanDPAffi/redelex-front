@@ -1,0 +1,347 @@
+<div class="page-container">
+  <div class="call-center-card">
+    
+    <!-- HEADER CON PROGRESO -->
+    <div class="form-header">
+      <div class="header-content">
+        <div class="title-row">
+          <i-feather name="headphones"></i-feather>
+          <h2>Gestión de Llamadas</h2>
+        </div>
+        <p class="subtitle">Asistente para registro y creación de tickets en HubSpot</p>
+        
+        <!-- Indicadores de pasos -->
+        <div class="progress-wrapper">
+          <div class="progress-steps">
+            <div class="step-indicator">
+              <div class="step-number" [class.active]="currentStep === 1" [class.completed]="currentStep > 1">
+                <span *ngIf="currentStep <= 1">1</span>
+                <i-feather *ngIf="currentStep > 1" name="check"></i-feather>
+              </div>
+              <span class="step-label">Clasificación</span>
+            </div>
+            
+            <div class="step-indicator">
+              <div class="step-number" [class.active]="currentStep === 2" [class.completed]="currentStep > 2">
+                <span *ngIf="currentStep <= 2">2</span>
+                <i-feather *ngIf="currentStep > 2" name="check"></i-feather>
+              </div>
+              <span class="step-label">Identificación</span>
+            </div>
+            
+            <div class="step-indicator">
+              <div class="step-number" [class.active]="currentStep === 3" [class.completed]="currentStep > 3">
+                <span *ngIf="currentStep <= 3">3</span>
+                <i-feather *ngIf="currentStep > 3" name="check"></i-feather>
+              </div>
+              <span class="step-label">Consulta</span>
+            </div>
+            
+            <div class="step-indicator">
+              <div class="step-number" [class.active]="currentStep === 4" [class.completed]="currentStep > 4">
+                <span *ngIf="currentStep <= 4">4</span>
+                <i-feather *ngIf="currentStep > 4" name="check"></i-feather>
+              </div>
+              <span class="step-label">Validación</span>
+            </div>
+          </div>
+          
+          <!-- Barra de progreso -->
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="(currentStep / 4) * 100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BODY DEL FORMULARIO -->
+    <div class="form-body">
+      <form [formGroup]="form">
+
+        <!-- PASO 1: CLASIFICACIÓN -->
+        <div *ngIf="currentStep === 1" class="step-content">
+          <h3 class="step-title">
+            <i-feather name="phone-call"></i-feather>
+            Clasificación de la Llamada
+          </h3>
+          
+          <div class="call-type-grid">
+            <label class="radio-card" [class.selected]="form.get('callType')?.value === 'Entrante'">
+              <input type="radio" formControlName="callType" value="Entrante">
+              <div class="card-icon">
+                <i-feather name="phone-incoming"></i-feather>
+              </div>
+              <div class="card-label">Entrante</div>
+            </label>
+            
+            <label class="radio-card" [class.selected]="form.get('callType')?.value === 'Saliente'">
+              <input type="radio" formControlName="callType" value="Saliente">
+              <div class="card-icon">
+                <i-feather name="phone-outgoing"></i-feather>
+              </div>
+              <div class="card-label">Saliente</div>
+            </label>
+            
+            <label class="radio-card" [class.selected]="form.get('callType')?.value === 'Llamada Transferida'">
+              <input type="radio" formControlName="callType" value="Llamada Transferida">
+              <div class="card-icon">
+                <i-feather name="phone-forwarded"></i-feather>
+              </div>
+              <div class="card-label">Llamada Transferida</div>
+            </label>
+          </div>
+
+          <!-- Área de transferencia (solo si es transferida) -->
+          <div *ngIf="form.get('callType')?.value === 'Llamada Transferida'" class="form-field">
+            <label class="field-label">
+              <i-feather name="arrow-right-circle"></i-feather>
+              Área de Transferencia / Origen
+            </label>
+            <select formControlName="transferArea">
+              <option value="">Seleccione un área...</option>
+              <option value="Servicio al Cliente">Servicio al Cliente</option>
+              <option value="Comercial">Comercial</option>
+              <option value="Cartera">Cartera</option>
+              <option value="Juridica">Jurídica</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- PASO 2: IDENTIFICACIÓN DEL CLIENTE -->
+        <div *ngIf="currentStep === 2" class="step-content">
+          <h3 class="step-title">
+            <i-feather name="users"></i-feather>
+            Identificación del Cliente
+          </h3>
+          
+          <!-- Script sugerido -->
+          <div class="script-box">
+            <div class="script-header">
+              <i-feather name="message-circle"></i-feather>
+              <span class="script-label">Dialogo</span>
+            </div>
+            <p class="script-text" *ngIf="isEntrante && !hubspotInfo.contactFound">
+              "Muy buenos días/tardes, habla <strong>{{ asesorName }}</strong> del área jurídica de AFFI. ¿Con quién tengo el gusto de hablar?"
+            </p>
+            <p class="script-text" *ngIf="isEntrante && hubspotInfo.contactFound">
+              "Muy buenos días/tardes, <strong>{{ form.get('contactName')?.value }}</strong>. Le habla <strong>{{ asesorName }}</strong>. ¿En qué puedo ayudarte hoy?"
+            </p>
+            <p class="script-text" *ngIf="!isEntrante">
+              "Muy buenos días/tardes, ¿hablo con <strong>{{ form.get('contactName')?.value || '[Nombre del Cliente]' }}</strong>?"
+            </p>
+          </div>
+
+          <!-- Grid de campos -->
+          <div class="form-section">
+            <h4 class="section-title">Datos de Empresa</h4>
+            <div class="fields-grid">
+              <div class="form-field">
+                <label class="field-label">
+                  <i-feather name="hash"></i-feather>
+                  NIT (Busca en HubSpot)
+                </label>
+                <div class="field-input-wrapper">
+                  <input type="text" formControlName="companyNit" placeholder="Ej: 805000082">
+                  <span *ngIf="hubspotInfo.companyFound" class="status-icon">
+                    <i-feather name="check-circle"></i-feather>
+                  </span>
+                </div>
+              </div>
+              
+              <div class="form-field">
+                <label class="field-label">
+                  <i-feather name="briefcase"></i-feather>
+                  Nombre Inmobiliaria
+                </label>
+                <input type="text" formControlName="companyName" [class.disabled]="hubspotInfo.companyFound">
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">
+                  <i-feather name="briefcase"></i-feather>
+                  Gerente Comercial
+                </label>
+                <input type="text" formControlName="gerenteComercial" [class.disabled]="hubspotInfo.companyFound">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4 class="section-title">Datos del Contacto</h4>
+            <div class="fields-grid">
+              <div class="form-field">
+                <label class="field-label">
+                  <i-feather name="mail"></i-feather>
+                  Correo (Busca en HubSpot)
+                </label>
+                <div class="field-input-wrapper">
+                  <input type="email" formControlName="contactEmail" placeholder="cliente@empresa.com">
+                  <span *ngIf="hubspotInfo.contactFound" class="status-icon">
+                    <i-feather name="check-circle"></i-feather>
+                  </span>
+                </div>
+              </div>
+              
+              <div class="form-field">
+                <label class="field-label">
+                  <i-feather name="user"></i-feather>
+                  Nombre Completo
+                </label>
+                <input type="text" formControlName="contactName">
+              </div>
+              
+              <div class="form-field">
+                <label class="field-label">
+                  <i-feather name="phone"></i-feather>
+                  Teléfono
+                </label>
+                <input type="text" formControlName="contactPhone" placeholder="+57 300 000 0000">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 3: DETALLE DE LA CONSULTA -->
+        <div *ngIf="currentStep === 3" class="step-content">
+          <h3 class="step-title">
+            <i-feather name="file-text"></i-feather>
+            Detalle de la Consulta
+          </h3>
+          
+          <!-- Script sugerido -->
+          <div class="script-box">
+            <div class="script-header">
+              <i-feather name="message-circle"></i-feather>
+              <span class="script-label">Dialogo</span>
+            </div>
+            <p class="script-text" *ngIf="isEntrante">
+              "Permítame un momento mientras registro la información en el sistema... Gracias por esperar."
+            </p>
+            <p class="script-text" *ngIf="!isEntrante">
+              "Le confirmo que [explicación clara del estado del caso]. ¿La información ha sido clara o desea que le aclare algún punto?"
+            </p>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">
+              <i-feather name="edit-3"></i-feather>
+              Descripción de la Consulta / Solicitud
+            </label>
+            <textarea 
+              formControlName="query" 
+              rows="8" 
+              placeholder="Escriba aquí los detalles de la consulta, solicitud o motivo de la llamada..."></textarea>
+          </div>
+        </div>
+
+        <!-- PASO 4: VALIDACIÓN JURÍDICA -->
+        <div *ngIf="currentStep === 4" class="step-content">
+          <h3 class="step-title">
+            <i-feather name="shield"></i-feather>
+            Validación Jurídica
+          </h3>
+          
+          <!-- Script sugerido -->
+          <div class="script-box">
+            <div class="script-header">
+              <i-feather name="message-circle"></i-feather>
+              <span class="script-label">Dialogo</span>
+            </div>
+            <p class="script-text">
+              "¿Me confirma por favor los datos del inquilino sobre el cual está realizando su consulta?"
+            </p>
+            <p class="script-text" *ngIf="selectedProceso" style="margin-top: 0.5rem;">
+              "El proceso <strong>{{ selectedProceso.claseProceso }}</strong> contra <strong>{{ selectedProceso.demandadoNombre }}</strong> se encuentra actualmente en etapa de: <strong>{{ selectedProceso.etapaProcesal }}</strong>"
+            </p>
+          </div>
+
+          <!-- Búsqueda de procesos -->
+          <div class="search-section">
+            <div class="form-field">
+              <label class="field-label">
+                <i-feather name="credit-card"></i-feather>
+                Cédula Inquilino / Demandado
+              </label>
+              <input type="text" formControlName="inquilinoIdentificacion" placeholder="Buscar en Redelex...">
+            </div>
+            <button type="button" (click)="buscarProcesos()" class="search-btn" [disabled]="loading">
+              <span *ngIf="loading" class="btn-spinner"></span>
+              <i-feather *ngIf="!loading" name="search"></i-feather>
+              {{ loading ? 'Buscando...' : 'Buscar' }}
+            </button>
+          </div>
+
+          <!-- Tabla de resultados -->
+          <div *ngIf="procesosEncontrados.length > 0" class="procesos-table-wrapper">
+            <table class="procesos-table">
+              <thead>
+                <tr>
+                  <th>Radicado / ID</th>
+                  <th>Inquilino</th>
+                  <th>Clase Proceso</th>
+                  <th>Etapa Procesal</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let proc of procesosEncontrados">
+                  <td class="cell-radicado">{{ proc.numeroRadicacion || proc.procesoId }}</td>
+                  <td>{{ proc.demandadoNombre }}</td>
+                  <td>{{ proc.claseProceso }}</td>
+                  <td class="cell-etapa">{{ proc.etapaProcesal }}</td>
+                  <td style="text-align: right;">
+                    <button type="button" (click)="seleccionarProceso(proc)" class="select-btn">
+                      Seleccionar
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Proceso seleccionado -->
+          <div *ngIf="selectedProceso" class="selected-proceso-alert">
+            <i-feather name="check-circle"></i-feather>
+            <p class="alert-text">
+              Proceso seleccionado: <strong>{{ selectedProceso.claseProceso }}</strong> ({{ selectedProceso.etapaProcesal }})
+            </p>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- FOOTER CON BOTONES -->
+    <div class="form-footer">
+      <button 
+        type="button" 
+        (click)="prevStep()" 
+        [disabled]="currentStep === 1 || loading"
+        class="btn btn-secondary">
+        <i-feather name="chevron-left"></i-feather>
+        Atrás
+      </button>
+
+      <button 
+        *ngIf="currentStep < 4"
+        type="button" 
+        (click)="nextStep()" 
+        class="btn btn-primary">
+        Siguiente
+        <i-feather name="chevron-right"></i-feather>
+      </button>
+
+      <button 
+        *ngIf="currentStep === 4"
+        type="button" 
+        (click)="submit()" 
+        [disabled]="loading"
+        class="btn btn-success">
+        <span *ngIf="loading" class="btn-spinner"></span>
+        <i-feather *ngIf="!loading" name="check"></i-feather>
+        {{ loading ? 'Creando...' : 'Finalizar y Crear Ticket' }}
+      </button>
+    </div>
+
+  </div>
+</div>

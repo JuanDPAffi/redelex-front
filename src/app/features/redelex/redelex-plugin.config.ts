@@ -56,6 +56,17 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
       enabled: true,
       order: 4,
       sectionId: 'reportes'
+    },
+    {
+      id: 'redelex-llamada',
+      label: 'Centro de Llamadas',
+      icon: 'phone-call',
+      route: '/panel/consultas/llamada',
+      roles: ['admin', 'affi'],
+      permissions: ['call:create'],
+      enabled: true,
+      order: 5,
+      sectionId: 'reportes'
     }
   ],
   
