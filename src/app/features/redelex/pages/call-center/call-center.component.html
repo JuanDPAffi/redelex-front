@@ -276,7 +276,9 @@
             <table class="procesos-table">
               <thead>
                 <tr>
-                  <th>Radicado / ID</th>
+                  <th>ID Proceso</th>
+                  <th>Radicado</th>
+                  <th>Cuenta</th>
                   <th>Inquilino</th>
                   <th>Clase Proceso</th>
                   <th>Etapa Procesal</th>
@@ -285,7 +287,9 @@
               </thead>
               <tbody>
                 <tr *ngFor="let proc of procesosEncontrados">
-                  <td class="cell-radicado">{{ proc.numeroRadicacion || proc.procesoId }}</td>
+                  <td class="cell-radicado">{{ proc.procesoId }}</td>
+                  <td class="cell-radicado">{{ proc.numeroRadicacion }}</td>
+                  <td class="cell-radicado">{{ proc.codigoAlterno }}</td>
                   <td>{{ proc.demandadoNombre }}</td>
                   <td>{{ proc.claseProceso }}</td>
                   <td class="cell-etapa">{{ proc.etapaProcesal }}</td>
