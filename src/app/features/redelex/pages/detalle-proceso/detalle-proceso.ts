@@ -12,7 +12,6 @@ import autoTable from 'jspdf-autotable';
 import { AFFI_LOGO_BASE64 } from '../../../../shared/assets/affi-logo-base64';
 import { 
   getEtapaConfig, 
-  getEtapaIndex, 
   getEtapasParaStepper, 
   EtapaProcesal 
 } from './etapas-procesales.config';
@@ -37,14 +36,23 @@ export class DetalleProcesoComponent implements OnInit {
   error = '';
   exportState: 'idle' | 'excel' | 'pdf' = 'idle';
 
+  selectOpen = false
+
   // Nuevas propiedades para el stepper
   etapaActualConfig: EtapaProcesal | null = null;
-  etapaActualIndex: number = 0;
-  etapasStepper: { nombre: string; color: string }[] = [];
+  etapaActualIndex: number = -1; // -1 indica que no se encontró en el flujo visual
+  etapasStepper: { nombre: string; color: string; id: number }[] = [];
 
   showSupportModal = false;
   isSendingTicket = false;
-  ticketData = { subject: '', content: '' };
+
+  subjectOptions: string[] = [
+    'Dudas sobre avance procesal',
+    'Recuperación del Inmueble',
+    'Valores en recuperación'
+  ];
+
+  ticketData = { subject: '', content: '' };  
 
   constructor(
     private route: ActivatedRoute,
@@ -63,9 +71,11 @@ export class DetalleProcesoComponent implements OnInit {
       this.error = 'ID de proceso no válido';
       this.loading = false;
     }
-    
-    // Cargar las etapas para el stepper
-    this.etapasStepper = getEtapasParaStepper();
+  }
+  
+  onSelectChange(event: Event) {
+    this.selectOpen = false;
+    (event.target as HTMLSelectElement).blur(); // fuerza a perder foco y “cierra” visualmente
   }
 
   cargarDetalle(id: number) {
@@ -76,9 +86,15 @@ export class DetalleProcesoComponent implements OnInit {
         const nombreDemandado = this.getNombreSujeto('DEMANDADO');
         this.titleService.setTitle(`Estados Procesales - Demandado ${nombreDemandado}`);
         
-        // Configurar la etapa actual
+        // 1. Obtener la configuración de la etapa actual (info, color, definición)
         this.etapaActualConfig = getEtapaConfig(this.detalle.etapaProcesal);
-        this.etapaActualIndex = getEtapaIndex(this.detalle.etapaProcesal);
+
+        // 2. Generar el Stepper dinámico según la clase (Ejecutivo vs Restitución)
+        const clase = this.detalle.claseProceso || '';
+        this.etapasStepper = getEtapasParaStepper(clase);
+
+        // 3. Calcular el índice visual (dónde pintar el círculo activo)
+        this.calcularIndiceVisual();
         
         this.loading = false;
       },
@@ -90,11 +106,41 @@ export class DetalleProcesoComponent implements OnInit {
     });
   }
 
+  calcularIndiceVisual() {
+    if (!this.etapaActualConfig || this.etapasStepper.length === 0) {
+      this.etapaActualIndex = 0;
+      return;
+    }
+
+    // Buscamos en el array FILTRADO (etapasStepper) la etapa que coincida con el ID de la configuración actual
+    const visualIndex = this.etapasStepper.findIndex(step => step.id === this.etapaActualConfig?.id);
+
+    if (visualIndex !== -1) {
+      this.etapaActualIndex = visualIndex;
+    } else {
+      // Caso Borde: La etapa actual existe en la BD (ej. Admisión) pero NO en el flujo visual actual (ej. Ejecutivo oculta Admisión)
+      // Estrategia: Buscar la etapa visible inmediatamente anterior para marcar el progreso hasta ahí.
+      
+      const currentId = this.etapaActualConfig.id;
+      // Filtramos las etapas del stepper que tengan un ID menor al actual
+      const prevSteps = this.etapasStepper.filter(step => step.id < currentId);
+      
+      if (prevSteps.length > 0) {
+        // Marcamos la última etapa visible anterior
+        const lastVisibleStep = prevSteps[prevSteps.length - 1];
+        this.etapaActualIndex = this.etapasStepper.indexOf(lastVisibleStep);
+      } else {
+        this.etapaActualIndex = 0; // Fallback al inicio
+      }
+    }
+  }
+
   openSupportModal() {
     const radicado = this.detalle?.numeroRadicacion || 'Sin Radicado';
-    this.ticketData = { 
+    // CAMBIO 2: Aseguramos que al abrir el modal empiece limpio
+    this.ticketData = {
       subject: '', 
-      content: '' 
+      content: ''
     };
     this.showSupportModal = true;
   }
@@ -104,8 +150,21 @@ export class DetalleProcesoComponent implements OnInit {
   }
 
   sendTicket() {
-    if (!this.ticketData.subject || !this.ticketData.content) {
-      AffiAlert.fire({ icon: 'warning', title: 'Campos vacíos', text: 'Por favor completa el asunto y el mensaje.' });
+  if (!this.ticketData.subject || this.ticketData.subject === '') {
+      AffiAlert.fire({ 
+        icon: 'warning', 
+        title: 'Campos incompletos', 
+        text: 'Por favor selecciona una opción válida en el asunto.' 
+      });
+      return;
+    }
+
+    if (!this.ticketData.content) {
+       AffiAlert.fire({ 
+        icon: 'warning', 
+        title: 'Campos vacíos', 
+        text: 'Por favor escribe un mensaje.' 
+      });
       return;
     }
 

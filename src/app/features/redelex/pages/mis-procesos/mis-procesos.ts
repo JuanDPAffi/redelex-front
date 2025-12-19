@@ -14,25 +14,94 @@ import { AffiAlert } from '../../../../shared/services/affi-alert';
 
 registerLocaleData(localeEsCo, 'es-CO');
 
-// Mapeo de etapas según la especificación
-const ETAPA_MAPPING: { [key: string]: { display: string, color: string, colorRGB: [number, number, number], order: number } } = {
-  'ALISTAMIENTO MES': { display: 'RECOLECCION Y VALIDACION DOCUMENTAL', color: 'FFFFFF99', colorRGB: [255, 255, 153], order: 1 },
-  'ALISTAMIENTO MESES ANTERIORES': { display: 'RECOLECCION Y VALIDACION DOCUMENTAL', color: 'FFFFFF99', colorRGB: [255, 255, 153], order: 1 },
-  'DOCUMENTACION COMPLETA': { display: 'RECOLECCION Y VALIDACION DOCUMENTAL', color: 'FFFFFF99', colorRGB: [255, 255, 153], order: 1 },
-  'ASIGNACION': { display: 'RECOLECCION Y VALIDACION DOCUMENTAL', color: 'FFFFFF99', colorRGB: [255, 255, 153], order: 1 },
-  'DEMANDA': { display: 'DEMANDA', color: 'FFF1A983', colorRGB: [241, 169, 131], order: 2 },
-  'MANDAMIENTO DE PAGO': { display: 'MANDAMIENTO DE PAGO', color: 'FFFBE2D5', colorRGB: [251, 226, 213], order: 3 },
-  'ADMISION DEMANDA': { display: 'ADMISION DEMANDA', color: 'FF92D050', colorRGB: [146, 208, 80], order: 4 },
-  'NOTIFICACION': { display: 'NOTIFICACION', color: 'FFB5E6A2', colorRGB: [181, 230, 162], order: 5 },
-  'EXCEPCIONES': { display: 'EXCEPCIONES', color: 'FF00B0F0', colorRGB: [0, 176, 240], order: 6 },
-  'AUDIENCIA': { display: 'AUDIENCIA', color: 'FFC0E6F5', colorRGB: [192, 230, 245], order: 7 },
-  'SENTENCIA': { display: 'SENTENCIA', color: 'FFD86DCD', colorRGB: [216, 109, 205], order: 8 },
-  'LIQUIDACION': { display: 'LIQUIDACION', color: 'FFE49EDD', colorRGB: [228, 158, 221], order: 9 },
-  'AVALUO DE BIENES': { display: 'LIQUIDACION', color: 'FFE49EDD', colorRGB: [228, 158, 221], order: 9 },
-  'REMATE': { display: 'LIQUIDACION', color: 'FFE49EDD', colorRGB: [228, 158, 221], order: 9 },
-  'LANZAMIENTO': { display: 'LANZAMIENTO', color: 'FFFFC000', colorRGB: [255, 192, 0], order: 10 },
-  'TERMINACION': { display: 'No se muestran al cliente', color: 'FFBFBFBF', colorRGB: [191, 191, 191], order: 11 },
-  'TERMINADO DESISTIMIENTO': { display: 'No se muestran al cliente', color: 'FFBFBFBF', colorRGB: [191, 191, 191], order: 11 },
+// 1. DEFINICIÓN MAESTRA DE ETAPAS (Sin Terminación para vista cliente)
+interface EtapaConfig {
+  id: number;
+  nombreInterno: string[];
+  color: string; // Hex para Excel
+  colorRGB: [number, number, number]; // RGB para PDF
+  nombreCliente: string;
+  definicion: string;
+}
+
+const ETAPAS_MASTER: EtapaConfig[] = [
+  { 
+    id: 1, 
+    nombreInterno: ['ALISTAMIENTO', 'DOCUMENTACION', 'ASIGNACION'], 
+    color: 'FFFFFF99', colorRGB: [255, 255, 153],
+    nombreCliente: 'RECOLECCION Y VALIDACION DOCUMENTAL', 
+    definicion: 'Se está completando y revisando la información necesaria para iniciar los procesos.' 
+  },
+  { 
+    id: 2, 
+    nombreInterno: ['DEMANDA'], 
+    color: 'FFF1A983', colorRGB: [241, 169, 131],
+    nombreCliente: 'DEMANDA', 
+    definicion: 'Hemos iniciado el proceso judicial.' 
+  },
+  { 
+    id: 3, 
+    nombreInterno: ['MANDAMIENTO'], 
+    color: 'FFFBE2D5', colorRGB: [251, 226, 213],
+    nombreCliente: 'MANDAMIENTO DE PAGO', 
+    definicion: 'El juez ordena el pago de la obligación.' 
+  },
+  { 
+    id: 4, 
+    nombreInterno: ['ADMISION'], 
+    color: 'FF92D050', colorRGB: [146, 208, 80],
+    nombreCliente: 'ADMISION DEMANDA', 
+    definicion: 'El juez acepta tramitar la demanda de restitución.' 
+  },
+  { 
+    id: 5, 
+    nombreInterno: ['NOTIFICACION', 'EMPLAZAMIENTO'], 
+    color: 'FFB5E6A2', colorRGB: [181, 230, 162],
+    nombreCliente: 'NOTIFICACION', 
+    definicion: 'Etapa en la que se comunica la existencia del proceso.' 
+  },
+  { 
+    id: 6, 
+    nombreInterno: ['EXCEPCIONES', 'CONTESTACION'], 
+    color: 'FF00B0F0', colorRGB: [0, 176, 240],
+    nombreCliente: 'EXCEPCIONES', 
+    definicion: 'El demandado presentó objeciones o contestó la demanda.' 
+  },
+  { 
+    id: 7, 
+    nombreInterno: ['AUDIENCIA'], 
+    color: 'FFC0E6F5', colorRGB: [192, 230, 245],
+    nombreCliente: 'AUDIENCIA', 
+    definicion: 'Diligencia donde el juez escucha a las partes.' 
+  },
+  { 
+    id: 8, 
+    nombreInterno: ['SENTENCIA'], 
+    color: 'FFD86DCD', colorRGB: [216, 109, 205],
+    nombreCliente: 'SENTENCIA', 
+    definicion: 'El juez decidió sobre la demanda.' 
+  },
+  { 
+    id: 9, 
+    nombreInterno: ['LIQUIDACION', 'AVALUO', 'REMATE'], 
+    color: 'FFE49EDD', colorRGB: [228, 158, 221],
+    nombreCliente: 'LIQUIDACION', 
+    definicion: 'Etapa en la que se cuantifica la deuda, se avalúan bienes o se realiza el remate.' 
+  },
+  { 
+    id: 10, 
+    nombreInterno: ['LANZAMIENTO', 'ENTREGA'], 
+    color: 'FFFFC000', colorRGB: [255, 192, 0],
+    nombreCliente: 'LANZAMIENTO', 
+    definicion: 'Se está gestionando la restitución o entrega del inmueble.' 
+  },
+  // EL ID 11 (TERMINACIÓN) NO SE INCLUYE AQUÍ PORQUE ES VISTA DE INMOBILIARIA
+];
+
+// 2. REGLAS DE VISIBILIDAD (Para referencia o uso futuro en filtros)
+const REGLAS_VISIBILIDAD: any = {
+  'EJECUTIVO SINGULAR': [1, 2, 3, 5, 6, 7, 8, 9, 11], // Usa ID 3 (Mandamiento)
+  'VERBAL SUMARIO': [1, 2, 4, 5, 6, 7, 8, 10, 11]     // Usa ID 4 (Admisión)
 };
 
 @Component({
@@ -112,9 +181,21 @@ export class MisProcesosComponent implements OnInit {
     this.cargarMisProcesos();
   }
 
+  // Lógica unificada para obtener el nombre visible de la etapa
   getEtapaDisplay(etapaRaw: string): string {
     const etapaNormalizada = etapaRaw ? etapaRaw.toUpperCase().trim() : '';
-    return ETAPA_MAPPING[etapaNormalizada]?.display || etapaRaw || 'EN TRÁMITE';
+    
+    // Verificar si es terminación primero para ocultarla/cambiar nombre si es necesario
+    if (etapaNormalizada.includes('TERMINA') || etapaNormalizada.includes('DESISTIMIENTO')) {
+      return 'No se muestran al cliente';
+    }
+
+    // Buscar en el maestro
+    const found = ETAPAS_MASTER.find(e => 
+      e.nombreInterno.some(k => etapaNormalizada.includes(k))
+    );
+
+    return found ? found.nombreCliente : (etapaRaw || 'EN TRÁMITE');
   }
 
   cargarMisProcesos() {
@@ -151,7 +232,6 @@ export class MisProcesosComponent implements OnInit {
     });
   }
 
-  // --- LÓGICA DE CÁLCULO DE KPIs ---
   calculateStats() {
     const data = this.rawData;
     const total = data.length;
@@ -187,8 +267,7 @@ export class MisProcesosComponent implements OnInit {
       this.stats.topEtapaPct = Math.round((sortedEtapas[0][1] / total) * 100);
     }
 
-    // 3. Activos vs Terminados
-    // Se asume que "No se muestran al cliente" son terminados según el mapping
+    // 3. Ciudad más frecuente
     const ciudadCounts: Record<string, number> = {};
     data.forEach(item => {
       const c = item.ciudadInmueble ? item.ciudadInmueble.trim() : 'Sin Ciudad';
@@ -251,9 +330,7 @@ export class MisProcesosComponent implements OnInit {
     this.applyFilters();
   }
 
-  toggleFiltros() { 
-    this.mostrarFiltros = !this.mostrarFiltros; 
-  }
+  toggleFiltros() { this.mostrarFiltros = !this.mostrarFiltros; }
 
   get paginatedData() {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
@@ -300,16 +377,21 @@ export class MisProcesosComponent implements OnInit {
     return this.exportColumns.some(col => col.selected);
   }
 
+  // Helper para generar las cajas de resumen basadas en el Maestro
+  private getResumenBoxes() {
+    // Generamos cajas para TODAS las etapas del maestro (menos terminación que ya está excluida del array)
+    return ETAPAS_MASTER.map(etapa => ({
+      title: etapa.nombreCliente,
+      desc: etapa.definicion,
+      count: this.contarEtapaDisplay(etapa.nombreCliente),
+      color: etapa.color,        // HEX para Excel
+      colorRGB: etapa.colorRGB   // RGB para PDF
+    }));
+  }
+
+  // ================= EXCEL =================
   async exportToExcel() {
-    if (!this.hasSelectedColumns) {
-      AffiAlert.fire({
-        icon: 'warning',
-        title: 'Selecciona columnas',
-        text: 'Debes seleccionar al menos una columna para exportar.',
-        confirmButtonText: 'Entendido'
-      });
-      return;
-    }
+    if (!this.hasSelectedColumns) return;
 
     this.exportState = 'excel';
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -319,46 +401,20 @@ export class MisProcesosComponent implements OnInit {
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Mis Procesos');
 
-      const counts = {
-        recoleccion: this.contarEtapaDisplay('RECOLECCION Y VALIDACION DOCUMENTAL'),
-        demanda: this.contarEtapaDisplay('DEMANDA'),
-        mandamiento: this.contarEtapaDisplay('MANDAMIENTO DE PAGO'),
-        admision: this.contarEtapaDisplay('ADMISION DEMANDA'),
-        notificacion: this.contarEtapaDisplay('NOTIFICACION'),
-        excepciones: this.contarEtapaDisplay('EXCEPCIONES'),
-        audiencia: this.contarEtapaDisplay('AUDIENCIA'),
-        sentencia: this.contarEtapaDisplay('SENTENCIA'),
-        liquidacion: this.contarEtapaDisplay('LIQUIDACION'),
-        lanzamiento: this.contarEtapaDisplay('LANZAMIENTO'),
-      };
+      // Obtener cajas dinámicamente
+      const allBoxes = this.getResumenBoxes();
+      // Dividimos en 2 filas (aprox mitad y mitad)
+      const midPoint = Math.ceil(allBoxes.length / 2);
+      const datosFila1 = allBoxes.slice(0, midPoint);
+      const datosFila2 = allBoxes.slice(midPoint);
 
-      const colSpans: { [key: string]: number } = {
-        'numeroRadicacion': 2,
-        'demandadoNombre': 2,
-        'despacho': 2,
-      };
+      const colSpans: { [key: string]: number } = { 'numeroRadicacion': 2, 'demandadoNombre': 2, 'despacho': 2 };
       
       const UNIFORM_WIDTH = 22;
       for (let i = 1; i <= 50; i++) { sheet.getColumn(i).width = UNIFORM_WIDTH; }
 
       let totalPhysicalColumns = 0;
       activeColumns.forEach(col => { totalPhysicalColumns += (colSpans[col.key] || 1); });
-
-      const colors = {
-        yellow99: 'FFFFFF99',
-        orangeF1: 'FFF1A983',
-        pinkFBE: 'FFFBE2D5',
-        green92: 'FF92D050',
-        greenB5: 'FFB5E6A2',
-        blue00: 'FF00B0F0',
-        blueC0: 'FFC0E6F5',
-        pinkD8: 'FFD86DCD',
-        pinkE4: 'FFE49EDD',
-        yellowFF: 'FFFFC000',
-        gray: 'FFBFBFBF',
-        headerBlue: 'FF1F4E78',
-        textDark: 'FF333333'
-      };
 
       const imageId = workbook.addImage({ base64: AFFI_LOGO_BASE64, extension: 'png' });
       sheet.addImage(imageId, { tl: { col: 0.1, row: 0.1 }, ext: { width: 90, height: 90 } });
@@ -385,22 +441,6 @@ export class MisProcesosComponent implements OnInit {
       setInfo(6, `NIT Asociado: ${this.identificacionUsuario}`);
       setInfo(8, `Inmobiliaria: ${this.nombreInmobiliaria || 'N/A'}`);
       setInfo(10, `Total Procesos: ${this.filteredData.length}`);
-
-      const datosFila1 = [
-        { title: 'Recolección y Validación Documental', desc: 'Se está completando y revisando la información necesaria para iniciar los procesos.', count: counts.recoleccion, color: colors.yellow99 },
-        { title: 'Demanda', desc: 'Hemos iniciado el proceso judicial.', count: counts.demanda, color: colors.orangeF1 },
-        { title: 'Mandamiento de Pago', desc: 'El juez acepta tramitar la demanda.', count: counts.mandamiento, color: colors.pinkFBE },
-        { title: 'Admisión Demanda', desc: 'El juez acepta tramitar la demanda.', count: counts.admision, color: colors.green92 },
-        { title: 'Notificación', desc: 'Etapa en la que se comunica la existencia del proceso.', count: counts.notificacion, color: colors.greenB5 },
-      ];
-
-      const datosFila2 = [
-        { title: 'Excepciones', desc: 'Demandado presentó objeciones a la demanda.', count: counts.excepciones, color: colors.blue00 },
-        { title: 'Audiencia', desc: 'Diligencia donde el juez escucha a las partes.', count: counts.audiencia, color: colors.blueC0 },
-        { title: 'Sentencia', desc: 'El juez decidió sobre la demanda.', count: counts.sentencia, color: colors.pinkD8 },
-        { title: 'Liquidación', desc: 'Se cuantifica con exactitud las obligaciones.', count: counts.liquidacion, color: colors.pinkE4 },
-        { title: 'Lanzamiento', desc: 'Se está gestionando el desalojo de los inquilinos.', count: counts.lanzamiento, color: colors.yellowFF },
-      ];
 
       const drawBoxRow = (startRow: number, datos: any[]) => {
         let currentBoxCol = 4;
@@ -431,6 +471,7 @@ export class MisProcesosComponent implements OnInit {
         });
       };
 
+      // Dibujar filas dinámicamente
       drawBoxRow(6, datosFila1);
       drawBoxRow(11, datosFila2);
 
@@ -444,7 +485,7 @@ export class MisProcesosComponent implements OnInit {
 
         const cell = sheet.getCell(tableStartRow, currentPhysicalCol);
         cell.value = col.label;
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.headerBlue } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E78' } };
         cell.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' }, name: 'Calibri' };
         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
         cell.border = { top: {style:'thin', color: {argb:'FFFFFFFF'}}, left: {style:'thin', color: {argb:'FFFFFFFF'}}, right: {style:'thin', color: {argb:'FFFFFFFF'}} };
@@ -473,23 +514,16 @@ export class MisProcesosComponent implements OnInit {
 
           const cell = sheet.getCell(currentRowIndex, rowPhysicalCol);
           cell.value = val || '';
-          cell.font = { size: 8, name: 'Calibri', color: { argb: colors.textDark } };
+          cell.font = { size: 8, name: 'Calibri', color: { argb: 'FF333333' } };
           cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
           cell.border = borderStyle;
 
           if (col.key === 'etapaProcesal') {
             const etapaDisplay = val || '';
-            let cellColor = null;
-
-            for (const [key, value] of Object.entries(ETAPA_MAPPING)) {
-              if (value.display === etapaDisplay) {
-                cellColor = value.color;
-                break;
-              }
-            }
-
-            if (cellColor) {
-              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cellColor } };
+            // Buscar color en el maestro
+            const config = ETAPAS_MASTER.find(e => e.nombreCliente === etapaDisplay);
+            if (config) {
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: config.color } };
             }
           }
           rowPhysicalCol += span;
@@ -521,16 +555,9 @@ export class MisProcesosComponent implements OnInit {
     }
   }
 
+  // ================= PDF =================
   async exportToPdf() {
-    if (!this.hasSelectedColumns) {
-      AffiAlert.fire({
-        icon: 'warning',
-        title: 'Selecciona columnas',
-        text: 'Debes seleccionar al menos una columna para exportar.',
-        confirmButtonText: 'Entendido'
-      });
-      return;
-    }
+    if (!this.hasSelectedColumns) return;
 
     this.exportState = 'pdf';
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -539,32 +566,11 @@ export class MisProcesosComponent implements OnInit {
       const activeColumns = this.exportColumns.filter(c => c.selected);
       const etapaColIndex = activeColumns.findIndex(c => c.key === 'etapaProcesal');
 
-      const counts = {
-        recoleccion: this.contarEtapaDisplay('RECOLECCION Y VALIDACION DOCUMENTAL'),
-        demanda: this.contarEtapaDisplay('DEMANDA'),
-        mandamiento: this.contarEtapaDisplay('MANDAMIENTO DE PAGO'),
-        admision: this.contarEtapaDisplay('ADMISION DEMANDA'),
-        notificacion: this.contarEtapaDisplay('NOTIFICACION'),
-        excepciones: this.contarEtapaDisplay('EXCEPCIONES'),
-        audiencia: this.contarEtapaDisplay('AUDIENCIA'),
-        sentencia: this.contarEtapaDisplay('SENTENCIA'),
-        liquidacion: this.contarEtapaDisplay('LIQUIDACION'),
-        lanzamiento: this.contarEtapaDisplay('LANZAMIENTO'),
-      };
-
-      const colorsRGB: { [key: string]: [number, number, number] } = {
-        yellow99: [255, 255, 153],
-        orangeF1: [241, 169, 131],
-        pinkFBE: [251, 226, 213],
-        green92: [146, 208, 80],
-        greenB5: [181, 230, 162],
-        blue00: [0, 176, 240],
-        blueC0: [192, 230, 245],
-        pinkD8: [216, 109, 205],
-        pinkE4: [228, 158, 221],
-        yellowFF: [255, 192, 0],
-        gray: [191, 191, 191]
-      };
+      // Obtener cajas dinámicamente
+      const allBoxes = this.getResumenBoxes();
+      const midPoint = Math.ceil(allBoxes.length / 2);
+      const boxesRow1 = allBoxes.slice(0, midPoint);
+      const boxesRow2 = allBoxes.slice(midPoint);
 
       const doc = new jsPDF('landscape', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.width;
@@ -572,7 +578,6 @@ export class MisProcesosComponent implements OnInit {
       const usableWidth = pageWidth - (margin * 2);
 
       const doubleColumns = ['numeroRadicacion', 'demandadoNombre', 'despacho'];
-      
       let totalUnits = 0;
       activeColumns.forEach(c => { totalUnits += doubleColumns.includes(c.key) ? 2 : 1; });
       const unitWidth = usableWidth / totalUnits;
@@ -609,26 +614,11 @@ export class MisProcesosComponent implements OnInit {
       const totalBlockWidth = (numBoxes * boxWidth) + ((numBoxes - 1) * boxGap);
       const startX = margin + (usableWidth - totalBlockWidth) / 2;
 
-      const boxesRow1 = [
-        { title: 'Recolección y Validación Documental', desc: 'Se está completando y revisando la información necesaria para iniciar los procesos.', count: counts.recoleccion, color: colorsRGB['yellow99'] },
-        { title: 'Demanda', desc: 'Hemos iniciado el proceso judicial.', count: counts.demanda, color: colorsRGB['orangeF1'] },
-        { title: 'Mandamiento de PAgo', desc: 'El juez acepta tramitar la demanda.', count: counts.mandamiento, color: colorsRGB['pinkFBE'] },
-        { title: 'Admisión Demanda', desc: 'El juez acepta tramitar la demanda.', count: counts.admision, color: colorsRGB['green92'] },
-        { title: 'Notificación', desc: 'Etapa en la que se comunica la existencia del proceso.', count: counts.notificacion, color: colorsRGB['greenB5'] },
-      ];
-
-      const boxesRow2 = [
-        { title: 'Excepciones', desc: 'Demandado presentó objeciones a la demanda.', count: counts.excepciones, color: colorsRGB['blue00'] },
-        { title: 'Audiencia', desc: 'Diligencia donde el juez escucha a las partes.', count: counts.audiencia, color: colorsRGB['blueC0'] },
-        { title: 'Sentencia', desc: 'El juez decidió sobre la demanda.', count: counts.sentencia, color: colorsRGB['pinkD8'] },
-        { title: 'Liquidación', desc: 'Se cuantifica con exactitud las obligaciones.', count: counts.liquidacion, color: colorsRGB['pinkE4'] },
-        { title: 'Lanzamiento', desc: 'Se está gestionando el desalojo de los inquilinos.', count: counts.lanzamiento, color: colorsRGB['yellowFF'] },
-      ];
-
       const drawPDFBoxRow = (y: number, items: any[]) => {
         items.forEach((item, i) => {
           const x = startX + (i * (boxWidth + boxGap));
-          doc.setFillColor(item.color[0], item.color[1], item.color[2]);
+          // RGB array
+          doc.setFillColor(item.colorRGB[0], item.colorRGB[1], item.colorRGB[2]);
           doc.rect(x, y, boxWidth, boxHeight, 'F');
           doc.setDrawColor(100); doc.setLineWidth(0.1);
           doc.rect(x, y, boxWidth, boxHeight, 'S');
@@ -671,16 +661,11 @@ export class MisProcesosComponent implements OnInit {
           if (data.section === 'body' && etapaColIndex !== -1 && data.column.index === etapaColIndex) {
             const cellValue = data.cell.raw;
             const etapaDisplay = cellValue ? String(cellValue) : '';
-            let colorRGB: [number, number, number] | null = null;
-
-            for (const [key, value] of Object.entries(ETAPA_MAPPING)) {
-              if (value.display === etapaDisplay) {
-                colorRGB = value.colorRGB;
-                break;
-              }
+            
+            const config = ETAPAS_MASTER.find(e => e.nombreCliente === etapaDisplay);
+            if (config) {
+              data.cell.styles.fillColor = config.colorRGB;
             }
-
-            if (colorRGB) data.cell.styles.fillColor = colorRGB;
           }
         }
       });

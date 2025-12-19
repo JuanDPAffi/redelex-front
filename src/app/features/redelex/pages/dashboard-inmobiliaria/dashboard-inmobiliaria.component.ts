@@ -1,11 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe, registerLocaleData } from '@angular/common';
-import localeEsCo from '@angular/common/locales/es-CO'; // Importar configuración regional
+import localeEsCo from '@angular/common/locales/es-CO';
 import { RedelexService } from '../../services/redelex.service';
 import { Title } from '@angular/platform-browser';
 import { FeatherModule } from 'angular-feather';
 
-// Registrar idioma español Colombia
 registerLocaleData(localeEsCo, 'es-CO');
 
 interface StatItem {
@@ -15,10 +14,13 @@ interface StatItem {
   color?: string;
 }
 
-interface TimeStat {
-  year: string;
-  count: number;
-  heightPct: number;
+// Interfaz para grupos específicos (Ejecutivo/Restitución)
+interface ClassGroup {
+  total: number;
+  prep: number;
+  juzgado: number;
+  sentencia: number;
+  flowStats: StatItem[];
 }
 
 @Component({
@@ -36,24 +38,22 @@ export class DashboardInmobiliariaComponent implements OnInit {
 
   loading = true;
   nombreInmobiliaria = '';
-  identificacionUsuario = '';
-  
-  // Fecha actual (Angular se encargará de formatearla)
   fechaActual = new Date();
 
-  // KPIs
+  // 1. ESTADÍSTICAS GLOBALES (Resumen de toda la cartera)
   kpis = {
     total: 0,
-    enPreparacion: 0, 
+    enPreparacion: 0,
     enJuzgado: 0,
-    conSentencia: 0,
-    nuevosEsteMes: 0
+    conSentencia: 0
   };
-
-  // Datos Gráficos
-  etapasStats: StatItem[] = [];
-  clasesStats: StatItem[] = [];
+  
   ciudadesStats: StatItem[] = [];
+
+  // 2. GRUPOS ESPECÍFICOS (Para el detalle por clase)
+  ejecutivo: ClassGroup = this.initGroup();
+  restitucion: ClassGroup = this.initGroup();
+  otros: ClassGroup = this.initGroup();
 
   readonly ETAPA_COLORS: Record<string, string> = {
     'RECOLECCION Y VALIDACION DOCUMENTAL': '#fbbf24',
@@ -66,109 +66,110 @@ export class DashboardInmobiliariaComponent implements OnInit {
     'SENTENCIA': '#8b5cf6',
     'LIQUIDACION': '#d946ef',
     'LANZAMIENTO': '#eab308',
-    'TERMINADO': '#9ca3af'
+    'TERMINADO': '#9ca3af',
+    'TERMINACION': '#9ca3af'
   };
 
   ngOnInit() {
-    this.titleService.setTitle('Estados Procesales - Tablero');
+    this.titleService.setTitle('Tablero de Control - Affi');
     this.loadData();
+  }
+
+  private initGroup(): ClassGroup {
+    return { total: 0, prep: 0, juzgado: 0, sentencia: 0, flowStats: [] };
   }
 
   loadData() {
     this.loading = true;
     this.redelexService.getMisProcesos().subscribe({
       next: (res) => {
-        this.nombreInmobiliaria = res.nombreInmobiliaria;
-        this.identificacionUsuario = res.identificacion;
+        this.nombreInmobiliaria = res.nombreInmobiliaria || 'Inmobiliaria';
         const procesos = res.procesos || [];
         this.calculateMetrics(procesos);
         this.loading = false;
       },
       error: (err) => {
-        console.error(err);
+        console.error('Error cargando datos:', err);
         this.loading = false;
       }
     });
   }
 
   calculateMetrics(data: any[]) {
-    const total = data.length;
-    this.kpis.total = total;
+    // Reiniciar Globales
+    this.kpis = { total: 0, enPreparacion: 0, enJuzgado: 0, conSentencia: 0 };
+    this.ciudadesStats = [];
+    
+    // Reiniciar Grupos
+    this.ejecutivo = this.initGroup();
+    this.restitucion = this.initGroup();
+    this.otros = this.initGroup();
 
-    if (total === 0) return;
+    if (!data || data.length === 0) return;
 
-    const etapasMap = new Map<string, number>();
-    const clasesMap = new Map<string, number>();
+    this.kpis.total = data.length;
+
+    // Mapas temporales
+    const flowMapEjecutivo = new Map<string, number>();
+    const flowMapRestitucion = new Map<string, number>();
+    const flowMapOtros = new Map<string, number>();
     const ciudadesMap = new Map<string, number>();
-    const despachosMap = new Map<string, number>();
-    const aniosMap = new Map<string, number>();
 
-    let prepCount = 0;
-    let juzgadoCount = 0;
-    let sentenciaCount = 0;
-    let nuevosMesCount = 0;
-
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    const etapasAvanzadas = ['SENTENCIA', 'LIQUIDACION', 'AVALUO', 'REMATE', 'LANZAMIENTO'];
+    const etapasAvanzadas = ['SENTENCIA', 'LIQUIDACION', 'AVALUO', 'REMATE', 'LANZAMIENTO', 'TERMINACION', 'TERMINADO'];
 
     data.forEach(p => {
-      // 1. Etapas
-      let etapa = this.normalizeEtapa(p.etapaProcesal);
-      etapasMap.set(etapa, (etapasMap.get(etapa) || 0) + 1);
-
-      if (etapa === 'RECOLECCION Y VALIDACION DOCUMENTAL') {
-        prepCount++;
-      } else {
-        juzgadoCount++;
-        if (etapasAvanzadas.some(adv => etapa.includes(adv))) sentenciaCount++;
-      }
-
-      // 2. Clases
-      const clase = p.claseProceso || 'Sin Clasificar';
-      clasesMap.set(clase, (clasesMap.get(clase) || 0) + 1);
-
-      // 3. Ciudades
+      const etapa = this.normalizeEtapa(p.etapaProcesal);
+      const clase = (p.claseProceso || '').toUpperCase();
       const ciudad = p.ciudadInmueble ? p.ciudadInmueble.trim().toUpperCase() : 'SIN CIUDAD';
+
+      // --- CÁLCULOS GLOBALES ---
       ciudadesMap.set(ciudad, (ciudadesMap.get(ciudad) || 0) + 1);
+      
+      const isPrep = etapa === 'RECOLECCION Y VALIDACION DOCUMENTAL';
+      const isSentencia = etapasAvanzadas.some(adv => etapa.includes(adv));
+      const isJuzgado = !isPrep && !isSentencia; // Simplificación para gráfica
 
-      // 4. Despachos
-      let despacho = p.despacho ? p.despacho.trim() : 'SIN DESPACHO';
-      despachosMap.set(despacho, (despachosMap.get(despacho) || 0) + 1);
+      // Actualizar KPIs Globales
+      if (isPrep) this.kpis.enPreparacion++;
+      else if (isSentencia) this.kpis.conSentencia++;
+      else this.kpis.enJuzgado++; // Asumimos resto en juzgado para el KPI global
 
-      // 5. Fechas
-      if (p.fechaRecepcionProceso) {
-        const fecha = new Date(p.fechaRecepcionProceso);
-        if (!isNaN(fecha.getTime())) {
-          const year = fecha.getFullYear().toString();
-          aniosMap.set(year, (aniosMap.get(year) || 0) + 1);
-
-          if (fecha.getMonth() === currentMonth && fecha.getFullYear() === currentYear) {
-            nuevosMesCount++;
-          }
-        }
+      // --- CÁLCULOS POR GRUPO (EJECUTIVO / RESTITUCIÓN) ---
+      if (clase.includes('EJECUTIVO') || clase.includes('SINGULAR')) {
+        this.updateGroup(this.ejecutivo, flowMapEjecutivo, etapa, isPrep, isJuzgado, isSentencia);
+      } 
+      else if (clase.includes('VERBAL') || clase.includes('RESTITUCION') || clase.includes('SUMARIO')) {
+        this.updateGroup(this.restitucion, flowMapRestitucion, etapa, isPrep, isJuzgado, isSentencia);
+      } 
+      else {
+        this.updateGroup(this.otros, flowMapOtros, etapa, isPrep, isJuzgado, isSentencia);
       }
     });
 
-    this.kpis.enPreparacion = prepCount;
-    this.kpis.enJuzgado = juzgadoCount;
-    this.kpis.conSentencia = sentenciaCount;
-    this.kpis.nuevosEsteMes = nuevosMesCount;
+    // Generar Arrays para gráficas de flujo
+    this.ejecutivo.flowStats = this.generateChartData(flowMapEjecutivo, this.ejecutivo.total);
+    this.restitucion.flowStats = this.generateChartData(flowMapRestitucion, this.restitucion.total);
+    this.otros.flowStats = this.generateChartData(flowMapOtros, this.otros.total);
 
-    // Generar Arrays Ordenados
-    this.etapasStats = this.mapToSortedArray(etapasMap, total)
+    // Generar Top Ciudades Global
+    this.ciudadesStats = this.mapToSortedArray(ciudadesMap, this.kpis.total).slice(0, 15);
+  }
+
+  private updateGroup(group: ClassGroup, map: Map<string, number>, etapa: string, isPrep: boolean, isJuzgado: boolean, isSentencia: boolean) {
+    group.total++;
+    if (isPrep) group.prep++;
+    if (isJuzgado) group.juzgado++;
+    if (isSentencia) group.sentencia++;
+    map.set(etapa, (map.get(etapa) || 0) + 1);
+  }
+
+  private generateChartData(map: Map<string, number>, total: number): StatItem[] {
+    return this.mapToSortedArray(map, total)
       .map(item => ({ ...item, color: this.ETAPA_COLORS[item.label] || '#cbd5e1' }));
-
-    this.clasesStats = this.mapToSortedArray(clasesMap, total).slice(0, 5);
-    this.ciudadesStats = this.mapToSortedArray(ciudadesMap, total).slice(0, 10);
-
-    const aniosArray = Array.from(aniosMap.entries()).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
-    const maxCountYear = Math.max(...aniosArray.map(a => a[1]), 1);
-
   }
 
   private mapToSortedArray(map: Map<string, number>, total: number): StatItem[] {
+    if (total === 0) return [];
     return Array.from(map.entries())
       .map(([label, count]) => ({
         label,
@@ -186,9 +187,14 @@ export class DashboardInmobiliariaComponent implements OnInit {
     return upper;
   }
 
+  // Getter para el gradiente de la dona
   get donutGradient(): string {
-    if (this.kpis.total === 0) return 'conic-gradient(#260086 0% 100%)';
-    const pctJuzgado = (this.kpis.enJuzgado / this.kpis.total) * 100;
-    return `conic-gradient(#260086 0% ${pctJuzgado}%, #fbbf24 ${pctJuzgado}% 100%)`;
+    if (this.kpis.total === 0) return 'conic-gradient(#e5e7eb 0% 100%)';
+    
+    // Segmentos: Prep (Amarillo) vs Juzgado/Sentencia (Azul)
+    const pctPrep = (this.kpis.enPreparacion / this.kpis.total) * 100;
+    
+    // #fbbf24 = Amarillo (Prep), #260086 = Azul (Resto)
+    return `conic-gradient(#fbbf24 0% ${pctPrep}%, #260086 ${pctPrep}% 100%)`;
   }
 }

@@ -305,21 +305,49 @@
       
       <div class="modal-body">
         <div class="context-info">
-          <strong>Ticket asociado al Radicado:</strong>
+          <strong>Ticket asociado al Radicado</strong>
           <span>{{ detalle?.numeroRadicacion }}</span>
         </div>
-        
+
         <p class="helper-text">
-          Nuestros equipo Jurídico recibirá la información del proceso para ayudarte mejor.
+          Nuestros equipo Jurídico recibirá la información del proceso para ayudarte.
         </p>
 
         <div class="form-group">
-          <label>Asunto</label>
-          <input [(ngModel)]="ticketData.subject" class="field__input" placeholder="Ej: Duda sobre la etapa actual">
+          <label for="ticketSubject">Asunto *</label>
+          <div 
+            class="select-wrapper"
+            [class.is-open]="selectOpen"
+            [class.has-value]="ticketData.subject">
+
+            <select
+              id="ticketSubject"
+              name="subject"
+              [(ngModel)]="ticketData.subject"
+              required
+              class="field__input field__select"
+              (focus)="selectOpen = true"
+              (blur)="selectOpen = false"
+              (change)="onSelectChange($event)">
+
+              <option value="" disabled>Selecciona una opción</option>
+
+              <option *ngFor="let option of subjectOptions" [value]="option">
+                {{ option }}
+              </option>
+            </select>
+
+            <svg class="select-arrow" xmlns="http://www.w3.org/2000/svg"
+              width="20" height="20" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
         </div>
 
         <div class="form-group">
-          <label>Mensaje</label>
+          <label>Mensaje *</label>
           <textarea [(ngModel)]="ticketData.content" class="field__input" rows="4" placeholder="Describe tu consulta jurídica..."></textarea>
         </div>
       </div>
