@@ -108,7 +108,8 @@ export class UsersListComponent implements OnInit {
     { key: 'procesos:view_all', label: 'Ver TODOS los Procesos (Global)' },
     { key: 'procesos:view_own', label: 'Ver Mis Procesos (Propio)' },
     { key: 'reports:view', label: 'Ver Reportes' },
-    { key: 'utils:export', label: 'Exportar Datos' }
+    { key: 'utils:export', label: 'Exportar Datos' },
+    { key: 'call:create', label: 'Crear Llamadas' }
   ];
 
   tempPermissions: string[] = [];
