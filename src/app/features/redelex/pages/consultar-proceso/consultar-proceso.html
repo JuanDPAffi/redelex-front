@@ -279,7 +279,7 @@
                 
                 <div class="stepper-wrapper">
                   <div class="stepper-track">
-                    @for (etapa of etapasStepper; track etapa.orden; let i = $index) {
+                    @for (etapa of etapasStepper; track etapa.id; let i = $index) {
                       <div class="step-item" 
                            [class.completed]="i < etapaActualIndex"
                            [class.active]="i === etapaActualIndex"
@@ -296,7 +296,7 @@
                           @if (i < etapaActualIndex) {
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: #333"><polyline points="20 6 9 17 4 12"></polyline></svg>
                           } @else {
-                            <span class="step-number" [style.color]="i === etapaActualIndex ? '#333' : '#9CA3AF'">{{ etapa.orden }}</span>
+                            <span class="step-number" [style.color]="i === etapaActualIndex ? '#333' : '#9CA3AF'">{{ i + 1 }}</span>
                           }
                         </div>
 
@@ -307,6 +307,7 @@
                     }
                   </div>
                 </div>
+
                 @if (etapaActualConfig) {
                   <div class="etapa-banner" [style.border-left-color]="etapaActualConfig.color">
                     <div class="banner-icon" [style.color]="etapaActualConfig.color">
@@ -317,8 +318,7 @@
                       </svg>
                     </div>
                     <div class="banner-content">
-                      <strong>ETAPA ACTUAL: {{ proceso.etapaProcesal || etapaActualConfig.nombreCliente }}</strong>
-                      
+                      <strong>ETAPA ACTUAL: {{ etapaActualConfig.nombreCliente }}</strong>
                       <p>{{ etapaActualConfig.definicion }}</p>
                     </div>
                   </div>

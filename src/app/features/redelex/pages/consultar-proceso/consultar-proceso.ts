@@ -27,28 +27,104 @@ interface ProcesoPorCedula {
   claseProceso?: string;
 }
 
-// --- CONFIGURACIÓN DE ETAPAS ---
+// --- CONFIGURACIÓN DE ETAPAS (VISTA INTERNA) ---
 interface EtapaConfig {
-  orden: number;
+  id: number;
   nombreInterno: string[];
   color: string;
   nombreCliente: string;
   definicion: string;
 }
 
+// 1. DEFINICIÓN MAESTRA (AHORA INCLUYE TERMINACIÓN)
 const ETAPAS_MASTER: EtapaConfig[] = [
-  { orden: 1, nombreInterno: ['ALISTAMIENTO MES', 'ALISTAMIENTO MESES ANTERIORES', 'DOCUMENTACION COMPLETA', 'ASIGNACION'], color: '#FFFF99', nombreCliente: 'RECOLECCION Y VALIDACION', definicion: 'Se está completando y revisando la información necesaria para iniciar los procesos.' },
-  { orden: 2, nombreInterno: ['DEMANDA'], color: '#F1A983', nombreCliente: 'DEMANDA', definicion: 'Hemos iniciado el proceso judicial.' },
-  { orden: 3, nombreInterno: ['MANDAMIENTO DE PAGO'], color: '#FBE2D5', nombreCliente: 'MANDAMIENTO PAGO', definicion: 'El juez acepta tramitar la demanda' },
-  { orden: 4, nombreInterno: ['ADMISION DEMANDA'], color: '#92D050', nombreCliente: 'ADMISION DEMANDA', definicion: 'El juez acepta tramitar la demanda' },
-  { orden: 5, nombreInterno: ['NOTIFICACION'], color: '#B5E6A2', nombreCliente: 'NOTIFICACION', definicion: 'Etapa en la que se comunica la existencia del proceso.' },
-  { orden: 6, nombreInterno: ['EXCEPCIONES'], color: '#00B0F0', nombreCliente: 'EXCEPCIONES', definicion: 'Demandado presentó objeciones a la demanda' },
-  { orden: 7, nombreInterno: ['AUDIENCIA'], color: '#C0E6F5', nombreCliente: 'AUDIENCIA', definicion: 'Diligencia donde el juez escucha a las partes.' },
-  { orden: 8, nombreInterno: ['SENTENCIA'], color: '#D86DCD', nombreCliente: 'SENTENCIA', definicion: 'El juez decidió sobre la demanda.' },
-  { orden: 9, nombreInterno: ['LIQUIDACION', 'AVALUO DE BIENES', 'REMATE'], color: '#E49EDD', nombreCliente: 'LIQUIDACION', definicion: 'Etapa en la que se cuantifica con exactitud las obligaciones.' },
-  { orden: 10, nombreInterno: ['LANZAMIENTO'], color: '#FFC000', nombreCliente: 'LANZAMIENTO', definicion: 'Se está gestionando el desalojo de los inquilinos.' },
-  { orden: 11, nombreInterno: ['TERMINACION', 'TERMINADO DESISTIMIENTO'], color: '#FF6D6D', nombreCliente: 'TERMINACION', definicion: 'El proceso ha finalizado.' }
+  { 
+    id: 1, 
+    nombreInterno: ['ALISTAMIENTO', 'DOCUMENTACION', 'ASIGNACION'], 
+    color: '#FFFF99', 
+    nombreCliente: 'RECOLECCION Y VALIDACION', 
+    definicion: 'Se está completando y revisando la información necesaria para iniciar los procesos.' 
+  },
+  { 
+    id: 2, 
+    nombreInterno: ['DEMANDA'], 
+    color: '#F1A983', 
+    nombreCliente: 'DEMANDA', 
+    definicion: 'Hemos iniciado el proceso judicial.' 
+  },
+  { 
+    id: 3, 
+    nombreInterno: ['MANDAMIENTO'], 
+    color: '#FBE2D5', 
+    nombreCliente: 'MANDAMIENTO PAGO', 
+    definicion: 'El juez ordena el pago de la obligación.' 
+  },
+  { 
+    id: 4, 
+    nombreInterno: ['ADMISION'], 
+    color: '#92D050', 
+    nombreCliente: 'ADMISION DEMANDA', 
+    definicion: 'El juez acepta tramitar la demanda de restitución.' 
+  },
+  { 
+    id: 5, 
+    nombreInterno: ['NOTIFICACION', 'EMPLAZAMIENTO'], 
+    color: '#B5E6A2', 
+    nombreCliente: 'NOTIFICACION', 
+    definicion: 'Etapa en la que se comunica la existencia del proceso.' 
+  },
+  { 
+    id: 6, 
+    nombreInterno: ['EXCEPCIONES', 'CONTESTACION'], 
+    color: '#00B0F0', 
+    nombreCliente: 'EXCEPCIONES', 
+    definicion: 'El demandado presentó objeciones o contestó la demanda.' 
+  },
+  { 
+    id: 7, 
+    nombreInterno: ['AUDIENCIA'], 
+    color: '#C0E6F5', 
+    nombreCliente: 'AUDIENCIA', 
+    definicion: 'Diligencia donde el juez escucha a las partes.' 
+  },
+  { 
+    id: 8, 
+    nombreInterno: ['SENTENCIA'], 
+    color: '#D86DCD', 
+    nombreCliente: 'SENTENCIA', 
+    definicion: 'El juez decidió sobre la demanda.' 
+  },
+  { 
+    id: 9, 
+    nombreInterno: ['LIQUIDACION', 'AVALUO', 'REMATE'], 
+    color: '#E49EDD', 
+    nombreCliente: 'LIQUIDACION', 
+    definicion: 'Etapa en la que se cuantifica la deuda, se avalúan bienes o se realiza el remate.' 
+  },
+  { 
+    id: 10, 
+    nombreInterno: ['LANZAMIENTO', 'ENTREGA'], 
+    color: '#FFC000', 
+    nombreCliente: 'LANZAMIENTO', 
+    definicion: 'Se está gestionando la restitución o entrega del inmueble.' 
+  },
+  { 
+    id: 11, 
+    nombreInterno: ['TERMINACION', 'TERMINADO', 'DESISTIMIENTO'], 
+    color: '#FF6D6D', 
+    nombreCliente: 'TERMINACION', 
+    definicion: 'El proceso ha finalizado judicialmente.' 
+  }
 ];
+
+// 2. REGLAS DE VISIBILIDAD (AGREGAMOS ID 11 AL FINAL)
+const REGLAS_VISIBILIDAD: any = {
+  // Ejecutivo: Muestra Mandamiento(3) y Liquidación(9). Oculta Admisión(4) y Lanzamiento(10). Terminación(11) Visible.
+  'EJECUTIVO SINGULAR': [1, 2, 3, 5, 6, 7, 8, 9, 10, 11], 
+  
+  // Restitución: Muestra Admisión(4) y Lanzamiento(10). Oculta Mandamiento(3) y Liquidación(9). Terminación(11) Visible.
+  'VERBAL SUMARIO': [1, 2, 4, 5, 6, 7, 8, 11], 
+};
 
 @Component({
   selector: 'app-consultar-proceso',
@@ -63,7 +139,7 @@ export class ConsultarProcesoComponent implements OnInit {
   private clasePipe = inject(ClaseProcesoPipe);
 
   // Variables para el Stepper
-  etapasStepper: EtapaConfig[] = ETAPAS_MASTER;
+  etapasStepper: EtapaConfig[] = [];
   etapaActualIndex: number = -1;
   etapaActualConfig: EtapaConfig | null = null;
 
@@ -139,31 +215,61 @@ export class ConsultarProcesoComponent implements OnInit {
   }
 
   // --- LÓGICA DEL STEPPER ---
-  private calcularEtapaActual() {
-    if (!this.proceso || !this.proceso.etapaProcesal) {
-      this.etapaActualIndex = -1;
-      this.etapaActualConfig = null;
-      return;
+  private construirStepper() {
+    if (!this.proceso) return;
+
+    // 1. Determinar tipo de flujo (Ejecutivo vs Restitución)
+    const claseRaw = (this.proceso.claseProceso || '').toUpperCase();
+    let idsVisibles: number[] = []; // INICIAMOS VACÍO
+
+    if (claseRaw.includes('VERBAL SUMARIO') || claseRaw.includes('VERBAL SUMARIO')) {
+      idsVisibles = REGLAS_VISIBILIDAD['VERBAL SUMARIO'];
+    } else if (claseRaw.includes('EJECUTIVO SINGULAR')) {
+      idsVisibles = REGLAS_VISIBILIDAD['EJECUTIVO SINGULAR'];
     }
 
-    const etapaBD = this.proceso.etapaProcesal.toUpperCase().trim();
+    // 2. Filtrar el array maestro
+    // Si idsVisibles está vacío (no es ni ejecutivo ni restitución), 
+    // etapasStepper quedará vacío y NO SE MOSTRARÁ EL GRÁFICO.
+    this.etapasStepper = ETAPAS_MASTER.filter(etapa => idsVisibles.includes(etapa.id));
+
+    // 3. Buscar etapa actual (PARA EL BANNER)
+    // Esto se ejecuta SIEMPRE, haya stepper o no.
+    const etapaBD = (this.proceso.etapaProcesal || '').toUpperCase().trim();
     
-    // Buscar la configuración que coincida con el nombre que viene de BD
-    const configFound = ETAPAS_MASTER.find(e => e.nombreInterno.includes(etapaBD));
+    // Buscamos coincidencia en el array maestro GLOBAL (no en el filtrado)
+    const configFound = ETAPAS_MASTER.find(e => 
+      e.nombreInterno.some(keyword => etapaBD.includes(keyword))
+    );
 
     if (configFound) {
       this.etapaActualConfig = configFound;
-      // El índice es orden - 1 (porque orden empieza en 1)
-      this.etapaActualIndex = configFound.orden - 1;
+      
+      // Solo intentamos calcular el índice visual si el stepper es visible
+      if (this.etapasStepper.length > 0) {
+        const visualIndex = this.etapasStepper.findIndex(e => e.id === configFound.id);
+        
+        if (visualIndex !== -1) {
+          this.etapaActualIndex = visualIndex;
+        } else {
+          // Si la etapa existe pero está oculta en este flujo visual, buscamos la anterior
+          const prevStep = this.etapasStepper.filter(e => e.id < configFound.id).pop();
+          if (prevStep) {
+             this.etapaActualIndex = this.etapasStepper.indexOf(prevStep);
+          } else {
+             this.etapaActualIndex = 0;
+          }
+        }
+      }
     } else {
-      // Si no encuentra (ej: una etapa nueva), lo marcamos como índice 0 o null
+      // Caso default para Banner si no mapea
       this.etapaActualIndex = 0;
       this.etapaActualConfig = {
-        orden: 0, 
-        nombreInterno: [], 
-        color: '#E5E7EB', // Color gris por defecto
-        nombreCliente: etapaBD, 
-        definicion: 'Etapa actual del proceso.'
+        id: 0,
+        nombreInterno: [etapaBD],
+        nombreCliente: etapaBD || 'ETAPA ACTUAL', 
+        color: '#E5E7EB',
+        definicion: 'Información del estado actual del proceso.'
       };
     }
   }
@@ -214,7 +320,7 @@ export class ConsultarProcesoComponent implements OnInit {
         this.procesarDatosProceso();
         
         // Calculamos la etapa para el stepper visual
-        this.calcularEtapaActual();
+        this.construirStepper();
         
         AffiAlert.fire({ icon: 'success', title: 'Proceso cargado', text: `Se cargó la información del proceso ${this.procesoId}.`, timer: 1400, showConfirmButton: false });
       },
@@ -238,6 +344,7 @@ export class ConsultarProcesoComponent implements OnInit {
     this.medidas = [];
     this.openMedidas.clear();
     this.openActuaciones.clear(); 
+    this.etapasStepper = [];
     this.etapaActualIndex = -1;
     this.etapaActualConfig = null;
   }
