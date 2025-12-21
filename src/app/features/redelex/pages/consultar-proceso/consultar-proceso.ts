@@ -598,10 +598,22 @@ export class ConsultarProcesoComponent implements OnInit {
        { Seccion: 'Datos del proceso', Campo: 'Calificación', Valor: p.calificacion || '' },
        { Seccion: 'Datos del proceso', Campo: 'Última actuación', Valor: [p.ultimaActuacionTipo || '', p.ultimaActuacionFecha || '', p.ultimaActuacionObservacion || ''].filter(Boolean).join(' | ') }
      );
+     
+     if (p.actuacionesRecientes && p.actuacionesRecientes.length > 0) {
+       p.actuacionesRecientes.forEach((act, idx) => {
+         rows.push({ 
+           Seccion: `Historial - Actuación ${idx + 1}`, 
+           Campo: `${this.formatDate(act.fecha)} | ${act.tipo}`, 
+           Valor: act.observacion || 'Sin observación' 
+         });
+       });
+     }
+
      rows.push({ Seccion: 'Abogados', Campo: 'Abogado principal', Valor: this.abogadoPrincipal?.Nombre || 'Sin asignar' });
      if (this.abogadosInternos.length) rows.push({ Seccion: 'Abogados', Campo: 'Abogados internos', Valor: this.abogadosInternos.map(ab => ab.Nombre).join(', ') });
      this.otrosAbogados.forEach((ab, idx) => { rows.push({ Seccion: 'Abogados', Campo: `Otro abogado ${idx + 1} (${ab.ActuaComo || 'N/A'})`, Valor: ab.Nombre || '-' }); });
      
+
      if (this.medidas.length) {
        this.medidas.forEach((m, idx) => {
          rows.push(
@@ -880,6 +892,42 @@ export class ConsultarProcesoComponent implements OnInit {
         columnStyles: { 0: { cellWidth: 60, fontStyle: 'bold' } }
       });
       currentY = (doc as any).lastAutoTable.finalY + 10;
+
+      if (p.actuacionesRecientes && p.actuacionesRecientes.length > 0) {
+        // Salto de página si queda poco espacio
+        if (currentY > 180) { doc.addPage(); currentY = 20; }
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('HISTÓRICO DE ACTUACIONES', margin, currentY);
+        currentY += 5;
+
+        const actuacionesBody = p.actuacionesRecientes.map(act => [
+          this.formatDate(act.fecha),
+          act.cuaderno || '-',
+          act.tipo || '-',
+          act.observacion || '-'
+        ]);
+
+        autoTable(doc, {
+          startY: currentY,
+          ...commonTableStyles,
+          head: [['Fecha', 'Cuaderno', 'Actuación', 'Detalle/Anotación']],
+          body: actuacionesBody,
+          columnStyles: {
+            0: { cellWidth: 25 },
+            1: { cellWidth: 20 },
+            2: { cellWidth: 45, fontStyle: 'bold' },
+            3: { cellWidth: 'auto' }
+          },
+          didParseCell: (data) => {
+            if (data.section === 'body' && data.column.index === 3) {
+              data.cell.styles.fontSize = 7; // Texto de observación un poco más pequeño
+            }
+          }
+        });
+        
+        currentY = (doc as any).lastAutoTable.finalY + 10;
+      }
 
       // --- ABOGADOS ---
       if (currentY > 170) { doc.addPage(); currentY = 20; }
