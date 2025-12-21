@@ -36,6 +36,13 @@ interface EtapaConfig {
   definicion: string;
 }
 
+interface BloqueActuaciones {
+  label: string;
+  year: number;
+  periodo: number; // 1, 2 o 3 para cuatrimestres
+  actuaciones: any[];
+}
+
 // 1. DEFINICIÓN MAESTRA (AHORA INCLUYE TERMINACIÓN)
 const ETAPAS_MASTER: EtapaConfig[] = [
   { 
@@ -137,6 +144,9 @@ const REGLAS_VISIBILIDAD: any = {
 
 export class ConsultarProcesoComponent implements OnInit {
   private clasePipe = inject(ClaseProcesoPipe);
+  bloquesActuaciones: BloqueActuaciones[] = [];
+  openBloques = new Set<string>();
+  openActuaciones = new Set<string>();
 
   // Variables para el Stepper
   etapasStepper: EtapaConfig[] = [];
@@ -163,7 +173,6 @@ export class ConsultarProcesoComponent implements OnInit {
   openMedidas = new Set<number>();
   hasSearched: boolean = false; 
   medidas: MedidasDto[] = [];
-  openActuaciones = new Set<number>();
   loading = false;
 
   currentPage = 1;
@@ -197,6 +206,15 @@ export class ConsultarProcesoComponent implements OnInit {
       : '';
   }
 
+  toggleBloque(label: string) {
+    if (this.openBloques.has(label)) {
+      this.openBloques.delete(label);
+    } else {
+      this.openBloques.clear(); 
+      this.openBloques.add(label);
+    }
+  }
+
   formatMoney(value?: number | string): string {
     if (value === null || value === undefined || value === '') return '-';
 
@@ -206,12 +224,49 @@ export class ConsultarProcesoComponent implements OnInit {
     return numberValue.toLocaleString('es-CO');
   }
 
-  toggleActuacion(index: number) {
-    if (this.openActuaciones.has(index)) {
-      this.openActuaciones.delete(index);
+  toggleActuacion(id: any) {
+    const actId = String(id);
+    if (this.openActuaciones.has(actId)) {
+      this.openActuaciones.delete(actId);
     } else {
-      this.openActuaciones.add(index);
+      this.openActuaciones.add(actId);
     }
+  }
+
+  private agruparActuacionesPorCuatrimestre() {
+    if (!this.proceso || !this.proceso.actuacionesRecientes) return;
+
+    const grupos: { [key: string]: BloqueActuaciones } = {};
+    
+    // Mapeo de meses a etiquetas profesionales
+    const labels = ["Ene - Abr", "May - Ago", "Sep - Dic"];
+
+    this.proceso.actuacionesRecientes.forEach(act => {
+      const fecha = new Date(act.fecha);
+      const year = fecha.getFullYear();
+      const periodo = Math.floor(fecha.getMonth() / 4); // 0, 1, 2
+      const key = `${year}-${periodo}`;
+
+      if (!grupos[key]) {
+        grupos[key] = {
+          label: `${labels[periodo]} ${year}`,
+          year: year,
+          periodo: periodo,
+          actuaciones: []
+        };
+      }
+      grupos[key].actuaciones.push(act);
+    });
+
+    this.bloquesActuaciones = Object.values(grupos).sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year;
+      return b.periodo - a.periodo;
+    });
+
+    // Solo abrimos el primero por defecto para no saturar la vista inicial
+    // if (this.bloquesActuaciones.length > 0 && this.openBloques.size === 0) {
+    //   this.openBloques.add(this.bloquesActuaciones[0].label);
+    // }
   }
 
   // --- LÓGICA DEL STEPPER ---
@@ -352,6 +407,14 @@ export class ConsultarProcesoComponent implements OnInit {
   private procesarDatosProceso() {
     if (!this.proceso) return;
     const raw = this.proceso as any;
+    if (this.proceso.actuacionesRecientes) {
+      this.proceso.actuacionesRecientes = (this.proceso.actuacionesRecientes as any[]).map((act, index) => ({
+        ...act,
+        id: act.id || `act-${index}-${new Date(act.fecha).getTime()}`
+      }));
+    }
+
+    this.agruparActuacionesPorCuatrimestre();
 
     const abogados: AbogadoDto[] = (raw.abogados ?? []) as AbogadoDto[];
     this.abogadoPrincipal = abogados.find((a) => a.ActuaComo?.toUpperCase().includes('PRINCIPAL')) ?? null;
