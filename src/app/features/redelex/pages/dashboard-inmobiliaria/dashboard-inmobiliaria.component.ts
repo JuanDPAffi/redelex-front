@@ -145,9 +145,12 @@ export class DashboardInmobiliariaComponent implements OnInit {
       // }
       
       // Descomentar para que -- NO ESPECIFICADO -- se muestre diferente 
+      // let rawCiudad = p.ciudadInmueble ? p.ciudadInmueble.trim().toUpperCase() : 'SIN CIUDAD';
       // if (rawCiudad.includes('NO ESPECIFICADO')) {
-        //   rawCiudad = 'PENDIENTE';
-        // }
+      //     rawCiudad = 'PENDIENTE';
+      //   }
+      // const ciudad = rawCiudad;
+      // ciudadesMap.set(ciudad, (ciudadesMap.get(ciudad) || 0) + 1);
         
       // Descomentar para mostrar -- NO ESPECIFICADO --
       let rawCiudad = p.ciudadInmueble ? p.ciudadInmueble.trim().toUpperCase() : 'SIN CIUDAD';
