@@ -1,6 +1,3 @@
-// src/app/features/auth/pages/auth-pages.scss
-// Estilos globales para todas las páginas de autenticación
-
 .affi-auth-page {
   min-height: 100vh;
   width: 100%;
@@ -127,7 +124,7 @@
   }
 
   @media (max-width: 768px) {
-    font-size: 1rem; // Evita zoom en iOS
+    font-size: 1rem;
   }
 }
 
@@ -275,10 +272,6 @@
     }
   }
 }
-/* =============================================
-   CAMPO DE CONTRASEÑA CON VISIBILIDAD ANIMADO
-   Para usar con Angular - agregar [class.toggling]="isToggling"
-   ============================================= */
 
 .input-with-icon {
   position: relative; 
@@ -326,13 +319,11 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  // Animación cuando cambia el estado
   &.toggling svg {
     animation: togglePassword 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-// Animación de rotación y escala
 @keyframes togglePassword {
   0% {
     transform: scale(1) rotate(0deg);
@@ -348,7 +339,6 @@
   }
 }
 
-// Variante alternativa: animación de deslizamiento vertical
 .password-toggle-btn.slide-variant {
   svg {
     transition: all 0.3s ease;
@@ -374,7 +364,6 @@
   }
 }
 
-// Variante con efecto de parpadeo
 .password-toggle-btn.blink-variant {
   &.toggling svg {
     animation: blinkToggle 0.3s ease;

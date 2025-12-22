@@ -2,13 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
-import {
-  RedelexService,
-  ProcesoDetalleDto,
-  AbogadoDto,
-  SujetosDto,
-  MedidasDto,
-} from '../../services/redelex.service';
+import { RedelexService, ProcesoDetalleDto, AbogadoDto, SujetosDto, MedidasDto } from '../../services/redelex.service';
 import { AffiAlert } from '../../../../shared/services/affi-alert';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -27,7 +21,6 @@ interface ProcesoPorCedula {
   claseProceso?: string;
 }
 
-// --- CONFIGURACIÓN DE ETAPAS (VISTA INTERNA) ---
 interface EtapaConfig {
   id: number;
   nombreInterno: string[];
@@ -39,11 +32,10 @@ interface EtapaConfig {
 interface BloqueActuaciones {
   label: string;
   year: number;
-  periodo: number; // 1, 2 o 3 para cuatrimestres
+  periodo: number;
   actuaciones: any[];
 }
 
-// 1. DEFINICIÓN MAESTRA (AHORA INCLUYE TERMINACIÓN)
 const ETAPAS_MASTER: EtapaConfig[] = [
   { 
     id: 1, 
@@ -124,12 +116,8 @@ const ETAPAS_MASTER: EtapaConfig[] = [
   }
 ];
 
-// 2. REGLAS DE VISIBILIDAD (AGREGAMOS ID 11 AL FINAL)
 const REGLAS_VISIBILIDAD: any = {
-  // Ejecutivo: Muestra Mandamiento(3) y Liquidación(9). Oculta Admisión(4) y Lanzamiento(10). Terminación(11) Visible.
   'EJECUTIVO SINGULAR': [1, 2, 3, 5, 6, 7, 8, 9, 10, 11], 
-  
-  // Restitución: Muestra Admisión(4) y Lanzamiento(10). Oculta Mandamiento(3) y Liquidación(9). Terminación(11) Visible.
   'VERBAL SUMARIO': [1, 2, 4, 5, 6, 7, 8, 11], 
 };
 
@@ -148,7 +136,6 @@ export class ConsultarProcesoComponent implements OnInit {
   openBloques = new Set<string>();
   openActuaciones = new Set<string>();
 
-  // Variables para el Stepper
   etapasStepper: EtapaConfig[] = [];
   etapaActualIndex: number = -1;
   etapaActualConfig: EtapaConfig | null = null;
@@ -237,14 +224,12 @@ export class ConsultarProcesoComponent implements OnInit {
     if (!this.proceso || !this.proceso.actuacionesRecientes) return;
 
     const grupos: { [key: string]: BloqueActuaciones } = {};
-    
-    // Mapeo de meses a etiquetas profesionales
     const labels = ["Ene - Abr", "May - Ago", "Sep - Dic"];
 
     this.proceso.actuacionesRecientes.forEach(act => {
       const fecha = new Date(act.fecha);
       const year = fecha.getFullYear();
-      const periodo = Math.floor(fecha.getMonth() / 4); // 0, 1, 2
+      const periodo = Math.floor(fecha.getMonth() / 4);
       const key = `${year}-${periodo}`;
 
       if (!grupos[key]) {
@@ -263,17 +248,15 @@ export class ConsultarProcesoComponent implements OnInit {
       return b.periodo - a.periodo;
     });
 
-    // Solo abrimos el primero por defecto para no saturar la vista inicial
+    // Abrimos el primero por defecto
     // if (this.bloquesActuaciones.length > 0 && this.openBloques.size === 0) {
     //   this.openBloques.add(this.bloquesActuaciones[0].label);
     // }
   }
 
-  // --- LÓGICA DEL STEPPER ---
   private construirStepper() {
     if (!this.proceso) return;
 
-    // 1. Determinar tipo de flujo (Ejecutivo vs Restitución)
     const claseRaw = (this.proceso.claseProceso || '').toUpperCase();
     let idsVisibles: number[] = []; // INICIAMOS VACÍO
 
@@ -283,16 +266,8 @@ export class ConsultarProcesoComponent implements OnInit {
       idsVisibles = REGLAS_VISIBILIDAD['EJECUTIVO SINGULAR'];
     }
 
-    // 2. Filtrar el array maestro
-    // Si idsVisibles está vacío (no es ni ejecutivo ni restitución), 
-    // etapasStepper quedará vacío y NO SE MOSTRARÁ EL GRÁFICO.
     this.etapasStepper = ETAPAS_MASTER.filter(etapa => idsVisibles.includes(etapa.id));
-
-    // 3. Buscar etapa actual (PARA EL BANNER)
-    // Esto se ejecuta SIEMPRE, haya stepper o no.
     const etapaBD = (this.proceso.etapaProcesal || '').toUpperCase().trim();
-    
-    // Buscamos coincidencia en el array maestro GLOBAL (no en el filtrado)
     const configFound = ETAPAS_MASTER.find(e => 
       e.nombreInterno.some(keyword => etapaBD.includes(keyword))
     );
@@ -300,14 +275,12 @@ export class ConsultarProcesoComponent implements OnInit {
     if (configFound) {
       this.etapaActualConfig = configFound;
       
-      // Solo intentamos calcular el índice visual si el stepper es visible
       if (this.etapasStepper.length > 0) {
         const visualIndex = this.etapasStepper.findIndex(e => e.id === configFound.id);
         
         if (visualIndex !== -1) {
           this.etapaActualIndex = visualIndex;
         } else {
-          // Si la etapa existe pero está oculta en este flujo visual, buscamos la anterior
           const prevStep = this.etapasStepper.filter(e => e.id < configFound.id).pop();
           if (prevStep) {
              this.etapaActualIndex = this.etapasStepper.indexOf(prevStep);
@@ -317,7 +290,6 @@ export class ConsultarProcesoComponent implements OnInit {
         }
       }
     } else {
-      // Caso default para Banner si no mapea
       this.etapaActualIndex = 0;
       this.etapaActualConfig = {
         id: 0,
@@ -373,8 +345,6 @@ export class ConsultarProcesoComponent implements OnInit {
         }
         this.proceso = res.data;
         this.procesarDatosProceso();
-        
-        // Calculamos la etapa para el stepper visual
         this.construirStepper();
         
         AffiAlert.fire({ icon: 'success', title: 'Proceso cargado', text: `Se cargó la información del proceso ${this.procesoId}.`, timer: 1400, showConfirmButton: false });
@@ -548,9 +518,7 @@ export class ConsultarProcesoComponent implements OnInit {
     this.consultarPorId();
   }
 
-  // --- EXPORTACIÓN (Se mantiene igual) ---
   private buildExportRows() {
-     // ... (Código original se mantiene)
      if (!this.proceso) return [];
      const p = this.proceso;
      const rows: { Seccion: string; Campo: string; Valor: string | number }[] = [];
@@ -629,9 +597,6 @@ export class ConsultarProcesoComponent implements OnInit {
       return rows;
   }
 
-  // ==========================================================================
-  // EXPORTACIÓN A EXCEL (Estilo Profesional)
-  // ==========================================================================
   async exportarExcel() {
     if (!this.proceso) {
       AffiAlert.fire({
@@ -646,25 +611,21 @@ export class ConsultarProcesoComponent implements OnInit {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
-      // Asumimos que buildExportRows devuelve un array de objetos { Seccion, Campo, Valor }
       const rows = this.buildExportRows();
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Detalle proceso');
 
-      // 1. LOGO
       try {
         const imageId = workbook.addImage({
           base64: AFFI_LOGO_BASE64,
           extension: 'png',
         });
-        // Ajuste de logo en esquina superior izquierda
         sheet.addImage(imageId, {
           tl: { col: 0.2, row: 0.1 },
           ext: { width: 100, height: 100 } 
         });
       } catch (e) { console.warn('No se pudo cargar el logo', e); }
 
-      // 2. TÍTULOS
       sheet.mergeCells('B2:C2');
       const titleCell = sheet.getCell('B2');
       titleCell.value = `DETALLE DEL PROCESO ${this.proceso.idProceso || ''}`;
@@ -678,17 +639,15 @@ export class ConsultarProcesoComponent implements OnInit {
       subTitleCell.font = { bold: false, size: 11, name: 'Arial', color: { argb: 'FF555555' } };
       subTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
-      // 3. COLUMNAS Y ENCABEZADO DE TABLA
       const headerRowIdx = 6;
       
-      sheet.getColumn(1).width = 25; // Sección
-      sheet.getColumn(2).width = 35; // Campo
-      sheet.getColumn(3).width = 80; // Valor
+      sheet.getColumn(1).width = 25;
+      sheet.getColumn(2).width = 35;
+      sheet.getColumn(3).width = 80;
 
       const headerRow = sheet.getRow(headerRowIdx);
       headerRow.values = ['Sección', 'Campo', 'Valor'];
 
-      // Estilo Encabezado: Gris Pizarra / Texto Blanco
       headerRow.eachCell((cell) => {
         cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF34495E' } };
         cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11, name: 'Arial' };
@@ -701,13 +660,11 @@ export class ConsultarProcesoComponent implements OnInit {
         };
       });
 
-      // 4. DATOS Y ESTILOS DE CUERPO
       const borderStyle = { style: 'thin', color: { argb: 'FFD3D3D3' } } as ExcelJS.Border;
 
       rows.forEach((r, index) => {
         const currentRow = sheet.addRow([r.Seccion, r.Campo, r.Valor]);
         
-        // Filas Alternadas (Zebra Striping)
         const isEven = index % 2 === 0;
         const fillConfig = isEven ? null : { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F8F8' } };
 
@@ -746,9 +703,6 @@ export class ConsultarProcesoComponent implements OnInit {
     }
   }
 
-  // ==========================================================================
-  // EXPORTACIÓN A PDF (Estilo Profesional)
-  // ==========================================================================
   async exportarPdf() {
     if (!this.proceso) {
       AffiAlert.fire({ icon: 'info', title: 'Sin datos', text: 'Primero consulta un proceso para poder exportar.' });
@@ -764,14 +718,12 @@ export class ConsultarProcesoComponent implements OnInit {
       const pageWidth = doc.internal.pageSize.getWidth();
       const margin = 14;
 
-      // 1. LOGO
       if (AFFI_LOGO_BASE64) {
         try {
           doc.addImage(AFFI_LOGO_BASE64, 'PNG', margin, 6, 30, 30); 
         } catch {}
       }
 
-      // 2. TÍTULOS
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
       doc.text(`PROCESO ID ${p.idProceso ?? ''}`, pageWidth / 2, 18, { align: 'center' });
@@ -784,12 +736,10 @@ export class ConsultarProcesoComponent implements OnInit {
       doc.setFont('helvetica', 'normal');
       doc.text(subtitle, pageWidth / 2, 24, { align: 'center' });
 
-      // --- ESTILOS COMUNES ---
-      // NOTA: Tipamos esto como UserOptions para evitar el error de 'theme'
       const commonTableStyles: UserOptions = {
         theme: 'grid',
         headStyles: { 
-          fillColor: [52, 73, 94], // Gris Pizarra
+          fillColor: [52, 73, 94],
           textColor: 255, 
           fontStyle: 'bold',
           lineWidth: 0.1,
@@ -810,7 +760,6 @@ export class ConsultarProcesoComponent implements OnInit {
 
       let currentY = 40;
 
-      // --- TABLA RESUMEN ---
       const demandanteNombres = this.sujetoDemandante.length ? this.sujetoDemandante.map(s => s.Nombre || '-').join(', ') : '-';
       const demandanteIdentificaciones = this.sujetoDemandante.length ? this.sujetoDemandante.map(s => s.NumeroIdentificacion || '-').join(', ') : '-';
 
@@ -839,7 +788,6 @@ export class ConsultarProcesoComponent implements OnInit {
 
       currentY = (doc as any).lastAutoTable.finalY + 10;
 
-      // --- DEUDORES SOLIDARIOS ---
       if (this.sujetosSolidarios.length) {
         const solidarioNombres = this.sujetosSolidarios.map(s => s.Nombre || '-').join(', ');
         const solidarioIdentificaciones = this.sujetosSolidarios.map(s => s.NumeroIdentificacion || '-').join(', ');
@@ -854,7 +802,6 @@ export class ConsultarProcesoComponent implements OnInit {
         currentY = (doc as any).lastAutoTable.finalY + 10;
       }
 
-      // --- OTROS SUJETOS ---
       if (this.otrosSujetos.length) {
         const otrosSujetosBody = this.otrosSujetos.flatMap(s => [
           [`${s.Tipo || 'Otro'} - Nombre`, s.Nombre || '-'],
@@ -871,7 +818,6 @@ export class ConsultarProcesoComponent implements OnInit {
         currentY = (doc as any).lastAutoTable.finalY + 10;
       }
 
-      // --- DATOS DEL PROCESO ---
       autoTable(doc, {
         startY: currentY,
         ...commonTableStyles,
@@ -894,7 +840,6 @@ export class ConsultarProcesoComponent implements OnInit {
       currentY = (doc as any).lastAutoTable.finalY + 10;
 
       if (p.actuacionesRecientes && p.actuacionesRecientes.length > 0) {
-        // Salto de página si queda poco espacio
         if (currentY > 180) { doc.addPage(); currentY = 20; }
 
         doc.setFont('helvetica', 'bold');
@@ -921,7 +866,7 @@ export class ConsultarProcesoComponent implements OnInit {
           },
           didParseCell: (data) => {
             if (data.section === 'body' && data.column.index === 3) {
-              data.cell.styles.fontSize = 7; // Texto de observación un poco más pequeño
+              data.cell.styles.fontSize = 7;
             }
           }
         });
@@ -929,7 +874,6 @@ export class ConsultarProcesoComponent implements OnInit {
         currentY = (doc as any).lastAutoTable.finalY + 10;
       }
 
-      // --- ABOGADOS ---
       if (currentY > 170) { doc.addPage(); currentY = 20; }
 
       const abogadosBody: any[] = [['Abogado Principal', this.abogadoPrincipal?.Nombre || 'Sin asignar']];
@@ -953,10 +897,8 @@ export class ConsultarProcesoComponent implements OnInit {
       currentY = (doc as any).lastAutoTable.finalY + 10; 
 
 
-      // --- MEDIDAS CAUTELARES ---
       if (this.medidas.length) {
         this.medidas.forEach((m, idx) => {
-          // Chequeo de salto de página
           if (currentY > 170) { doc.addPage(); currentY = 20; } 
 
           autoTable(doc, {

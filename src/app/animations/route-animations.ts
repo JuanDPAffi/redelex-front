@@ -2,10 +2,7 @@ import { trigger, transition, style, animate, query, group } from '@angular/anim
 
 export const routeFadeAnimation = trigger('routeFadeAnimation', [
   transition('* <=> *', [
-    // El contenedor del outlet
     style({ position: 'relative' }),
-
-    // Las vistas que entran/salen se apilan una sobre otra
     query(':enter, :leave', [
       style({
         position: 'absolute',
@@ -13,9 +10,7 @@ export const routeFadeAnimation = trigger('routeFadeAnimation', [
         width: '100%',
       }),
     ], { optional: true }),
-
     group([
-      // Vista que sale
       query(':leave', [
         animate(
           '180ms ease-in',
@@ -26,8 +21,6 @@ export const routeFadeAnimation = trigger('routeFadeAnimation', [
           })
         ),
       ], { optional: true }),
-
-      // Vista que entra
       query(':enter', [
         style({
           opacity: 0,

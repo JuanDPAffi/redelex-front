@@ -1,5 +1,3 @@
-// src/app/features/redelex/redelex-plugin.config.ts
-
 import { PluginConfig } from '../../core/models/plugin.interface';
 import { REDELEX_ROUTES } from './redelex.routes';
 
@@ -10,7 +8,6 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
   enabled: true,
   description: 'Consulta y gestión de procesos legales de Redelex',
   
-  // Items que se agregarán automáticamente al menú
   menuItems: [
     {
       id: 'redelex-dashboard',

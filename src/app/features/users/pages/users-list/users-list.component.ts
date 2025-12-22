@@ -7,8 +7,6 @@ import { AffiAlert } from '../../../../shared/services/affi-alert';
 import { FeatherModule } from 'angular-feather';
 import { RegisterPayload } from '../../../auth/services/auth.service';
 import { Title } from '@angular/platform-browser';
-
-// --- LIBRERÍAS DE EXPORTACIÓN ---
 import * as ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,6 +20,7 @@ import { AFFI_LOGO_BASE64 } from '../../../../shared/assets/affi-logo-base64';
   templateUrl: './users-list.component.html',
   styleUrls: ['./users-list.component.scss']
 })
+
 export class UsersListComponent implements OnInit {
   private titleService = inject(Title);
   private datePipe = inject(DatePipe);
@@ -31,7 +30,6 @@ export class UsersListComponent implements OnInit {
   inmobiliarias: InmobiliariaLookup[] = [];
   loading = true;
 
-  // --- ESTADÍSTICAS (KPIs) ---
   stats = {
     total: 0,
     staff: 0,
@@ -44,18 +42,15 @@ export class UsersListComponent implements OnInit {
     pctInactive: 0
   };
 
-  // Estados de Modales
   showEditModal = false;
   showPermissionsModal = false;
   showExportModal = false;
 
-  // Datos del Formulario
   selectedUser: Partial<User> = {};
   userPassword = '';
   isCreating = false;
   selectedInmoId: string = '';
 
-  // --- EXPORTACIÓN ---
   exportState: 'idle' | 'excel' | 'pdf' = 'idle';
   exportColumns = [
     { key: 'name', label: 'Nombre', selected: true },
@@ -66,7 +61,6 @@ export class UsersListComponent implements OnInit {
     { key: 'isActive', label: 'Estado', selected: true },
   ];
 
-  // --- PAGINACIÓN ---
   currentPage = 1;
   itemsPerPage = 10;
   pageSizeOptions = [5, 10, 20, 50];
@@ -77,7 +71,6 @@ export class UsersListComponent implements OnInit {
     'inmobiliaria': ['procesos:view_own', 'utils:export']
   };
 
-  // --- FILTROS ---
   filtros = {
     busquedaGeneral: '',
     rol: '',
@@ -278,7 +271,6 @@ export class UsersListComponent implements OnInit {
     }
   }
 
-  // --- EXPORTACIÓN ---
   openExportModal() { this.showExportModal = true; }
   closeExportModal() { this.showExportModal = false; }
 
@@ -389,7 +381,6 @@ export class UsersListComponent implements OnInit {
     link.click();
   }
 
-  // --- GESTIÓN DE MODALES CRUD ---
   toggleDropdownInmo() {
     if (this.selectedUser.role === 'inmobiliaria' || this.isCreating) {
       this.isDropdownOpen = !this.isDropdownOpen;

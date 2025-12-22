@@ -1,5 +1,3 @@
-// src/app/features/redelex/pages/consultar-proceso/consultar-proceso.scss
-
 /* =============================================
    LAYOUT PRINCIPAL
    ============================================= */
@@ -78,11 +76,11 @@
 
 .card__header {
   display: flex;
-  justify-content: space-between; // Esto empuja el contador a la derecha
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--color-gray-100); // Línea sutil separadora
+  border-bottom: 1px solid var(--color-gray-100);
 }
 
 .card__header h3 {
@@ -93,23 +91,19 @@
 }
 
 .count-badge {
-  // Diseño de "píldora" sobrio
-  background: var(--color-gray-100); // Fondo gris muy claro
-  color: var(--color-gray-600);      // Texto gris medio
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
   
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.25rem 0.75rem;
-  border-radius: 999px; // Bordes totalmente redondos
-  
-  // Para asegurar que no se rompa en líneas
+  border-radius: 999px;
   white-space: nowrap;
   line-height: 1;
   display: inline-flex;
   align-items: center;
 }
 
-// Ajuste para móviles (opcional, por si el título es muy largo)
 @media (max-width: 576px) {
   .card__header {
     align-items: flex-start;
@@ -236,32 +230,30 @@
    ============================================= */
 .helper { text-align: center; padding: 2rem; color: #6b7280; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--color-primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-/* Spinner de carga */
 .spinner-loader {
   display: inline-block;
   width: 12px;
   height: 12px;
-  border: 2px solid rgba(0, 0, 0, 0.2); // Borde sutil oscuro para botones blancos
+  border: 2px solid rgba(0, 0, 0, 0.2);
   border-radius: 50%;
-  border-top-color: var(--color-primary); // Color principal girando
+  border-top-color: var(--color-primary);
   animation: spin 0.8s linear infinite;
   margin-right: 6px;
 }
 
-/* Modificador para cuando el botón está cargando */
+
 .export-btn.is-loading {
-  width: auto !important; // Permitir que crezca
-  padding: 0 1rem;        // Dar espacio lateral
+  width: auto !important;
+  padding: 0 1rem;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--color-gray-700);
-  background: #f3f4f6;    // Fondo gris claro de carga
+  background: #f3f4f6;
   cursor: wait;
   
-  svg { display: none; }  // Ocultar icono original
+  svg { display: none; }
 }
 
-/* Estado deshabilitado (para el botón opuesto) */
 .export-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -291,47 +283,34 @@
   }
 }
 
-/* =============================================
-   LISTA DE PROCESOS - DISEÑO SOBRIO Y COMPACTO (AFFI)
-   ============================================= */
-
-// Contenedor principal de la lista
 .process-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  // Eliminamos el gap grande, usaremos bordes separadores
   background: white;
-  border-radius: var(--border-radius-lg); // Solo el contenedor principal tiene bordes redondeados
+  border-radius: var(--border-radius-lg);
   border: 1px solid var(--color-gray-200);
-  overflow: hidden; // Para que los hijos no se salgan del borde redondeado
+  overflow: hidden;
 }
 
-// Ítem individual de la lista
 .process-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
-  // Diseño plano y compacto
-  padding: 0.75rem 1rem; // Mucho menos padding que antes
-  border-bottom: 1px solid var(--color-gray-100); // Separador sutil
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-gray-100);
   cursor: pointer;
   transition: all 0.15s ease-in-out;
   position: relative;
 
-  // Quitar borde del último elemento
   &:last-child {
     border-bottom: none;
   }
 
-  // ESTADO HOVER SOBRIO
   &:hover {
-    background: #f8f9fa; // Un gris extremadamente claro, casi imperceptible pero presente
-    
-    // El nombre se oscurece un poco más o toma el color de marca
+    background: #f8f9fa;
     .process-name {
       color: var(--color-primary); 
     }
@@ -342,35 +321,31 @@
     }
   }
 
-  // ESTADO SELECCIONADO
   &--selected {
-    background: rgba(var(--color-primary-rgb), 0.05); // Asumiendo que tienes la versión RGB, sino usa un color muy claro
-    box-shadow: inset 3px 0 0 var(--color-primary); // Indicador lateral sutil
+    background: rgba(var(--color-primary-rgb), 0.05);
+    box-shadow: inset 3px 0 0 var(--color-primary);
   }
 }
 
-/* --- CONTENIDO IZQUIERDO --- */
 .process-info {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem; // Espacio mínimo entre nombre y metadatos
+  gap: 0.25rem;
   flex: 1;
   min-width: 0;
   margin-right: 0.75rem;
 }
 
-/* --- LÍNEA 1: ID + NOMBRE --- */
 .process-header {
   display: flex;
-  align-items: baseline; // Alinear texto base
+  align-items: baseline;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-// ID muy sutil, estilo "etiqueta técnica"
 .badge-id {
-  font-size: 0.65rem; // Muy pequeño
-  font-family: monospace; // Fuente técnica
+  font-size: 0.65rem;
+  font-family: monospace;
   color: var(--color-gray-500);
   background: var(--color-gray-100);
   padding: 1px 4px;
@@ -380,12 +355,11 @@
   align-self: center;
 }
 
-// Nombre profesional y compacto
 .process-name {
   margin: 0;
-  font-size: 0.9rem; // Tamaño reducido considerablemente
+  font-size: 0.9rem;
   font-weight: 600;
-  color: var(--color-gray-800); // No negro puro, un gris oscuro profesional
+  color: var(--color-gray-800);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -393,13 +367,12 @@
   transition: color 0.15s ease;
 }
 
-/* --- LÍNEA 2: METADATOS --- */
 .process-meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.4rem;
-  font-size: 0.75rem; // Fuente pequeña para datos secundarios
+  font-size: 0.75rem;
   color: var(--color-gray-500);
 }
 
@@ -410,46 +383,39 @@
 }
 
 .meta-icon {
-  width: 14px; // Icono más pequeño
+  width: 14px;
   height: 14px;
   fill: var(--color-gray-400);
-  margin-top: -1px; // Ajuste óptico
+  margin-top: -1px;
 }
 
 .meta-text {
-  font-family: var(--font-family); // Usar fuente normal, no monospace
+  font-family: var(--font-family);
   font-weight: 500;
   color: var(--color-gray-600);
 }
 
 .meta-separator {
   color: var(--color-gray-300);
-  font-size: 0.6rem; // Separador discreto
+  font-size: 0.6rem;
 }
 
-// Badge de tipo: Sutil, sin fondo de color fuerte
 .badge-type {
   display: inline-block;
   font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  
-  // Opción A: Solo texto de color (Más sobrio)
-  // color: var(--color-primary); 
-  
-  // Opción B: Fondo tintado muy suave (Profesional)
   color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 8%, transparent); // Si tu CSS lo soporta, es ideal. Sino usa un rgba fijo muy claro ej: rgba(40, 0, 150, 0.08)
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
   padding: 1px 6px;
-  border-radius: 4px; // Rectángulo suavizado, no píldora redonda
+  border-radius: 4px;
   white-space: nowrap;
 }
 
-/* --- ACCIÓN (FLECHA) --- */
 .chevron {
-  font-size: 1.2rem; // Más pequeño
-  color: var(--color-gray-300); // Muy discreto en reposo
+  font-size: 1.2rem;
+  color: var(--color-gray-300);
   transition: all 0.15s ease;
 }
 
@@ -458,8 +424,8 @@
    ============================================= */
 @media (max-width: 576px) {
   .process-item {
-    padding: 0.75rem; // Padding consistente en móvil
-    align-items: flex-start; // Alinear arriba si el nombre ocupa 2 líneas
+    padding: 0.75rem;
+    align-items: flex-start;
   }
 
   .process-header {
@@ -476,7 +442,7 @@
   }
   
   .badge-id {
-    margin-top: 2px; // Ajuste óptico con texto de 2 líneas
+    margin-top: 2px;
   }
 
   .process-meta {
@@ -485,7 +451,7 @@
   }
   
   .chevron {
-      margin-top: 0.2rem; // Alinear con la primera línea de texto
+      margin-top: 0.2rem;
   }
 }
 
@@ -722,16 +688,16 @@
 }
 
 .detail-grid > div {
-  grid-column: span 4; /* Desktop: 3 columnas */
-  min-width: 0;        /* clave para que no reviente el layout */
+  grid-column: span 4;
+  min-width: 0;
 }
 
 @media (max-width: 1100px) {
-  .detail-grid > div { grid-column: span 6; } /* Tablet: 2 columnas */
+  .detail-grid > div { grid-column: span 6; }
 }
 
 @media (max-width: 768px) {
-  .detail-grid > div { grid-column: span 12; } /* Móvil: 1 columna */
+  .detail-grid > div { grid-column: span 12; }
 }
 
 .detail-grid--full {
@@ -924,9 +890,6 @@
   }
 }
 
-/* =============================================
-   MEJORAS PARA OTROS SUJETOS Y CARDS
-   ============================================= */
 .other-subject-card,
 .proceso-card,
 .medida-card {
@@ -947,9 +910,6 @@
   }
 }
 
-/* =============================================
-   MEJORAS PARA SECCIÓN DE ABOGADOS
-   ============================================= */
 .abogado-principal {
   background: var(--bg-tertiary);
   border: 1px solid var(--color-gray-200);
@@ -1020,7 +980,6 @@
   color: #991b1b;
 }
 
-// Acordeón de Medidas Cautelares
 .medida-card-accordion {
   background: white;
   border: 1px solid var(--color-gray-200);
@@ -1041,7 +1000,7 @@
   align-items: center;
   padding: 1rem;
   cursor: pointer;
-  background: #f8fafc; // Gris muy claro
+  background: #f8fafc;
   
   &:hover {
     background: #f1f5f9;
@@ -1051,19 +1010,17 @@
 .medida-title {
   display: flex;
   align-items: center;
-  // Cambiamos gap ligeramente para que el SVG no quede tan pegado
   gap: 0.5rem; 
   font-size: 0.95rem;
   color: var(--color-gray-800);
   flex: 1;
 }
 
-// Clase nueva para el SVG
 .medida-icon-svg {
-  width: 1.25rem;  // Tamaño similar al emoji anterior (aprox 20px)
+  width: 1.25rem;
   height: 1.25rem;
-  color: var(--color-primary); // Usamos el color primario para que resalte, o usa var(--color-gray-500) para gris
-  flex-shrink: 0; // Evita que el icono se aplaste si el texto es muy largo
+  color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 .medida-icon {
@@ -1078,7 +1035,7 @@
   border-radius: 99px;
   text-transform: uppercase;
   font-weight: 600;
-  margin-left: auto; // Empuja a la derecha si quieres, o quítalo para que vaya seguido
+  margin-left: auto;
   margin-right: 1rem;
 }
 
@@ -1113,12 +1070,11 @@
   align-items: center;
   flex: 1; 
   z-index: 1;
-  min-width: 80px; // Ancho mínimo para evitar superposición
+  min-width: 80px;
 
-  /* --- LÍNEA CONECTORA HORIZONTAL --- */
   .step-line {
     position: absolute;
-    top: 50%; // Centrado verticalmente con el círculo
+    top: 50%;
     left: 50%;
     width: 100%;
     height: 3px;
@@ -1172,12 +1128,10 @@
     min-width: 110px; 
   }
 
-  // Etiquetas en posiciones PARES (índices 0, 2, 4...) → ARRIBA
   &:nth-child(odd) .step-label {
     bottom: calc(100% + 8px);
   }
 
-  // Etiquetas en posiciones IMPARES (índices 1, 3, 5...) → ABAJO
   &:nth-child(even) .step-label {
     top: calc(100% + 8px);
   }
@@ -1210,53 +1164,36 @@
     }
   }
 
-  /* Ocultar línea del último elemento */
   &:last-child .step-line {
     display: none;
   }
 }
-/* =============================================
-   BREAKPOINTS - STEPPER ZIGZAG (MOBILE / 14" / 16.5")
-   Pegarlo debajo del bloque actual
-   ============================================= */
 
-/* --- Base: mejora scroll horizontal en touch + evita recortes --- */
 .stepper-wrapper {
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x mandatory;
-
-  /* que el track pueda "respirar" sin que se recorte la etiqueta */
   padding: 4rem 0;
 }
 
 .stepper-track {
   align-items: center;
-  gap: 0; // mantenemos separación por flex:1
+  gap: 0;
 }
 
 .step-item {
   scroll-snap-align: start;
 }
 
-
-/* =============================================
-   RESPONSIVE: MOBILE VERTICAL + LAPTOP ADAPTATIVE
-   Pegarlo debajo de tu CSS actual
-   ============================================= */
-
-/* -----------------------------
-   MOBILE: vertical (lista abajo)
-   ----------------------------- */
 @media (max-width: 1450px) {
   .stepper-wrapper {
     padding: 1rem 0;
-    overflow-x: hidden;     // no scroll horizontal
+    overflow-x: hidden;
     overflow-y: visible;
   }
 
   .stepper-track {
     display: flex;
-    flex-direction: column; // 👈 lista vertical
+    flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
     padding: 0 0.75rem;
@@ -1270,19 +1207,18 @@
     min-width: 0;
     width: 100%;
     padding: 0;
-    flex-direction: row;    // círculo + label en fila
+    flex-direction: row;
     align-items: center;
     justify-content: flex-start;
     gap: 0.75rem;
     position: relative;
 
-    /* Línea vertical (conector) */
     .step-line {
       position: absolute;
-      left: 16px;           // centro del círculo (32px / 2)
-      top: 32px;            // debajo del círculo
+      left: 16px;
+      top: 32px;
       width: 3px;
-      height: calc(100% + 0.75rem); // conecta con el siguiente item (gap)
+      height: calc(100% + 0.75rem);
       transform: none;
       background-color: #E5E7EB;
 
@@ -1291,7 +1227,6 @@
       }
     }
 
-    /* Último sin línea */
     &:last-child .step-line {
       display: none;
     }
@@ -1304,9 +1239,8 @@
       z-index: 2;
     }
 
-    /* Label a la derecha (sin zigzag) */
     .step-label {
-      position: static;     // 👈 ya no absolute
+      position: static;
       max-width: none;
       text-align: left;
       padding: 0;
@@ -1316,7 +1250,6 @@
       word-break: break-word;
     }
 
-    /* Desactivar reglas zigzag */
     &:nth-child(odd) .step-label,
     &:nth-child(even) .step-label {
       top: auto;
@@ -1334,7 +1267,6 @@
   }
 }
 
-/* Laptop 14" aprox (1024-1366): compacto */
 @media (min-width: 1450px) and (max-width: 1650px) {
   .stepper-wrapper { padding: 3.25rem 0; }
 
@@ -1348,14 +1280,13 @@
     }
 
     .step-label {
-      max-width: 92px;     // lo justo para no recortar tanto
+      max-width: 92px;
       font-size: 0.68rem;
       line-height: 1.15;
     }
   }
 }
 
-/* Laptop 16.5" aprox (1367-1920): más aire */
 @media (min-width: 1650px) and (max-width: 1920px) {
   .stepper-wrapper { padding: 4rem 0; }
 
@@ -1376,7 +1307,7 @@
 }
 
 /* =============================================
-   BANNER DE DESCRIPCIÓN (RESPONSIVE)
+   BANNER DE DESCRIPCIÓN
    ============================================= */
 .etapa-banner {
   display: flex;
@@ -1413,7 +1344,6 @@
     }
   }
 
-  /* Ajuste Banner Móvil */
   @media (max-width: 600px) {
     flex-direction: column;
     gap: 0.5rem;
@@ -1423,8 +1353,6 @@
     }
   }
 }
-
-/* --- HISTORIAL DE ACTUACIONES --- */
 
 .historial-container {
   margin-top: 1.5rem;
@@ -1445,12 +1373,12 @@
   background: white;
   border: 1px solid var(--color-gray-200);
   border-radius: var(--border-radius-md);
-  margin-bottom: 0.5rem; /* Espacio entre items */
+  margin-bottom: 0.5rem;
   overflow: hidden;
   transition: all 0.2s ease;
 
   &.is-open {
-    border-color: var(--color-primary); // Borde azul cuando abre
+    border-color: var(--color-primary);
     box-shadow: var(--shadow-sm);
   }
 }
@@ -1461,7 +1389,7 @@
   align-items: center;
   padding: 0.85rem 1rem;
   cursor: pointer;
-  background: #f8fafc; // Fondo gris muy suave
+  background: #f8fafc;
   transition: background 0.2s;
 
   &:hover {
@@ -1494,8 +1422,8 @@
 
 .cuaderno-badge {
   font-size: 0.7rem;
-  background: #e0e7ff; // Azul muy claro
-  color: #3730a3;       // Azul oscuro
+  background: #e0e7ff;
+  color: #3730a3;
   padding: 1px 6px;
   border-radius: 4px;
   text-transform: uppercase;
@@ -1514,11 +1442,6 @@
   to { opacity: 1; }
 }
 
-/* =============================================
-   HISTORIAL EN GRID - DISEÑO REFINADO (AFFI)
-   Responsive + Profesional + Intuitivo
-   ============================================= */
-
 .historial-grid-container {
   margin-top: var(--spacing-md);
   background: white;
@@ -1528,7 +1451,6 @@
   box-shadow: var(--shadow-sm);
   width: 100%;
   box-sizing: border-box;
-
   transition: all var(--transition-base);
 
   &:hover {
@@ -1583,16 +1505,13 @@
 }
 
 /* =============================================
-   GRID DE PERIODOS - RESPONSIVE AVANZADO
+   GRID DE PERIODOS - RESPONSIVE
    ============================================= */
 .period-grid {
   display: grid;
   gap: clamp(0.75rem, 2vw, 1rem);
-  
-  /* Desktop grande (1920+) */
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   
-  /* Desktop estándar */
   @media (max-width: 1600px) {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   }
@@ -1634,8 +1553,7 @@
   text-align: left;
   position: relative;
   overflow: hidden;
-  
-  /* Borde decorativo izquierdo sutil */
+
   &::before {
     content: '';
     position: absolute;
@@ -1726,7 +1644,6 @@
     }
   }
   
-  /* Touch devices - sin hover effects que molesten */
   @media (hover: none) {
     &:hover {
       transform: none;
@@ -1823,7 +1740,6 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   
-  /* Scrollbar personalizado */
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -1909,7 +1825,7 @@
 
 .act-info-mini {
   flex: 1;
-  min-width: 0; /* Permite que el texto haga wrap */
+  min-width: 0;
 
   .type-row { 
     display: flex; 
@@ -2007,7 +1923,6 @@
   }
 }
 
-/* Touch target mínimo de 44px para móviles */
 @media (pointer: coarse) {
   .period-card {
     min-height: 88px;

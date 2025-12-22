@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { UserData, RegisterPayload } from '../../auth/services/auth.service';
 import { environment } from '../../../../environments/environment';
 
-// --- CORRECCIÓN AQUÍ ---
 export interface User extends UserData {
   _id: string;
   isActive: boolean;
@@ -18,6 +17,7 @@ export interface User extends UserData {
 @Injectable({
   providedIn: 'root'
 })
+
 export class UsersService {
   private apiUrl = `${environment.apiUrl}api/users`;
   private authUrl = `${environment.apiUrl}api/auth`;

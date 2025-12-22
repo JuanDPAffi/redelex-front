@@ -21,14 +21,12 @@ export class CallCenterComponent {
   form: FormGroup;
   loading = false;
   
-  // Datos de autocompletado y estado
   hubspotInfo: any = { companyFound: false, contactFound: false };
   procesosEncontrados: any[] = [];
   selectedProceso: any = null;
   selectedOwnerId: string | null = null;
   filterText: string = '';
   
-  // Usuario actual (Asesor)
   asesorName = '';
 
   private fb = inject(FormBuilder);
@@ -43,7 +41,7 @@ export class CallCenterComponent {
     this.form = this.fb.group({
       // Step 1
       callType: ['Entrante', Validators.required],
-      transferArea: [''], // Solo si es saliente/transferida
+      transferArea: [''],
 
       // Step 2 (Cliente)
       companyNit: ['', Validators.required],
@@ -56,10 +54,10 @@ export class CallCenterComponent {
       // Step 3 (Consulta)
       query: ['', Validators.required],
 
-      // Step 4 (Proceso - Opcional)
+      // Step 4 (Proceso)
       inquilinoIdentificacion: [''],
       inquilinoNombre: [''],
-      cuenta: [''], // Cuenta
+      cuenta: [''],
       procesoId: ['']
     });
 
@@ -70,9 +68,7 @@ ngOnInit() {
     this.titleService.setTitle('Estados Procesales - Centro de Llamadas');
   }
 
-  // --- LOGICA DE AUTOCOMPLETADO HUBSPOT ---
   setupAutocomplete() {
-    // Autocompletar NIT
     this.form.get('companyNit')?.valueChanges.pipe(
       debounceTime(500),
       distinctUntilChanged(),
@@ -99,8 +95,8 @@ ngOnInit() {
           timer: 2000,
           timerProgressBar: true,
           showConfirmButton: false,
-          toast: true, // Si tu SweetAlert soporta toast nativo, si no, quita esta línea
-          position: 'top-end' // Opcional: para que salga en la esquina
+          toast: true,
+          position: 'top-end'
         });
       } else {
         this.hubspotInfo.companyFound = false;
@@ -108,7 +104,6 @@ ngOnInit() {
       }
     });
 
-    // Autocompletar Email
     this.form.get('contactEmail')?.valueChanges.pipe(
       debounceTime(500),
       distinctUntilChanged(),
@@ -140,13 +135,11 @@ ngOnInit() {
     });
   }
 
-  // --- LOGICA DE BÚSQUEDA DE PROCESOS (REDELEX) ---
   buscarProcesos() {
     const id = this.form.get('inquilinoIdentificacion')?.value;
     if (!id) return;
 
     this.loading = true;
-    // Ajusta la ruta si tu backend tiene prefijo /redelex o directo
     this.http.get<any>(`${this.apiUrl}/redelex/procesos-por-identificacion/${id}`).subscribe({
       next: (res) => {
         this.loading = false;
@@ -177,15 +170,14 @@ ngOnInit() {
     this.selectedProceso = proc;
     this.form.patchValue({
       procesoId: proc.procesoId,
-      cuenta: proc.codigoAlterno || 'Sin Radicado', // "Cuenta"
-      inquilinoNombre: proc.demandadoNombre, // Asumimos inquilino
+      cuenta: proc.codigoAlterno || 'Sin Radicado',
+      inquilinoNombre: proc.demandadoNombre,
       etapaProcesal: proc.etapaProcesal
     });
   }
 
   // --- STEPPER ---
   nextStep() {
-    // Validaciones simples por paso
     if (this.currentStep === 1 && this.form.get('callType')?.invalid) {
       AffiAlert.fire({
         icon: 'warning',
@@ -245,7 +237,6 @@ ngOnInit() {
           showConfirmButton: true,
           confirmButtonText: 'Nueva Llamada'
         }).then(() => {
-          // Recargar para limpiar todo
           window.location.reload();
         });
       },

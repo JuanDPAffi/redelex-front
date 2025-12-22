@@ -1,9 +1,4 @@
 /* =============================================
-   GESTIÓN DE USUARIOS - AFFI LATAM
-   Diseño Profesional y Moderno
-   ============================================= */
-
-/* =============================================
    ESTRUCTURA DE PÁGINA
    ============================================= */
 .page {
@@ -1127,8 +1122,7 @@
    ESTILOS NUEVOS PARA KPIs Y EXPORTACIÓN
    ============================================= */
 
-/* 1. KPI CARDS (Estadísticas) */
-.stats-grid-overview {
+   .stats-grid-overview {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: var(--spacing-lg);
@@ -1204,7 +1198,6 @@
   margin-top: 0.25rem;
 }
 
-/* Barras de progreso mini dentro de las cards */
 .progress-mini {
   width: 100%;
   height: 4px;
@@ -1220,7 +1213,6 @@
   }
 }
 
-/* Barra multicolor para Activos/Inactivos */
 .progress-multi {
   width: 100%;
   height: 4px;
@@ -1237,7 +1229,6 @@
   }
 }
 
-/* Colores de Utilidad para KPIs */
 .bg-blue-100 { background-color: #dbeafe; }
 .text-blue-700 { color: #1d4ed8; }
 
@@ -1255,7 +1246,6 @@
 
 .bg-red-200 { background-color: #fecaca; }
 
-/* 2. ESTILOS MODAL EXPORTACIÓN */
 .columns-actions {
   display: flex;
   gap: 1rem;
@@ -1281,7 +1271,6 @@
 
 .export-buttons { display: flex; gap: 0.75rem; }
 
-/* Botones Excel/PDF distintivos */
 .btn--excel {
   background: linear-gradient(135deg, #217346 0%, #1d6038 100%);
   color: white;

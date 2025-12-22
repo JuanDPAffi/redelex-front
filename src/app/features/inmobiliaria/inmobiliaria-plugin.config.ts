@@ -11,7 +11,7 @@ export const INMOBILIARIA_PLUGIN_CONFIG: PluginConfig = {
     {
       id: 'inmo-list',
       label: 'Inmobiliarias',
-      icon: 'home', // Asegúrate de registrar 'Home' en app.config.ts
+      icon: 'home',
       route: '/panel/inmobiliarias',
       permissions: ['inmo:view'],
       roles: ['admin'],
@@ -20,7 +20,6 @@ export const INMOBILIARIA_PLUGIN_CONFIG: PluginConfig = {
       sectionId: 'sistema'
     }
   ],
-
   routes: INMOBILIARIA_ROUTES,
   dependencies: ['auth']
 };

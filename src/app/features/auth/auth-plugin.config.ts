@@ -1,6 +1,3 @@
-// src/app/features/auth/auth-plugin.config.ts
-// 🆕 Archivo NUEVO - Crear después de mover la carpeta auth a features/
-
 import { PluginConfig } from '../../core/models/plugin.interface';
 import { AUTH_ROUTES } from './auth.routes';
 

@@ -1,4 +1,3 @@
-// Wrapper de SweetAlert2 con estilos AFFI
 import Swal from 'sweetalert2';
 
 export const AffiAlert = Swal.mixin({
@@ -9,5 +8,5 @@ export const AffiAlert = Swal.mixin({
     confirmButton: 'affi-swal-btn affi-swal-btn--primary',
     cancelButton: 'affi-swal-btn affi-swal-btn--ghost'
   },
-  buttonsStyling: false   // 👈 usamos nuestras clases, no las de SweetAlert
+  buttonsStyling: false
 });

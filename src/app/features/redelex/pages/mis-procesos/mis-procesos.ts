@@ -14,12 +14,11 @@ import { AffiAlert } from '../../../../shared/services/affi-alert';
 
 registerLocaleData(localeEsCo, 'es-CO');
 
-// 1. DEFINICIÓN MAESTRA DE ETAPAS (Sin Terminación para vista cliente)
 interface EtapaConfig {
   id: number;
   nombreInterno: string[];
-  color: string; // Hex para Excel
-  colorRGB: [number, number, number]; // RGB para PDF
+  color: string;
+  colorRGB: [number, number, number];
   nombreCliente: string;
   definicion: string;
 }
@@ -95,14 +94,7 @@ const ETAPAS_MASTER: EtapaConfig[] = [
     nombreCliente: 'LANZAMIENTO', 
     definicion: 'Se está gestionando la restitución o entrega del inmueble.' 
   },
-  // EL ID 11 (TERMINACIÓN) NO SE INCLUYE AQUÍ PORQUE ES VISTA DE INMOBILIARIA
 ];
-
-// 2. REGLAS DE VISIBILIDAD (Para referencia o uso futuro en filtros)
-const REGLAS_VISIBILIDAD: any = {
-  'EJECUTIVO SINGULAR': [1, 2, 3, 5, 6, 7, 8, 9, 11], // Usa ID 3 (Mandamiento)
-  'VERBAL SUMARIO': [1, 2, 4, 5, 6, 7, 8, 10, 11]     // Usa ID 4 (Admisión)
-};
 
 @Component({
   selector: 'app-mis-procesos',
@@ -130,7 +122,6 @@ export class MisProcesosComponent implements OnInit {
 
   mostrarFiltros = true;
 
-  // --- ESTADÍSTICAS KPI ---
   stats = {
     total: 0,
     topClase: 'N/A',
@@ -181,16 +172,13 @@ export class MisProcesosComponent implements OnInit {
     this.cargarMisProcesos();
   }
 
-  // Lógica unificada para obtener el nombre visible de la etapa
   getEtapaDisplay(etapaRaw: string): string {
     const etapaNormalizada = etapaRaw ? etapaRaw.toUpperCase().trim() : '';
     
-    // Verificar si es terminación primero para ocultarla/cambiar nombre si es necesario
     if (etapaNormalizada.includes('TERMINA') || etapaNormalizada.includes('DESISTIMIENTO')) {
       return 'No se muestran al cliente';
     }
 
-    // Buscar en el maestro
     const found = ETAPAS_MASTER.find(e => 
       e.nombreInterno.some(k => etapaNormalizada.includes(k))
     );
@@ -239,7 +227,6 @@ export class MisProcesosComponent implements OnInit {
 
     if (total === 0) return;
 
-    // 1. Clase más común
     const claseCounts: Record<string, number> = {};
     data.forEach(item => {
       const c = this.clasePipe.transform(item.claseProceso) || 'Sin Clase';
@@ -253,7 +240,6 @@ export class MisProcesosComponent implements OnInit {
       this.stats.topClasePct = Math.round((sortedClases[0][1] / total) * 100);
     }
 
-    // 2. Etapa más frecuente
     const etapaCounts: Record<string, number> = {};
     data.forEach(item => {
       const e = item.etapaProcesal || 'Sin Etapa';
@@ -267,7 +253,6 @@ export class MisProcesosComponent implements OnInit {
       this.stats.topEtapaPct = Math.round((sortedEtapas[0][1] / total) * 100);
     }
 
-    // 3. Ciudad más frecuente
     const ciudadCounts: Record<string, number> = {};
     data.forEach(item => {
       const c = item.ciudadInmueble ? item.ciudadInmueble.trim() : 'Sin Ciudad';
@@ -377,19 +362,16 @@ export class MisProcesosComponent implements OnInit {
     return this.exportColumns.some(col => col.selected);
   }
 
-  // Helper para generar las cajas de resumen basadas en el Maestro
   private getResumenBoxes() {
-    // Generamos cajas para TODAS las etapas del maestro (menos terminación que ya está excluida del array)
     return ETAPAS_MASTER.map(etapa => ({
       title: etapa.nombreCliente,
       desc: etapa.definicion,
       count: this.contarEtapaDisplay(etapa.nombreCliente),
-      color: etapa.color,        // HEX para Excel
-      colorRGB: etapa.colorRGB   // RGB para PDF
+      color: etapa.color,
+      colorRGB: etapa.colorRGB
     }));
   }
 
-  // ================= EXCEL =================
   async exportToExcel() {
     if (!this.hasSelectedColumns) return;
 
@@ -400,10 +382,7 @@ export class MisProcesosComponent implements OnInit {
       const activeColumns = this.exportColumns.filter(c => c.selected);
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Mis Procesos');
-
-      // Obtener cajas dinámicamente
       const allBoxes = this.getResumenBoxes();
-      // Dividimos en 2 filas (aprox mitad y mitad)
       const midPoint = Math.ceil(allBoxes.length / 2);
       const datosFila1 = allBoxes.slice(0, midPoint);
       const datosFila2 = allBoxes.slice(midPoint);
@@ -471,12 +450,10 @@ export class MisProcesosComponent implements OnInit {
         });
       };
 
-      // Dibujar filas dinámicamente
       drawBoxRow(6, datosFila1);
       drawBoxRow(11, datosFila2);
 
       const tableStartRow = 16;
-      const headerRow = sheet.getRow(tableStartRow);
       let currentPhysicalCol = 1;
 
       activeColumns.forEach((col) => {
@@ -520,7 +497,6 @@ export class MisProcesosComponent implements OnInit {
 
           if (col.key === 'etapaProcesal') {
             const etapaDisplay = val || '';
-            // Buscar color en el maestro
             const config = ETAPAS_MASTER.find(e => e.nombreCliente === etapaDisplay);
             if (config) {
               cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: config.color } };
@@ -555,7 +531,6 @@ export class MisProcesosComponent implements OnInit {
     }
   }
 
-  // ================= PDF =================
   async exportToPdf() {
     if (!this.hasSelectedColumns) return;
 
@@ -565,18 +540,14 @@ export class MisProcesosComponent implements OnInit {
     try {
       const activeColumns = this.exportColumns.filter(c => c.selected);
       const etapaColIndex = activeColumns.findIndex(c => c.key === 'etapaProcesal');
-
-      // Obtener cajas dinámicamente
       const allBoxes = this.getResumenBoxes();
       const midPoint = Math.ceil(allBoxes.length / 2);
       const boxesRow1 = allBoxes.slice(0, midPoint);
       const boxesRow2 = allBoxes.slice(midPoint);
-
       const doc = new jsPDF('landscape', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.width;
       const margin = 5;
       const usableWidth = pageWidth - (margin * 2);
-
       const doubleColumns = ['numeroRadicacion', 'demandadoNombre', 'despacho'];
       let totalUnits = 0;
       activeColumns.forEach(c => { totalUnits += doubleColumns.includes(c.key) ? 2 : 1; });
@@ -617,7 +588,6 @@ export class MisProcesosComponent implements OnInit {
       const drawPDFBoxRow = (y: number, items: any[]) => {
         items.forEach((item, i) => {
           const x = startX + (i * (boxWidth + boxGap));
-          // RGB array
           doc.setFillColor(item.colorRGB[0], item.colorRGB[1], item.colorRGB[2]);
           doc.rect(x, y, boxWidth, boxHeight, 'F');
           doc.setDrawColor(100); doc.setLineWidth(0.1);

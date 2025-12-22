@@ -87,7 +87,6 @@ export class PluginRegistryService {
       }
     });
     
-    // Ordenar items por la propiedad 'order'
     sections.forEach(section => {
         section.items.sort((a, b) => (a.order || 99) - (b.order || 99));
     });

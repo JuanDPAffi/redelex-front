@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
@@ -8,7 +7,6 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './activate-account.html',
-  // Quitamos los estilos inline para usar tu SCSS global
   styleUrls: ['./activate-account.scss'] 
 })
 export class ActivateAccountComponent implements OnInit {

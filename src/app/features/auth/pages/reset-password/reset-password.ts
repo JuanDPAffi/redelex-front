@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core'; // Agregué OnInit
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Title } from '@angular/platform-browser';
-import { AffiAlert } from '../../../../shared/services/affi-alert'; // <--- IMPORTANTE: Importar AffiAlert
+import { AffiAlert } from '../../../../shared/services/affi-alert';
 
 @Component({
   selector: 'app-reset-password',
@@ -13,13 +13,12 @@ import { AffiAlert } from '../../../../shared/services/affi-alert'; // <--- IMPO
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.scss'
 })
+
 export class ResetPasswordComponent implements OnInit {
   form: FormGroup;
   token = '';
   email = '';
   loading = false;
-  
-  // Estados para visibilidad
   showPassword = false;
   showConfirmPassword = false;
   isTogglingPassword = false;
@@ -84,23 +83,20 @@ export class ResetPasswordComponent implements OnInit {
         this.loading = false;
         const msg = res.message || '';
         
-        // Verificamos si el mensaje menciona que sigue inactiva
-        // (Esto coincide con lo que programamos en el backend: "...permanece inactiva...")
         if (msg.toLowerCase().includes('inactiva') || msg.toLowerCase().includes('bloqueada')) {
           
           AffiAlert.fire({
-            icon: 'warning', // Amarillo
+            icon: 'warning',
             title: 'Contraseña Actualizada',
-            text: msg, // "Contraseña actualizada. Sin embargo, tu cuenta permanece inactiva..."
+            text: msg,
             confirmButtonText: 'Entendido'
           }).then(() => {
             this.router.navigate(['/auth/login']);
           });
 
         } else {
-          // Éxito total
           AffiAlert.fire({
-            icon: 'success', // Verde
+            icon: 'success',
             title: '¡Excelente!',
             text: 'Tu contraseña ha sido restablecida correctamente.',
             timerProgressBar: true,

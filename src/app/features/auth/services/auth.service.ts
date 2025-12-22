@@ -52,8 +52,6 @@ export class AuthService {
   login(data: LoginPayload): Observable<any> {
     return this.http.post(`${this.apiUrl}login`, data).pipe(
       tap((response: any) => {
-        // El backend guarda el token en una cookie HTTP-only
-        // Solo guardamos los datos del usuario en localStorage
         if (response.user) {
           this.saveUserData(response.user);
         }
@@ -71,7 +69,6 @@ export class AuthService {
 
   logoutClientSide(): void {
     localStorage.removeItem('redelex_user');
-    // El token está en una cookie HTTP-only, el backend la eliminará
   }
 
   saveUserData(userData: any): void { 
@@ -98,11 +95,8 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    // Solo verificar si hay usuario, el token está en la cookie
     return !!localStorage.getItem('redelex_user');
   }
-
-  // --- HELPERS DE AUTORIZACIÓN ---
 
   isAdmin(): boolean {
     const user = this.getUserData();
@@ -113,10 +107,8 @@ export class AuthService {
     const user = this.getUserData();
     if (!user) return false;
 
-    // Admin tiene poder absoluto
     if (user.role === 'admin') return true;
 
-    // Verificar en el array de permisos
     return user.permissions?.includes(requiredPermission) || false;
   }
 
@@ -129,10 +121,6 @@ export class AuthService {
     return permissions.some(p => user.permissions?.includes(p));
   }
 
-  /**
-   * Obtiene la ruta de destino según los permisos del usuario
-   * Previene bucles infinitos al redirigir a rutas accesibles
-   */
   getRedirectUrl(): string {
     const user = this.getUserData();
     const role = user?.role?.toLowerCase(); 
@@ -148,12 +136,9 @@ export class AuthService {
         return '/panel/consultas/dashboard';
         
       default:
-        // Fallback seguro si el rol no coincide
         return '/panel/consultas/consultar-proceso';
     }
   }
-
-  // --- OTROS MÉTODOS ---
 
   activateAccount(email: string, token: string): Observable<any> {
     return this.http.post(`${this.apiUrl}activate`, { email, token });

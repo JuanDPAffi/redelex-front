@@ -29,46 +29,30 @@ export interface ProcesoDetalleDto {
   idProceso: number;
   numeroRadicacion: string | null;
   codigoAlterno: string | null;
-
   claseProceso: string | null;
   etapaProcesal: string | null;
   estado: string | null;
   regional: string | null;
   tema: string | null;
-
   sujetos: SujetosDto[];
-
   despacho: string | null;
   despachoOrigen: string | null;
-
   fechaAdmisionDemanda: string;
   fechaCreacion: string;
   fechaEntregaAbogado: string;
   fechaRecepcionProceso: string;
-
   ubicacionContrato: string | null;
-
-  // Subrogación
   fechaAceptacionSubrogacion: string;
   fechaPresentacionSubrogacion: string;
   motivoNoSubrogacion: string | null;
-
-  // Calificación
   calificacion: string | null;
-
-  // Sentencia 1ra instancia
   sentenciaPrimeraInstanciaResultado: string | null;
   sentenciaPrimeraInstanciaFecha: string | null;
-
-  // Medidas cautelares
   medidasCautelares: MedidasDto[];
-
-  // Última actuación
   ultimaActuacionFecha: string;
   ultimaActuacionTipo: string | null;
   ultimaActuacionObservacion: string | null;
   actuacionesRecientes?: ActuacionDto[];
-
   abogados: AbogadoDto[];
 }
 
@@ -97,7 +81,6 @@ export interface SujetosDto {
   NumeroIdentificacion: string;
 }
 
-// Interfaz para tipar la respuesta (mismo DTO del backend)
 export interface InformeInmobiliaria {
   idProceso: number;
   claseProceso: string;
@@ -125,47 +108,30 @@ export interface InformeResponse {
   providedIn: 'root',
 })
 export class RedelexService {
-  // environment.apiUrl = "https://api.estadosprocesales.affi.net/"
   private apiUrl = `${environment.apiUrl}api/redelex`;
 
   constructor(private http: HttpClient) {}
 
   getMisProcesos(): Observable<any> {
-    // Llama al endpoint "inteligente" que usa el NIT del token
     return this.http.get(`${this.apiUrl}/mis-procesos`);
   }
 
   getProcesoDetalleById(id: number): Observable<any> {
-    // Llama al endpoint GET /api/redelex/proceso/:id
     return this.http.get(`${this.apiUrl}/proceso/${id}`);
   }
 
-  /**
-   * Detalle del proceso por ID
-   * GET /api/redelex/proceso/:id
-   * Respuesta: { success: boolean; data: ProcesoDetalleDto | null }
-   */
   getProceso(id: number): Observable<{ success: boolean; data: ProcesoDetalleDto | null }> {
     return this.http.get<{ success: boolean; data: ProcesoDetalleDto | null }>(
       `${this.apiUrl}/proceso/${id}`
     );
   }
 
-  /**
-   * Lista de procesos por identificación
-   * GET /api/redelex/procesos-por-identificacion/:identificacion
-   * Respuesta: { success: boolean; identificacion: string; procesos: number[] }
-   */
   getProcesosByIdentificacion(identificacion: string): Observable<ProcesosPorIdentificacionResponse> {
     return this.http.get<ProcesosPorIdentificacionResponse>(
       `${this.apiUrl}/procesos-por-identificacion/${identificacion}`
     );
   }
 
-  /**
-  * Obtiene el informe de Inmobiliar por ID
-  * @param informeId ID del informe (ej: 5626)
-  */
   getInformeInmobiliaria(informeId: number): Observable<InformeResponse> {
     return this.http.get<InformeResponse>(`${this.apiUrl}/informe-inmobiliaria/${informeId}`);
   }

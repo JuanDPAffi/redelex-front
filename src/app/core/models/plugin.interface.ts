@@ -1,11 +1,6 @@
-// src/app/core/models/plugin.interface.ts
-
 import { Routes } from '@angular/router';
 import { Type } from '@angular/core';
 
-/**
- * Configuración de un plugin
- */
 export interface PluginConfig {
   id: string;
   name: string;
@@ -18,9 +13,6 @@ export interface PluginConfig {
   dependencies?: string[];
 }
 
-/**
- * Item del menú
- */
 export interface MenuItem {
   id: string;
   label: string;
@@ -39,9 +31,6 @@ export interface MenuItem {
   matchRoutes?: string[];
 }
 
-/**
- * Sección del menú
- */
 export interface MenuSection {
   id: string;
   title: string;

@@ -24,7 +24,6 @@ export class RegisterComponent implements OnInit {
     private router: Router,
     private titleService: Title 
   ) {
-    // Verificar si ya hay sesión activa
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/panel']);
       return;
@@ -44,13 +43,8 @@ export class RegisterComponent implements OnInit {
   }
 
   togglePasswordVisibility() {
-    // Activar animación
     this.isTogglingPassword = true;
-    
-    // Cambiar visibilidad
     this.showPassword = !this.showPassword;
-    
-    // Desactivar animación después de completarse
     setTimeout(() => {
       this.isTogglingPassword = false;
     }, 400);

@@ -1,6 +1,5 @@
 <div class="page">
   <div class="page__header">
-
     <div class="header-content">
       <a routerLink="/panel/consultas/mis-procesos" class="back-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -19,9 +18,9 @@
             Ayuda del Proceso
           </button>
           <button class="btn btn--excel" 
-                  (click)="exportToExcel()"
-                  [disabled]="exportState !== 'idle'"
-                  [class.is-loading]="exportState === 'excel'">
+            (click)="exportToExcel()"
+            [disabled]="exportState !== 'idle'"
+            [class.is-loading]="exportState === 'excel'">
             @if (exportState === 'excel') {
               <span class="spinner-loader"></span> Generando...
             } @else {
@@ -34,9 +33,9 @@
           </button>
 
           <button class="btn btn--pdf" 
-                  (click)="exportToPdf()"
-                  [disabled]="exportState !== 'idle'"
-                  [class.is-loading]="exportState === 'pdf'">
+            (click)="exportToPdf()"
+            [disabled]="exportState !== 'idle'"
+            [class.is-loading]="exportState === 'pdf'">
             @if (exportState === 'pdf') {
               <span class="spinner-loader"></span> Generando...
             } @else {
@@ -52,7 +51,6 @@
     </div>
   </div>
 
-  <!-- LOADING STATE -->
   @if (loading) {
     <div class="helper">
       <div class="spinner"></div>
@@ -60,21 +58,15 @@
     </div>
   }
 
-  <!-- ERROR STATE -->
   @if (error) {
     <div class="helper">
       <p>{{ error }}</p>
     </div>
   }
 
-  <!-- CONTENIDO PRINCIPAL -->
   @if (!loading && !error && detalle) {
     <div class="main-layout">
-      
-      <!-- COLUMNA IZQUIERDA -->
       <div class="main-column">
-        
-        <!-- STEPPER DE ETAPAS PROCESALES -->
         @if (etapaActualConfig) {
           <section class="process-stepper">
             <h2>Etapa Procesal Actual</h2>
@@ -101,8 +93,6 @@
                 </div>
               }
             </div>
-            
-            <!-- Descripción de la etapa actual -->
             <div class="etapa-descripcion" [style.border-left-color]="etapaActualConfig.color">
               <div class="descripcion-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -115,8 +105,7 @@
             </div>
           </section>
         }
-        
-        <!-- RESUMEN DEL PROCESO -->
+
         <section class="process-summary">
           <div class="process-meta">
             <div class="meta-info">
@@ -150,7 +139,6 @@
           </div>
         </section>
 
-        <!-- UBICACIÓN Y COMPETENCIA -->
         <section class="location-section">
           <h2>Despacho y Ubicación</h2>
           <div class="location-grid">
@@ -180,13 +168,9 @@
             </div>
           </div>
         </section>
-
       </div>
 
-      <!-- COLUMNA DERECHA (SIDEBAR) -->
       <div class="sidebar-column">
-        
-        <!-- ESTADO JUDICIAL -->
         <section class="judicial-status">
           <h2>Estado Judicial</h2>
           <div class="status-items">
@@ -203,13 +187,9 @@
             </div>
           </div>
         </section>
-
-        <!-- PARTES PROCESALES -->
         <section class="parties-section">
           <h2>Partes Procesales</h2>
           <div class="party-list">
-            
-            <!-- DEMANDANTE -->
             <div class="party-item demandante">
               <div class="party-header">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -232,8 +212,6 @@
                   }
                 </div>
             </div>
-
-            <!-- DEMANDADO -->
             <div class="party-item demandado">
               <div class="party-header">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -256,8 +234,6 @@
                   }
                 </div>
             </div>
-
-            <!-- DEUDORES SOLIDARIOS -->
             @if (haySolidarios()) {
               <div class="party-item">
                 <div class="party-header">
@@ -284,10 +260,8 @@
                 </div>
               </div>
             }
-
           </div>
         </section>
-
       </div>
     </div>
   }

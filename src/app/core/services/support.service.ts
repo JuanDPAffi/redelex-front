@@ -12,6 +12,7 @@ export interface TicketMetadata {
 @Injectable({
   providedIn: 'root'
 })
+
 export class SupportService {
   private apiUrl = `${environment.apiUrl}api/support/ticket`;
 
@@ -21,7 +22,7 @@ export class SupportService {
     return this.http.post(this.apiUrl, { 
       subject, 
       content,
-      metadata // Si es undefined, el backend asume Soporte Técnico.
+      metadata
     });
   }
 }

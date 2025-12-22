@@ -1,16 +1,13 @@
 import { Component, OnInit, ElementRef, HostListener, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common'; // Agregado DatePipe
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpEventType, HttpResponse } from '@angular/common/http';
 import { FeatherModule } from 'angular-feather';
 import { Title } from '@angular/platform-browser';
-
-// --- LIBRERÍAS DE EXPORTACIÓN ---
 import * as ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { AFFI_LOGO_BASE64 } from '../../../../shared/assets/affi-logo-base64'; // Ajusta la ruta si es necesario
-
+import { AFFI_LOGO_BASE64 } from '../../../../shared/assets/affi-logo-base64';
 import { InmobiliariaService, Inmobiliaria, ImportResult } from '../../services/inmobiliaria.service';
 import { AffiAlert } from '../../../../shared/services/affi-alert';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -19,7 +16,7 @@ import { AuthService } from '../../../auth/services/auth.service';
   selector: 'app-inmobiliaria-list',
   standalone: true,
   imports: [CommonModule, FormsModule, FeatherModule],
-  providers: [DatePipe], // Proveedor necesario para formatear fechas en el TS
+  providers: [DatePipe],
   templateUrl: './inmobiliaria-list.component.html',
   styleUrls: ['./inmobiliaria-list.component.scss']
 })
@@ -28,21 +25,18 @@ export class InmobiliariaListComponent implements OnInit {
   loading = true;
   isSendingEmail = false;
 
-  // Estados de Modales
   showEditModal = false;
   showImportModal = false;
-  showExportModal = false; // Nuevo estado
-  selectedInmo: Partial<Inmobiliaria> = {};
+  showExportModal = false;
 
-  // Estados de Importación
+  selectedInmo: Partial<Inmobiliaria> = {};
   currentFile: File | null = null;
   uploadProgress = 0;
   isUploading = false;
   importResult: ImportResult | null = null;
   dragOver = false;
-
-  // Estados de Exportación
   exportState: 'idle' | 'excel' | 'pdf' = 'idle';
+
   exportColumns = [
     { key: 'nit', label: 'NIT', selected: true },
     { key: 'codigo', label: 'Código', selected: true },
@@ -56,12 +50,10 @@ export class InmobiliariaListComponent implements OnInit {
     { key: 'isActive', label: 'Estado', selected: true },
   ];
 
-  // --- PAGINACIÓN ---
   currentPage = 1;
   itemsPerPage = 10;
-  pageSizeOptions = [5, 10, 20, 50];
 
-  // --- FILTROS AVANZADOS ---
+  pageSizeOptions = [5, 10, 20, 50];
   filtros = {
     busquedaGeneral: '',
     nit: '',
@@ -88,9 +80,8 @@ export class InmobiliariaListComponent implements OnInit {
   };
 
   private titleService = inject(Title);
-  private datePipe = inject(DatePipe); // Inyección para uso en exportación
+  private datePipe = inject(DatePipe);
 
-  // Listas para los dropdowns
   listaEstados = ['Activo', 'Inactivo'];
   listaTieneUsuario = ['Con Usuario', 'Sin Usuario'];
   listaDepartamentos: string[] = [];
@@ -158,7 +149,6 @@ export class InmobiliariaListComponent implements OnInit {
           showConfirmButton: false
         });
       },
-      // CORRECCIÓN AQUÍ: Agrega ": any" después de err
       error: (err: any) => { 
         this.isSendingEmail = false;
         console.error(err);
@@ -268,7 +258,6 @@ export class InmobiliariaListComponent implements OnInit {
   }
 
   selectFilterOption(filterKey: keyof typeof this.filtros, value: string) {
-    // @ts-ignore
     this.filtros[filterKey] = value;
     this.activeDropdown = null;
     this.currentPage = 1;
@@ -281,7 +270,6 @@ export class InmobiliariaListComponent implements OnInit {
     }
   }
 
-  // --- IMPORTACIÓN Y CRUD ---
   openImportModal() {
     this.showImportModal = true;
     this.resetImportState();
@@ -415,10 +403,6 @@ export class InmobiliariaListComponent implements OnInit {
     this.resetImportState();
   }
 
-  // =========================================================
-  // LOGICA DE EXPORTACIÓN (EXCEL & PDF)
-  // =========================================================
-
   openExportModal() { this.showExportModal = true; }
   closeExportModal() { this.showExportModal = false; }
   
@@ -442,33 +426,28 @@ export class InmobiliariaListComponent implements OnInit {
     }
 
     this.exportState = 'excel';
-    await new Promise(r => setTimeout(r, 100)); // UI Refresh
+    await new Promise(r => setTimeout(r, 100));
 
     try {
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Inmobiliarias');
       const activeColumns = this.exportColumns.filter(c => c.selected);
 
-      // Estilos Generales
       sheet.columns = activeColumns.map(() => ({ width: 25 }));
       
-      // Logo
       const imageId = workbook.addImage({ base64: AFFI_LOGO_BASE64, extension: 'png' });
       sheet.addImage(imageId, { tl: { col: 0.1, row: 0.1 }, ext: { width: 90, height: 90 } });
 
-      // Título
       const titleRow = sheet.getRow(2);
       titleRow.getCell(3).value = 'LISTADO DE INMOBILIARIAS';
       titleRow.getCell(3).font = { bold: true, size: 14, name: 'Calibri' };
       
-      // Info Extra
       const subTitleRow = sheet.getRow(3);
       subTitleRow.getCell(3).value = `Fecha de generación: ${this.datePipe.transform(new Date(), "d 'de' MMMM 'de' yyyy")}`;
       
       sheet.getRow(5).getCell(1).value = `Total Registros Exportados: ${this.filteredInmobiliarias.length}`;
       sheet.getRow(5).getCell(1).font = { bold: true };
 
-      // Encabezados de Tabla
       const headerRowIndex = 8;
       const headerRow = sheet.getRow(headerRowIndex);
       
@@ -481,7 +460,6 @@ export class InmobiliariaListComponent implements OnInit {
         cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
       });
 
-      // Datos
       this.filteredInmobiliarias.forEach((inmo, idx) => {
         const rowIndex = headerRowIndex + 1 + idx;
         const row = sheet.getRow(rowIndex);
@@ -489,7 +467,6 @@ export class InmobiliariaListComponent implements OnInit {
         activeColumns.forEach((col, colIndex) => {
           let val: any = inmo[col.key as keyof Inmobiliaria];
 
-          // Formateo según tipo
           if (col.key === 'isActive') val = val ? 'ACTIVO' : 'INACTIVO';
           if (col.key === 'fechaInicioFianza') val = this.datePipe.transform(val, 'yyyy-MM-dd') || '';
           if (col.key === 'emailRegistrado') val = val || 'SIN USUARIO';
@@ -532,11 +509,9 @@ export class InmobiliariaListComponent implements OnInit {
       const doc = new jsPDF('landscape', 'mm', 'a4');
       const activeColumns = this.exportColumns.filter(c => c.selected);
       
-      // Encabezado
       doc.addImage(AFFI_LOGO_BASE64, 'PNG', 10, 5, 20, 20);
       doc.setFontSize(14); doc.setFont('helvetica', 'bold');
       doc.text('LISTADO DE INMOBILIARIAS', 105, 15, { align: 'center' });
-      
       doc.setFontSize(10); doc.setFont('helvetica', 'normal');
       doc.text(`Generado el: ${this.datePipe.transform(new Date(), 'dd/MM/yyyy HH:mm')}`, 105, 20, { align: 'center' });
       doc.text(`Registros: ${this.filteredInmobiliarias.length}`, 14, 30);
@@ -558,7 +533,7 @@ export class InmobiliariaListComponent implements OnInit {
         theme: 'grid',
         styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' },
         headStyles: { fillColor: [31, 78, 120], textColor: [255, 255, 255] },
-        columnStyles: { 0: { cellWidth: 'auto' } } // Ajuste automático básico
+        columnStyles: { 0: { cellWidth: 'auto' } }
       });
 
       doc.save(`Listado_Inmobiliarias_${new Date().getTime()}.pdf`);

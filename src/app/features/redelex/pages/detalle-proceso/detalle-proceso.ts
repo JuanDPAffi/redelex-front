@@ -4,17 +4,12 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RedelexService } from '../../services/redelex.service';
 import { Title } from '@angular/platform-browser';
 import { SupportService } from '../../../../core/services/support.service';
-import { AuthService } from '../../../auth/services/auth.service';
 import { ClaseProcesoPipe } from '../../../../shared/pipes/clase-proceso.pipe';
 import * as ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AFFI_LOGO_BASE64 } from '../../../../shared/assets/affi-logo-base64';
-import { 
-  getEtapaConfig, 
-  getEtapasParaStepper, 
-  EtapaProcesal 
-} from './etapas-procesales.config';
+import { getEtapaConfig, getEtapasParaStepper, EtapaProcesal } from './etapas-procesales.config';
 import { AffiAlert } from '../../../../shared/services/affi-alert';
 import { FormsModule } from '@angular/forms';
 
@@ -38,9 +33,8 @@ export class DetalleProcesoComponent implements OnInit {
 
   selectOpen = false
 
-  // Nuevas propiedades para el stepper
   etapaActualConfig: EtapaProcesal | null = null;
-  etapaActualIndex: number = -1; // -1 indica que no se encontró en el flujo visual
+  etapaActualIndex: number = -1;
   etapasStepper: { nombre: string; color: string; id: number }[] = [];
 
   showSupportModal = false;
@@ -59,7 +53,6 @@ export class DetalleProcesoComponent implements OnInit {
     private redelexService: RedelexService,
     private titleService: Title,
     private supportService: SupportService,
-    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -75,7 +68,7 @@ export class DetalleProcesoComponent implements OnInit {
   
   onSelectChange(event: Event) {
     this.selectOpen = false;
-    (event.target as HTMLSelectElement).blur(); // fuerza a perder foco y “cierra” visualmente
+    (event.target as HTMLSelectElement).blur();
   }
 
   cargarDetalle(id: number) {
@@ -85,17 +78,10 @@ export class DetalleProcesoComponent implements OnInit {
         this.detalle = res.data || res;
         const nombreDemandado = this.getNombreSujeto('DEMANDADO');
         this.titleService.setTitle(`Estados Procesales - Demandado ${nombreDemandado}`);
-        
-        // 1. Obtener la configuración de la etapa actual (info, color, definición)
         this.etapaActualConfig = getEtapaConfig(this.detalle.etapaProcesal);
-
-        // 2. Generar el Stepper dinámico según la clase (Ejecutivo vs Restitución)
         const clase = this.detalle.claseProceso || '';
         this.etapasStepper = getEtapasParaStepper(clase);
-
-        // 3. Calcular el índice visual (dónde pintar el círculo activo)
         this.calcularIndiceVisual();
-        
         this.loading = false;
       },
       error: (err) => {
@@ -112,32 +98,23 @@ export class DetalleProcesoComponent implements OnInit {
       return;
     }
 
-    // Buscamos en el array FILTRADO (etapasStepper) la etapa que coincida con el ID de la configuración actual
     const visualIndex = this.etapasStepper.findIndex(step => step.id === this.etapaActualConfig?.id);
 
     if (visualIndex !== -1) {
       this.etapaActualIndex = visualIndex;
     } else {
-      // Caso Borde: La etapa actual existe en la BD (ej. Admisión) pero NO en el flujo visual actual (ej. Ejecutivo oculta Admisión)
-      // Estrategia: Buscar la etapa visible inmediatamente anterior para marcar el progreso hasta ahí.
-      
       const currentId = this.etapaActualConfig.id;
-      // Filtramos las etapas del stepper que tengan un ID menor al actual
       const prevSteps = this.etapasStepper.filter(step => step.id < currentId);
-      
       if (prevSteps.length > 0) {
-        // Marcamos la última etapa visible anterior
         const lastVisibleStep = prevSteps[prevSteps.length - 1];
         this.etapaActualIndex = this.etapasStepper.indexOf(lastVisibleStep);
       } else {
-        this.etapaActualIndex = 0; // Fallback al inicio
+        this.etapaActualIndex = 0;
       }
     }
   }
 
   openSupportModal() {
-    const radicado = this.detalle?.numeroRadicacion || 'Sin Radicado';
-    // CAMBIO 2: Aseguramos que al abrir el modal empiece limpio
     this.ticketData = {
       subject: '', 
       content: ''
@@ -170,7 +147,6 @@ export class DetalleProcesoComponent implements OnInit {
 
     this.isSendingTicket = true;
 
-    // Construimos la METADATA del proceso
     const metadata = {
       procesoId: this.procesoId!,
       radicado: this.detalle?.numeroRadicacion,
@@ -179,7 +155,6 @@ export class DetalleProcesoComponent implements OnInit {
       clase: this.detalle?.claseProceso || 'N/A'    
     };
 
-    // Llamamos al servicio enviando la metadata (El backend sabrá que es tipo PROCESO)
     this.supportService.createTicket(
       this.ticketData.subject, 
       this.ticketData.content, 
@@ -235,9 +210,6 @@ export class DetalleProcesoComponent implements OnInit {
     return this.detalle.sujetos.filter((s: any) => s.Tipo?.toUpperCase().includes('SOLIDARIO'));
   }
 
-  // ========================================================================
-  // EXPORTAR A EXCEL
-  // ========================================================================
   async exportToExcel() {
     this.exportState = 'excel';
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -272,7 +244,6 @@ export class DetalleProcesoComponent implements OnInit {
         right: { style: 'thin', color: { argb: colors.border } }
       };
 
-      // Logo y títulos
       const imageId = workbook.addImage({ base64: AFFI_LOGO_BASE64, extension: 'png' });
       sheet.addImage(imageId, { tl: { col: 0.1, row: 0.1 }, ext: { width: 100, height: 100 } });
 
@@ -319,7 +290,6 @@ export class DetalleProcesoComponent implements OnInit {
         currentRow++;
       };
 
-      // PARTES PROCESALES
       addSectionHeader('Partes Procesales');
       
       const demNombre = this.getNombreSujeto('DEMANDANTE');
@@ -337,13 +307,11 @@ export class DetalleProcesoComponent implements OnInit {
 
       currentRow++;
 
-      // INFORMACIÓN GENERAL
       addSectionHeader('Información General');
       addRowData('Número de Radicación', this.detalle.numeroRadicacion);
       addRowData('Cuenta', this.detalle.codigoAlterno);
       addRowData('Clase de Proceso', this.clasePipe.transform(this.detalle.claseProceso));
       
-      // Usar el nombre de etapa para el cliente
       const etapaParaCliente = this.etapaActualConfig?.nombreCliente || this.detalle.etapaProcesal || 'EN TRÁMITE';
       addRowData('Etapa Procesal Actual', etapaParaCliente);
       
@@ -353,14 +321,12 @@ export class DetalleProcesoComponent implements OnInit {
       
       currentRow++;
 
-      // UBICACIÓN Y DESPACHO
       addSectionHeader('Despacho y Ubicación');
       addRowData('Despacho Judicial', this.detalle.despacho);
       addRowData('Ubicación del Contrato', this.detalle.ubicacionContrato || this.detalle.regional);
       
       currentRow++;
 
-      // ESTADO Y SENTENCIA
       addSectionHeader('Estado Judicial y Sentencia');
       const fechaPres = this.datePipe.transform(this.detalle.fechaRecepcionProceso, 'dd/MM/yyyy') || 'N/A';
       addRowData('Fecha Presentación Demanda', fechaPres);
@@ -397,9 +363,6 @@ export class DetalleProcesoComponent implements OnInit {
     }
   }
 
-  // ========================================================================
-  // EXPORTAR A PDF
-  // ========================================================================
   async exportToPdf() {
     this.exportState = 'pdf';
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -418,7 +381,6 @@ export class DetalleProcesoComponent implements OnInit {
       const pageWidth = doc.internal.pageSize.width;
       const margin = 15;
 
-      // Logo y encabezado
       doc.addImage(AFFI_LOGO_BASE64, 'PNG', margin, 10, 25, 25);
 
       doc.setFontSize(16);
@@ -442,7 +404,6 @@ export class DetalleProcesoComponent implements OnInit {
         bodyData.push([label, value || '---']);
       };
 
-      // PARTES
       bodyData.push([{ 
         content: 'PARTES PROCESALES', 
         colSpan: 2, 
@@ -467,7 +428,6 @@ export class DetalleProcesoComponent implements OnInit {
         pushRow('Deudores Solidarios', solidarios);
       }
 
-      // INFORMACIÓN GENERAL
       bodyData.push([{ 
         content: 'INFORMACIÓN GENERAL', 
         colSpan: 2, 
@@ -490,7 +450,6 @@ export class DetalleProcesoComponent implements OnInit {
         pushRow('Descripción de Etapa', this.etapaActualConfig.definicion);
       }
 
-      // UBICACIÓN
       bodyData.push([{ 
         content: 'DESPACHO Y UBICACIÓN', 
         colSpan: 2, 
@@ -504,7 +463,6 @@ export class DetalleProcesoComponent implements OnInit {
       pushRow('Despacho Judicial', this.detalle.despacho);
       pushRow('Ubicación del Contrato', this.detalle.ubicacionContrato || this.detalle.regional);
 
-      // JUDICIAL
       bodyData.push([{ 
         content: 'ESTADO JUDICIAL', 
         colSpan: 2, 

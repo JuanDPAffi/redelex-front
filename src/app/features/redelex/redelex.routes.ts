@@ -4,28 +4,17 @@ import { roleGuard } from '../../core/guards/role.guard';
 import { permissionGuard } from '../../core/guards/permission.guard';
 import { AuthService } from '../auth/services/auth.service';
 
-/**
- * Guard que delega la decisión al AuthService.
- * Mantiene una única fuente de verdad para las redirecciones.
- */
 const smartDefaultRedirect = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
   
-  // 1. Si no hay usuario, fuera.
   if (!authService.isLoggedIn()) {
     return router.createUrlTree(['/auth/login']);
   }
 
-  // 2. Usamos la lógica centralizada que creamos antes.
-  // Esto devuelve '/panel/consultas/dashboard' o la que corresponda al rol.
   const targetUrl = authService.getRedirectUrl();
-  
-  // 3. Navegamos
   router.navigate([targetUrl]);
   
-  // Retornamos false para cancelar la navegación a la ruta vacía ''
-  // y permitir que el router procese la nueva navegación.
   return false; 
 };
 
@@ -61,16 +50,14 @@ export const REDELEX_ROUTES: Routes = [
         path: 'proceso/:id',
         loadComponent: () => import('./pages/detalle-proceso/detalle-proceso')
           .then(m => m.DetalleProcesoComponent),
-        // Aquí está bien usar roleGuard o permissionGuard según prefieras
         canActivate: [roleGuard(['admin', 'affi', 'inmobiliaria'])]
       },
       {
-        path: 'llamada', // /panel/consultas/llamada
+        path: 'llamada',
         loadComponent: () => import('./pages/call-center/call-center.component')
           .then(m => m.CallCenterComponent),
         canActivate: [permissionGuard('call:create')]
       },
-      // RUTA DEFAULT
       {
         path: '',
         canActivate: [smartDefaultRedirect],

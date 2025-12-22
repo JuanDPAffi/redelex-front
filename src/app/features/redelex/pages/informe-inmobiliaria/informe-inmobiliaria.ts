@@ -18,12 +18,11 @@ interface DemandanteOption {
   identificacion: string;
 }
 
-// --- CONFIGURACIÓN CENTRALIZADA SEGÚN IMAGEN DE EXCEL ---
 interface EtapaConfig {
-  triggers: string[]; // Nombres que vienen de la BD
-  summaryTitle: string; // Nombre para mostrar en las cajitas de resumen
-  colorHex: string; // Color Hex con #
-  desc: string; // Descripción para el resumen
+  triggers: string[];
+  summaryTitle: string;
+  colorHex: string;
+  desc: string;
 }
 
 const ETAPAS_CONFIG: EtapaConfig[] = [
@@ -116,7 +115,6 @@ export class InformeInmobiliariaComponent implements OnInit {
     this.loadInforme();
   }
 
-  // --- ESTADÍSTICAS KPI (NUEVO) ---
   stats = {
     total: 0,
     topClase: 'N/A',
@@ -257,7 +255,7 @@ export class InformeInmobiliariaComponent implements OnInit {
         this.rawData = datosLimpios;
         this.filteredData = datosLimpios;
         this.extraerListasUnicas();
-        this.calculateStats(); // <--- CÁLCULO DE KPIs
+        this.calculateStats();
         this.loading = false;
       },
       error: (err) => {
@@ -268,15 +266,13 @@ export class InformeInmobiliariaComponent implements OnInit {
     });
   }
 
-  // --- LÓGICA DE CÁLCULO DE KPIs (NUEVO) ---
   calculateStats() {
-    const data = this.rawData; // Estadísticas Globales (Base completa)
+    const data = this.rawData;
     const total = data.length;
     this.stats.total = total;
     
     if (total === 0) return;
 
-    // 1. Clase más común
     const claseCounts: Record<string, number> = {};
     data.forEach(d => {
       const c = this.clasePipe.transform(d.claseProceso) || 'Sin Clase';
@@ -289,7 +285,6 @@ export class InformeInmobiliariaComponent implements OnInit {
       this.stats.topClasePct = Math.round((topClaseArr[0][1] / total) * 100);
     }
 
-    // 2. Etapa más frecuente
     const etapaCounts: Record<string, number> = {};
     data.forEach(d => {
       const e = d.etapaProcesal || 'Sin Etapa';
@@ -302,8 +297,6 @@ export class InformeInmobiliariaComponent implements OnInit {
       this.stats.topEtapaPct = Math.round((topEtapaArr[0][1] / total) * 100);
     }
 
-    // 3. Activos vs Terminados
-    // Usamos ETAPAS_CONFIG para identificar cuáles son de terminación
     const termConfig = ETAPAS_CONFIG.find(c => c.summaryTitle === 'TERMINACION');
     const termTriggers = termConfig ? termConfig.triggers : [];
     

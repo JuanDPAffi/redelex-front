@@ -25,7 +25,6 @@ export class LoginComponent implements OnInit {
     private titleService: Title
   ) {
     if (this.authService.isLoggedIn()) {
-      // Usamos la nueva función centralizada
       const target = this.authService.getRedirectUrl();
       this.router.navigate([target]);
       return;
@@ -38,13 +37,8 @@ export class LoginComponent implements OnInit {
   }
 
   togglePasswordVisibility() {
-    // Activar animación
     this.isTogglingPassword = true;
-    
-    // Cambiar visibilidad
     this.showPassword = !this.showPassword;
-    
-    // Desactivar animación después de completarse
     setTimeout(() => {
       this.isTogglingPassword = false;
     }, 400);
@@ -66,7 +60,6 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(this.form.value).subscribe({
       next: res => {
-        // Guardamos los datos del usuario
         if (res.user) {
            this.authService.saveUserData(res.user);
         }
@@ -86,19 +79,17 @@ export class LoginComponent implements OnInit {
         const mensajeBackend = err.error?.message || 'Error desconocido';
         const msgLower = mensajeBackend.toLowerCase();
 
-        // CASO 1: CUENTA BLOQUEADA O INACTIVA (Alerta ROJA)
         if (
           msgLower.includes('desactivad') || 
           msgLower.includes('inactiva') ||
           msgLower.includes('bloqueada')
         ) {
           AffiAlert.fire({
-            icon: 'error', // Icono de error para bloqueo total
+            icon: 'error',
             title: 'Acceso Denegado',
-            text: mensajeBackend // "Su cuenta ha sido desactivada..." o "Inmobiliaria inactiva"
+            text: mensajeBackend
           });
         } 
-        // CASO 2: ADVERTENCIA DE INTENTOS (Alerta AMARILLA)
         else if (
           msgLower.includes('intento(s)') ||
           msgLower.includes('advertencia')
@@ -109,7 +100,6 @@ export class LoginComponent implements OnInit {
             text: mensajeBackend
           });
         } 
-        // CASO 3: CREDENCIALES INCORRECTAS GENÉRICAS
         else {
           AffiAlert.fire({
             icon: 'error',

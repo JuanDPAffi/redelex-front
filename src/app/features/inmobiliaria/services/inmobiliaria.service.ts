@@ -41,7 +41,6 @@ export class InmobiliariaService {
     return this.http.get<Inmobiliaria[]>(this.apiUrl);
   }
 
-  // Actualizar datos básicos (si quisieras editar manual)
   update(id: string, data: Partial<Inmobiliaria>): Observable<Inmobiliaria> {
     return this.http.put<Inmobiliaria>(`${this.apiUrl}/${id}`, data);
   }
@@ -50,13 +49,12 @@ export class InmobiliariaService {
     return this.http.patch(`${this.apiUrl}/${id}/status`, {});
   }
 
-  // --- IMPORTACIÓN MASIVA CON PROGRESO ---
   importInmobiliarias(file: File): Observable<HttpEvent<ImportResult>> {
     const formData = new FormData();
     formData.append('file', file);
 
     const req = new HttpRequest('POST', `${this.apiUrl}/import`, formData, {
-      reportProgress: true, // Habilita la barra de progreso
+      reportProgress: true,
       responseType: 'json'
     });
 

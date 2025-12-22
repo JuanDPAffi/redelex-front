@@ -3,21 +3,16 @@ import { roleGuard } from './core/guards/role.guard';
 import { panelRedirectGuard } from './core/guards/panel-redirect.guard'; 
 
 export const routes: Routes = [
-  // Redirección inicial
   {
     path: '',
     redirectTo: '/panel',
     pathMatch: 'full'
   },
-
-  // Rutas Públicas (Auth)
   {
     path: 'auth',
     loadChildren: () => 
       import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES)
   },
-
-  // Rutas Privadas (Panel Principal)
   {
     path: 'panel',
     loadComponent: () => 
@@ -25,7 +20,6 @@ export const routes: Routes = [
         .then(m => m.ShellLayoutComponent),
     canActivate: [roleGuard(['admin', 'affi', 'inmobiliaria'])],
     children: [
-      // Módulos (consultas, usuarios, inmobiliarias)
       {
         path: 'consultas',
         loadChildren: () => 
@@ -41,21 +35,16 @@ export const routes: Routes = [
         loadChildren: () => import('./features/inmobiliaria/inmobiliaria.routes')
           .then(m => m.INMOBILIARIA_ROUTES)
       },
-      
-      // --- RUTA DEFAULT INTELIGENTE (SOLUCIÓN FINAL) ---
       {
         path: '',
-        canActivate: [panelRedirectGuard], // El Guard ejecuta la lógica y navega
+        canActivate: [panelRedirectGuard],
         loadComponent: () => 
           import('./core/components/empty-redirect/empty-redirect.component')
-            .then(m => m.EmptyRedirectComponent), // Componente estructural vacío para el router
-        pathMatch: 'full' // Mantener full para asegurar que anule los módulos, 
-                          // aunque el loadComponent sea el que satisfaga la necesidad estructural
+            .then(m => m.EmptyRedirectComponent),
+        pathMatch: 'full'
       }
     ]
   },
-
-  // Catch-all (404)
   {
     path: '**',
     redirectTo: '/auth/login'

@@ -1,14 +1,11 @@
-// src/app/features/redelex/pages/detalle-proceso/etapas-procesales.config.ts
-
 export interface EtapaProcesal {
-  id: number; // Usamos id para coincidir con tus reglas (1, 2, 3...)
+  id: number;
   nombreInterno: string[];
   color: string;
   nombreCliente: string;
   definicion: string;
 }
 
-// 1. MAESTRA DE ETAPAS (Todas las posibles)
 export const ETAPAS_MASTER: EtapaProcesal[] = [
   {
     id: 1,
@@ -83,30 +80,21 @@ export const ETAPAS_MASTER: EtapaProcesal[] = [
   {
     id: 11,
     nombreInterno: ['TERMINACION', 'TERMINADO', 'DESISTIMIENTO'],
-    color: '#FF6D6D', // Color rojo suave para terminación
+    color: '#FF6D6D',
     nombreCliente: 'TERMINACION',
     definicion: 'El proceso ha finalizado judicialmente.'
   }
 ];
 
-// 2. REGLAS DE VISIBILIDAD (IDs a mostrar según la clase)
 const REGLAS_VISIBILIDAD: Record<string, number[]> = {
-  // Ejecutivo: Muestra Mandamiento(3), Liq(9), Lanzamiento(10). Oculta Admisión(4).
   'EJECUTIVO SINGULAR': [1, 2, 3, 5, 6, 7, 8, 9, 10],
-  
-  // Restitución: Muestra Admisión(4). Oculta Mandamiento(3), Liq(9), Lanzamiento(10).
-  // NOTA: Según tu script, Restitución usa [1, 2, 4, 5, 6, 7, 8, 11]
   'VERBAL SUMARIO': [1, 2, 4, 5, 6, 7, 8],
 };
-
-// 3. FUNCIONES HELPER
 
 export function getEtapaConfig(nombreInterno: string | null | undefined): EtapaProcesal | null {
   if (!nombreInterno) return null;
   const nombreUpper = nombreInterno.toUpperCase().trim();
   
-  // Buscamos en la maestra completa para obtener la info de la etapa actual, 
-  // independientemente de si se muestra en el stepper o no.
   return ETAPAS_MASTER.find(etapa => 
     etapa.nombreInterno.some(keyword => nombreUpper.includes(keyword))
   ) || null;
@@ -116,17 +104,14 @@ export function getEtapasParaStepper(claseProceso: string = ''): { nombre: strin
   const claseUpper = claseProceso.toUpperCase();
   let idsVisibles: number[] = [];
 
-  // Lógica de selección de reglas
   if (claseUpper.includes('VERBAL SUMARIO') || claseUpper.includes('RESTITUCION')) {
     idsVisibles = REGLAS_VISIBILIDAD['VERBAL SUMARIO'];
   } else if (claseUpper.includes('EJECUTIVO') || claseUpper.includes('SINGULAR')) {
     idsVisibles = REGLAS_VISIBILIDAD['EJECUTIVO SINGULAR'];
   } else {
-    // Default si no coincide (podríamos mostrar todas o el ejecutivo por defecto)
     idsVisibles = REGLAS_VISIBILIDAD['EJECUTIVO SINGULAR'];
   }
 
-  // Filtramos la maestra según los IDs visibles
   return ETAPAS_MASTER
     .filter(etapa => idsVisibles.includes(etapa.id))
     .map(etapa => ({

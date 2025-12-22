@@ -1,16 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-
-import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, NavigationEnd } from '@angular/router';
 import { of, Subject, takeUntil } from 'rxjs';
 import { catchError, filter } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
-
-// Servicios y Modelos
 import { PluginRegistryService } from '../../services/plugin-registry.service';
 import { MenuSection, MenuItem } from '../../models/plugin.interface';
 import { AuthService, UserData } from '../../../features/auth/services/auth.service';
-
-// 1. Importamos solo el módulo base (los íconos ya se registraron en app.config.ts)
 import { FeatherModule } from 'angular-feather';
 import { SupportService } from '../../services/support.service';
 import { AffiAlert } from '../../../shared/services/affi-alert';
@@ -28,23 +23,17 @@ import { AffiAlert } from '../../../shared/services/affi-alert';
   styleUrl: './shell-layout.component.scss'
 })
 export class ShellLayoutComponent implements OnInit, OnDestroy {
-  // --- VARIABLES DE ESTADO (Estas eran las que faltaban) ---
   sidebarOpen = false;
   userName = 'Usuario';
   userRole = 'Invitado';
   userInitials = 'U';
-
-  // VARIABLES NUEVAS PARA SOPORTE
   showSupportModal = false;
   isSendingTicket = false;
   ticketData = { subject: '', content: '' };
-  
   menuSections: MenuSection[] = [];
   breadcrumbs: { label: string, active?: boolean }[] = [];
-
   currentTip = '';
 
-  // TIPS PARA ADMINISTRADORES Y AFFI
   readonly tipsAdmin = [
     'Usa la búsqueda global para localizar procesos de cualquier inmobiliaria rápidamente.',
     'Recuerda que puedes gestionar los accesos de las inmobiliarias desde el módulo de Usuarios.',
@@ -52,7 +41,6 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
     'Recuerda usar los filtros para buscar información específica'
   ];
 
-  // TIPS PARA INMOBILIARIAS
   readonly tipsInmobiliaria = [
     'Revisa diariamente la sección "Mis Procesos" para ver las últimas actualizaciones.',
     'Usa el filtro de "Radicado" para encontrar rápidamente un expediente específico.',
@@ -120,21 +108,16 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   }
 
   isItemActive(item: MenuItem): boolean {
-    // 1. Verificación Personalizada (Prioridad: matchRoutes)
-    // Si la URL actual contiene alguno de los strings definidos en matchRoutes, está activo.
     if (item.matchRoutes && item.matchRoutes.length > 0) {
       const currentUrl = this.router.url;
       const isCustomMatch = item.matchRoutes.some(fragment => currentUrl.includes(fragment));
       if (isCustomMatch) return true;
     }
 
-    // 2. Verificación Estándar (Ruta exacta o hija)
     if (item.route) {
       const routeCommands = Array.isArray(item.route) ? item.route : [item.route];
       const tree = this.router.createUrlTree(routeCommands);
       
-      // 'subset' permite que /consultas/mis-procesos active el botón si la ruta es esa
-      // pero no activará hermanos como /consultas/proceso/:id, por eso usamos el paso 1.
       return this.router.isActive(tree, {
         paths: 'subset',
         queryParams: 'ignored',
@@ -152,7 +135,6 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
     window.removeEventListener('resize', this.handleResize.bind(this));
   }
 
-  // --- LÓGICA DE SOPORTE ---
   openSupportModal() {
     this.ticketData = { subject: '', content: '' };
     this.showSupportModal = true;
@@ -201,28 +183,17 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
         this.menuSections = sections.map(section => {
           
           const filteredItems = section.items.filter(item => {
-            // 1. Admin ve todo siempre
             if (isAdmin) return true;
-
-            // 2. Analizar requisitos del ítem
             const itemRoles = item.roles || [];
-            // Cast a 'any' para leer permissions si no está en la interfaz base aún, 
-            // aunque ya debería estar si actualizaste el modelo plugin.interface.ts
             const itemPerms = (item as any).permissions as string[] || []; 
-
             const requiresRoles = itemRoles.length > 0;
             const requiresPerms = itemPerms.length > 0;
 
-            // 3. Si el ítem es público (sin roles ni permisos), mostrarlo
             if (!requiresRoles && !requiresPerms) return true;
 
-            // 4. LÓGICA OR (Permisiva): 
-            // Cumple si tiene el Rol correcto O si tiene el Permiso correcto
             const matchesRole = requiresRoles ? itemRoles.includes(currentRole) : false;
             const matchesPerms = requiresPerms ? itemPerms.some(p => currentPermissions.includes(p)) : false;
 
-            // Si cumple cualquiera de los dos, pasa.
-            // (Antes el matchesRole false te bloqueaba inmediatamente)
             return matchesRole || matchesPerms;
           });
 
@@ -321,14 +292,11 @@ export class ShellLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    // Nos suscribimos al observable de logout
     this.authService.logout().subscribe({
       next: () => {
-        // Éxito del backend: La limpieza ya se hizo en el 'finalize' del servicio
         this.router.navigate(['/auth/login']);
       },
       error: () => {
-        // Falla de red: La limpieza local YA SE HIZO. Navegamos igual.
         this.router.navigate(['/auth/login']);
       }
     });

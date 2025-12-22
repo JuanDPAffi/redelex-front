@@ -30,6 +30,7 @@ interface ClassGroup {
   templateUrl: './dashboard-inmobiliaria.component.html',
   styleUrls: ['./dashboard-inmobiliaria.component.scss']
 })
+
 export class DashboardInmobiliariaComponent implements OnInit {
   private redelexService = inject(RedelexService);
   private titleService = inject(Title);
@@ -69,10 +70,8 @@ export class DashboardInmobiliariaComponent implements OnInit {
   };
   
   ciudadesStats: StatItem[] = [];
-
   ejecutivo: ClassGroup = this.initGroup();
   restitucion: ClassGroup = this.initGroup();
-  // Se eliminó el grupo 'otros' ya que no se usará.
 
   readonly ETAPA_COLORS: Record<string, string> = {
     'RECOLECCION Y VALIDACION DOCUMENTAL': '#fbbf24',
@@ -115,7 +114,6 @@ export class DashboardInmobiliariaComponent implements OnInit {
   }
 
   calculateMetrics(data: any[]) {
-    // Reiniciar contadores
     this.kpis = { total: 0, enPreparacion: 0, enJuzgado: 0, conSentencia: 0 };
     this.ciudadesStats = [];
     this.ejecutivo = this.initGroup();
@@ -130,7 +128,6 @@ export class DashboardInmobiliariaComponent implements OnInit {
     const etapasAvanzadas = ['SENTENCIA', 'LIQUIDACION', 'AVALUO', 'REMATE', 'LANZAMIENTO', 'TERMINACION', 'TERMINADO'];
 
     data.forEach(p => {
-      // 1. Clasificación del Tipo de Proceso
       const clase = (p.claseProceso || '').toUpperCase();
       let isEjecutivo = false;
       let isRestitucion = false;
@@ -140,17 +137,13 @@ export class DashboardInmobiliariaComponent implements OnInit {
       } else if (clase.includes('VERBAL') || clase.includes('RESTITUCION') || clase.includes('SUMARIO')) {
         isRestitucion = true;
       } else {
-        // 2. FILTRO: Si no es Ejecutivo ni Restitución, se ignora completamente (break del ciclo actual)
+        // Si no es Ejecutivo ni Restitución, se ignora completamente
         return; 
       }
 
-      // Si llegamos aquí, el proceso cuenta para los KPIs
       this.kpis.total++;
-
-      // 3. Normalización de Etapa (Manejo de vacíos incluido)
       const etapa = this.normalizeEtapa(p.etapaProcesal);
       
-      // Ciudades
       const ciudad = p.ciudadInmueble ? p.ciudadInmueble.trim().toUpperCase() : 'SIN CIUDAD';
       if (!ciudad.includes('NO ESPECIFICADO')) {
         ciudadesMap.set(ciudad, (ciudadesMap.get(ciudad) || 0) + 1);
@@ -160,12 +153,10 @@ export class DashboardInmobiliariaComponent implements OnInit {
       const isSentencia = etapasAvanzadas.some(adv => etapa.includes(adv));
       const isJuzgado = !isPrep && !isSentencia;
 
-      // Actualizar KPIs Globales
       if (isPrep) this.kpis.enPreparacion++;
       else if (isSentencia) this.kpis.conSentencia++;
       else this.kpis.enJuzgado++;
 
-      // Actualizar Grupos Específicos
       if (isEjecutivo) {
         this.updateGroup(this.ejecutivo, flowMapEjecutivo, etapa, isPrep, isJuzgado, isSentencia);
       } else if (isRestitucion) {
@@ -175,8 +166,6 @@ export class DashboardInmobiliariaComponent implements OnInit {
 
     this.ejecutivo.flowStats = this.generateChartData(flowMapEjecutivo, this.ejecutivo.total, this.ORDER_EJECUTIVO);
     this.restitucion.flowStats = this.generateChartData(flowMapRestitucion, this.restitucion.total, this.ORDER_RESTITUCION);
-    
-    // Ciudades
     this.ciudadesStats = this.mapToSortedArray(ciudadesMap, this.kpis.total).slice(0, 15);
   }
 
@@ -222,7 +211,6 @@ export class DashboardInmobiliariaComponent implements OnInit {
   }
 
   private normalizeEtapa(raw: string): string {
-    // MODIFICACION 1: Si es vacío, null o undefined, retorna Recolección.
     if (!raw || raw.trim() === '') return 'RECOLECCION Y VALIDACION DOCUMENTAL';
     
     const upper = raw.toUpperCase();
@@ -231,7 +219,6 @@ export class DashboardInmobiliariaComponent implements OnInit {
     return upper;
   }
 
-  // Helpers para porcentajes (usados en HTML)
   get pctPrep(): number { return this.kpis.total > 0 ? (this.kpis.enPreparacion / this.kpis.total) : 0; }
   get pctJuzgado(): number { return this.kpis.total > 0 ? (this.kpis.enJuzgado / this.kpis.total) : 0; }
   get pctSentencia(): number { return this.kpis.total > 0 ? (this.kpis.conSentencia / this.kpis.total) : 0; }
@@ -239,12 +226,9 @@ export class DashboardInmobiliariaComponent implements OnInit {
   get donutGradient(): string {
     if (this.kpis.total === 0) return 'conic-gradient(#e5e7eb 0% 100%)';
     
-    // Convertimos a porcentajes 0-100 para CSS
     const p1 = this.pctPrep * 100;
     const p2 = p1 + (this.pctJuzgado * 100);
-    // p3 sería el resto hasta 100 (Sentencia)
 
-    // Colores: Prep (Amarillo), Juzgado (Azul Principal), Sentencia (Morado)
     return `conic-gradient(
       #fbbf24 0% ${p1}%, 
       #2563eb ${p1}% ${p2}%, 

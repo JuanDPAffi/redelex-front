@@ -12,10 +12,10 @@ export const USERS_PLUGIN_CONFIG: PluginConfig = {
     {
       id: 'users-list',
       label: 'Usuarios',
-      icon: 'users', // Asegúrate de tener un ícono 'users' o usa 'user'
+      icon: 'users',
       route: '/panel/usuarios',
       permissions: ['users:view'],
-      roles: ['admin'], // Fallback legacy
+      roles: ['admin'],
       enabled: true,
       order: 2,
       sectionId: 'sistema'

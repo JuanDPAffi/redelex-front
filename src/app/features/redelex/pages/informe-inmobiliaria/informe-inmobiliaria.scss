@@ -1,6 +1,4 @@
-/* =============================================
-   ESTILOS GENERALES
-   ============================================= */
+
 .page {
   max-width: 100%;
   margin: 0 auto;
@@ -55,9 +53,6 @@
   border: 1px solid #f3f4f6;
 }
 
-/* =============================================
-   FILTROS
-   ============================================= */
 .filter-section {
   margin-bottom: 1.5rem;
   animation: slideDown 0.2s ease-out;
@@ -96,7 +91,7 @@
   background: white;
   transition: all 0.2s;
   width: 100%;
-  height: 42px; // Altura fija consistente
+  height: 42px;
 
   &:focus {
     border-color: var(--color-primary);
@@ -129,25 +124,21 @@
   margin: 1.5rem 0;
 }
 
-/* =============================================
-   SELECT PERSONALIZADO (Estilo Limpio/Nativo)
-   ============================================= */
 .custom-select-container {
   position: relative;
 }
 
 .custom-select {
-  // Hereda estilos básicos pero ajusta display
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  padding: 0 0.85rem; // Padding lateral
+  padding: 0 0.85rem;
   font-size: 0.9rem;
   background: white;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 42px; // Misma altura que inputs
+  height: 42px;
   transition: all 0.2s;
 
   &:hover {
@@ -243,7 +234,6 @@
   }
 }
 
-  // Versión que abre hacia arriba
   &.dropdown-menu--up {
     top: auto;
     bottom: 100%;
@@ -253,9 +243,6 @@
   }
 }
 
-/* =============================================
-   TABLA
-   ============================================= */
 .table-container {
   display: flex;
   flex-direction: column;
@@ -309,37 +296,25 @@
   display: inline-flex;       
   align-items: center;
   justify-content: center;
-  
-  /* Ajuste de padding para que se vea bien con 1 o 2 líneas */
   padding: 0.4rem 0.8rem;    
-  
-  /* Forma redondeada completa */
-  border-radius: 12px;        /* Usamos 12px en lugar de 50px para que si hay 2 líneas se vea más natural */
-  
-  font-size: 0.65rem;         /* Un pelín más pequeño ayuda a que encaje mejor */
+  border-radius: 12px;
+  font-size: 0.65rem;
   font-weight: 700;           
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  
-  /* --- CAMBIOS CLAVE PARA EL SALTO DE LÍNEA --- */
-  white-space: normal;        /* Permite que el texto baje a la siguiente línea */
-  text-align: center;         /* Centra el texto cuando hay dos líneas */
-  line-height: 1.1;           /* Espaciado entre líneas compacto */
-  max-width: 110px;           /* Fuerza el salto si el texto supera este ancho */
-  /* -------------------------------------------- */
-
+  white-space: normal;
+  text-align: center;
+  line-height: 1.1;
+  max-width: 110px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
   min-width: 80px;            
-  height: auto;               /* Permite que crezca verticalmente */
+  height: auto;
   
   &--active { background: #dcfce7; color: #166534; }
   &--pending { background: #fef3c7; color: #92400e; }
   &--inactive { background: #fee2e2; color: #991b1b; }
 }
 
-/* =============================================
-   PAGINACIÓN RESPONSIVE
-   ============================================= */
 .pagination {
   display: flex;
   justify-content: space-between;
@@ -347,18 +322,18 @@
   padding-top: 1.5rem;
   border-top: 1px solid #e5e7eb;
   gap: 1rem;
-  flex-wrap: wrap; // Permite que baje en móviles
+  flex-wrap: wrap;
 
   @media (max-width: 768px) {
     justify-content: center;
     
     .pagination__btn {
-      order: 2; // Botones abajo
-      flex: 1; // Que ocupen espacio equitativo
+      order: 2;
+      flex: 1;
     }
     
     .pagination__info {
-      order: 1; // Info arriba
+      order: 1;
       width: 100%;
       justify-content: center;
       margin-bottom: 0.5rem;
@@ -397,13 +372,11 @@
   font-size: 0.9rem;
   color: #4b5563;
   flex-wrap: wrap;
-
-  // Estilo para el selector de PageSize dentro de la paginación
   .page-size-selector {
     min-width: 120px;
 
     .custom-select {
-      height: 36px; // Un poco más compacto
+      height: 36px;
       padding: 0 0.6rem;
       font-size: 0.85rem;
       background: #f9fafb;
@@ -413,12 +386,6 @@
   }
 }
 
-/* =============================================
-   BOTONES Y MODAL (Sin cambios, mantener)
-   ============================================= */
-/* =============================================
-   MODAL EXPORTACIÓN - ESTILO USERS-LIST
-   ============================================= */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -623,7 +590,6 @@
   gap: var(--spacing-md);
 }
 
-/* Botones Generales */
 .btn {
   border: none;
   border-radius: var(--border-radius-md);
@@ -704,7 +670,6 @@
 
 .helper { text-align: center; padding: 2rem; color: #6b7280; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--color-primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-/* Spinner pequeño para botones */
 .spinner-loader {
   display: inline-block;
   width: 12px;
@@ -717,34 +682,29 @@
   vertical-align: middle;
 }
 
-/* Estado deshabilitado para botones */
 .btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  pointer-events: none; // Evita clics extra
+  pointer-events: none;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* =============================================
-   STATS OVERVIEW (KPI CARDS - NUEVO)
-   ============================================= */
-
 .stats-grid-overview {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem; // var(--spacing-lg)
-  margin-bottom: 2rem; // var(--spacing-xl)
+  gap: 1.5rem;
+  margin-bottom: 2rem;
   animation: slideDown 0.3s ease-out;
 }
 
 .kpi-card {
   background: white;
-  border-radius: 12px; // var(--border-radius-xl)
+  border-radius: 12px;
   padding: 1.25rem;
-  border: 1px solid #e5e7eb; // var(--color-gray-200)
+  border: 1px solid #e5e7eb;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   display: flex;
   align-items: flex-start;
@@ -782,7 +742,7 @@
 .kpi-label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #6b7280; // var(--color-gray-500)
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   margin-bottom: 0.25rem;
@@ -791,7 +751,7 @@
 .kpi-value {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #111827; // var(--color-gray-900)
+  color: #111827;
   line-height: 1.2;
   margin-bottom: 0.25rem;
 }
@@ -808,15 +768,14 @@
 
 .kpi-subtext {
   font-size: 0.75rem;
-  color: #6b7280; // var(--color-gray-500)
+  color: #6b7280;
   margin-top: 0.25rem;
 }
 
-/* Barras de progreso mini dentro de las cards */
 .progress-mini {
   width: 100%;
   height: 4px;
-  background: #f3f4f6; // var(--color-gray-100)
+  background: #f3f4f6;
   border-radius: 2px;
   margin: 4px 0;
   overflow: hidden;
@@ -828,7 +787,6 @@
   }
 }
 
-/* Barra multicolor para Activos/Terminados */
 .progress-multi {
   width: 100%;
   height: 4px;
@@ -845,7 +803,6 @@
   }
 }
 
-/* Utilidades de color */
 .bg-blue-100 { background-color: #dbeafe; }
 .text-blue-700 { color: #1d4ed8; }
 

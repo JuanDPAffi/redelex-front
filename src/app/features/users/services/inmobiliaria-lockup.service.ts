@@ -15,6 +15,7 @@ export interface InmobiliariaLookup {
 @Injectable({
   providedIn: 'root'
 })
+
 export class InmobiliariaLookupService {
   private apiUrl = `${environment.apiUrl}api/inmobiliarias`;
 
