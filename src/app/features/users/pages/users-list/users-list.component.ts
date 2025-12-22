@@ -123,7 +123,7 @@ export class UsersListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.titleService.setTitle('Gestión de Usuarios - Admin');
+    this.titleService.setTitle('Estados Procesales - Usuarios');
     this.loadUsers();
     this.loadInmobiliarias();
   }
