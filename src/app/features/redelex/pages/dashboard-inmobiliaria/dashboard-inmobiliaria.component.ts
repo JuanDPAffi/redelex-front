@@ -14,7 +14,6 @@ interface StatItem {
   color?: string;
 }
 
-// Interfaz para grupos específicos (Ejecutivo/Restitución)
 interface ClassGroup {
   total: number;
   prep: number;
@@ -40,7 +39,29 @@ export class DashboardInmobiliariaComponent implements OnInit {
   nombreInmobiliaria = '';
   fechaActual = new Date();
 
-  // 1. ESTADÍSTICAS GLOBALES (Resumen de toda la cartera)
+  // 1. DEFINICIÓN DEL ORDEN ESPECÍFICO
+  readonly ORDER_EJECUTIVO = [
+    'RECOLECCION Y VALIDACION DOCUMENTAL',
+    'DEMANDA',
+    'MANDAMIENTO DE PAGO',
+    'NOTIFICACION',
+    'EXCEPCIONES',
+    'AUDIENCIA',
+    'SENTENCIA',
+    'LIQUIDACION',
+    'LANZAMIENTO'
+  ];
+
+  readonly ORDER_RESTITUCION = [
+    'RECOLECCION Y VALIDACION DOCUMENTAL',
+    'DEMANDA',
+    'ADMISION DEMANDA',
+    'NOTIFICACION',
+    'EXCEPCIONES',
+    'AUDIENCIA',
+    'SENTENCIA'
+  ];
+
   kpis = {
     total: 0,
     enPreparacion: 0,
@@ -50,7 +71,6 @@ export class DashboardInmobiliariaComponent implements OnInit {
   
   ciudadesStats: StatItem[] = [];
 
-  // 2. GRUPOS ESPECÍFICOS (Para el detalle por clase)
   ejecutivo: ClassGroup = this.initGroup();
   restitucion: ClassGroup = this.initGroup();
   otros: ClassGroup = this.initGroup();
@@ -96,11 +116,9 @@ export class DashboardInmobiliariaComponent implements OnInit {
   }
 
   calculateMetrics(data: any[]) {
-    // Reiniciar Globales
     this.kpis = { total: 0, enPreparacion: 0, enJuzgado: 0, conSentencia: 0 };
     this.ciudadesStats = [];
     
-    // Reiniciar Grupos
     this.ejecutivo = this.initGroup();
     this.restitucion = this.initGroup();
     this.otros = this.initGroup();
@@ -109,7 +127,6 @@ export class DashboardInmobiliariaComponent implements OnInit {
 
     this.kpis.total = data.length;
 
-    // Mapas temporales
     const flowMapEjecutivo = new Map<string, number>();
     const flowMapRestitucion = new Map<string, number>();
     const flowMapOtros = new Map<string, number>();
@@ -122,19 +139,16 @@ export class DashboardInmobiliariaComponent implements OnInit {
       const clase = (p.claseProceso || '').toUpperCase();
       const ciudad = p.ciudadInmueble ? p.ciudadInmueble.trim().toUpperCase() : 'SIN CIUDAD';
 
-      // --- CÁLCULOS GLOBALES ---
       ciudadesMap.set(ciudad, (ciudadesMap.get(ciudad) || 0) + 1);
       
       const isPrep = etapa === 'RECOLECCION Y VALIDACION DOCUMENTAL';
       const isSentencia = etapasAvanzadas.some(adv => etapa.includes(adv));
-      const isJuzgado = !isPrep && !isSentencia; // Simplificación para gráfica
+      const isJuzgado = !isPrep && !isSentencia;
 
-      // Actualizar KPIs Globales
       if (isPrep) this.kpis.enPreparacion++;
       else if (isSentencia) this.kpis.conSentencia++;
-      else this.kpis.enJuzgado++; // Asumimos resto en juzgado para el KPI global
+      else this.kpis.enJuzgado++;
 
-      // --- CÁLCULOS POR GRUPO (EJECUTIVO / RESTITUCIÓN) ---
       if (clase.includes('EJECUTIVO') || clase.includes('SINGULAR')) {
         this.updateGroup(this.ejecutivo, flowMapEjecutivo, etapa, isPrep, isJuzgado, isSentencia);
       } 
@@ -146,12 +160,14 @@ export class DashboardInmobiliariaComponent implements OnInit {
       }
     });
 
-    // Generar Arrays para gráficas de flujo
-    this.ejecutivo.flowStats = this.generateChartData(flowMapEjecutivo, this.ejecutivo.total);
-    this.restitucion.flowStats = this.generateChartData(flowMapRestitucion, this.restitucion.total);
+    // --- CAMBIO CLAVE: Pasar el orden personalizado ---
+    this.ejecutivo.flowStats = this.generateChartData(flowMapEjecutivo, this.ejecutivo.total, this.ORDER_EJECUTIVO);
+    this.restitucion.flowStats = this.generateChartData(flowMapRestitucion, this.restitucion.total, this.ORDER_RESTITUCION);
+    
+    // Otros se mantiene ordenado por cantidad (sin tercer argumento)
     this.otros.flowStats = this.generateChartData(flowMapOtros, this.otros.total);
 
-    // Generar Top Ciudades Global
+    // Ciudades se mantiene por cantidad
     this.ciudadesStats = this.mapToSortedArray(ciudadesMap, this.kpis.total).slice(0, 15);
   }
 
@@ -163,9 +179,37 @@ export class DashboardInmobiliariaComponent implements OnInit {
     map.set(etapa, (map.get(etapa) || 0) + 1);
   }
 
-  private generateChartData(map: Map<string, number>, total: number): StatItem[] {
-    return this.mapToSortedArray(map, total)
-      .map(item => ({ ...item, color: this.ETAPA_COLORS[item.label] || '#cbd5e1' }));
+  // Ahora acepta un array opcional 'customOrder'
+  private generateChartData(map: Map<string, number>, total: number, customOrder?: string[]): StatItem[] {
+    let items = Array.from(map.entries()).map(([label, count]) => ({
+      label,
+      count,
+      pct: total > 0 ? Math.round((count / total) * 100) : 0,
+      color: this.ETAPA_COLORS[label] || '#cbd5e1'
+    }));
+
+    if (customOrder && customOrder.length > 0) {
+      // Ordenamiento Personalizado
+      return items.sort((a, b) => {
+        const idxA = customOrder.indexOf(a.label);
+        const idxB = customOrder.indexOf(b.label);
+
+        // Si ambos están en la lista, ordenar por su posición en la lista
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        
+        // Si solo A está en la lista, A va primero
+        if (idxA !== -1) return -1;
+        
+        // Si solo B está en la lista, B va primero
+        if (idxB !== -1) return 1;
+
+        // Si ninguno está en la lista, ordenar por cantidad descendente (comportamiento default para 'Otros')
+        return b.count - a.count;
+      });
+    } else {
+      // Ordenamiento por defecto (Mayor cantidad primero)
+      return items.sort((a, b) => b.count - a.count);
+    }
   }
 
   private mapToSortedArray(map: Map<string, number>, total: number): StatItem[] {
@@ -187,14 +231,9 @@ export class DashboardInmobiliariaComponent implements OnInit {
     return upper;
   }
 
-  // Getter para el gradiente de la dona
   get donutGradient(): string {
     if (this.kpis.total === 0) return 'conic-gradient(#e5e7eb 0% 100%)';
-    
-    // Segmentos: Prep (Amarillo) vs Juzgado/Sentencia (Azul)
     const pctPrep = (this.kpis.enPreparacion / this.kpis.total) * 100;
-    
-    // #fbbf24 = Amarillo (Prep), #260086 = Azul (Resto)
     return `conic-gradient(#fbbf24 0% ${pctPrep}%, #260086 ${pctPrep}% 100%)`;
   }
 }
