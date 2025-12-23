@@ -192,24 +192,24 @@ export class MisProcesosComponent implements OnInit {
       next: (res) => {
         this.identificacionUsuario = res.identificacion;
         this.nombreInmobiliaria = res.nombreInmobiliaria || '';
-        const rawProcesos = res.procesos || [];
 
+        const rawProcesos = res.procesos || [];
         const datosLimpios = rawProcesos.map((item: any) => {
-          const newItem = { ...item };
-          if (newItem.demandadoNombre?.includes(',')) newItem.demandadoNombre = newItem.demandadoNombre.split(',')[0].trim();
-          if (newItem.demandadoIdentificacion?.includes(',')) newItem.demandadoIdentificacion = newItem.demandadoIdentificacion.split(',')[0].trim();
-          if (newItem.demandanteNombre?.includes(',')) newItem.demandanteNombre = newItem.demandanteNombre.split(',')[0].trim();
+          const p = { ...item };
+
+          if (p.demandadoNombre?.includes(',')) p.demandadoNombre = p.demandadoNombre.split(',')[0].trim();
+          if (p.demandadoIdentificacion?.includes(',')) p.demandadoIdentificacion = p.demandadoIdentificacion.split(',')[0].trim();
           
-          newItem.numeroRadicacion = newItem.numeroRadicacion || 'N/A';
-          newItem.etapaProcesal = this.getEtapaDisplay(newItem.etapaProcesal);
+          p.etapaProcesal = this.getEtapaDisplay(p.etapaProcesal);
           
-          return newItem;
+          return p;
         });
         
         this.rawData = datosLimpios;
         this.extraerListasUnicas();
         this.calculateStats();
         this.applyFilters();
+        
         this.loading = false;
       },
       error: (err) => {
