@@ -59,7 +59,7 @@ export const REDELEX_PLUGIN_CONFIG: PluginConfig = {
       label: 'Centro de Llamadas',
       icon: 'phone-call',
       route: '/panel/consultas/llamada',
-      roles: ['admin', 'affi'],
+      roles: ['admin'],
       permissions: ['call:create'],
       enabled: true,
       order: 5,
