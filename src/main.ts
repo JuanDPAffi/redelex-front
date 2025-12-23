@@ -5,3 +5,5 @@ import { appConfig } from './app/app.config';
 
 bootstrapApplication(AppComponent, {...appConfig, providers: [provideZoneChangeDetection(), ...appConfig.providers]})
   .catch((err) => console.error(err));
+
+// Desarrollo Finalizado V1 Juan Diego Pinilla Montoya 23/12/2025

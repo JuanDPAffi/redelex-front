@@ -136,26 +136,39 @@ export class InmobiliariaListComponent implements OnInit {
   }
 
   onSendReminder() {
-    this.isSendingEmail = true;
+    AffiAlert.fire({
+      title: '¿Enviar recordatorio?',
+      text: 'Se enviará un correo electrónico a los encargados para recordarles realizar la importación.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, enviar correo',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+      this.isSendingEmail = true;
 
-    this.inmoService.triggerImportReminder().subscribe({
-      next: () => {
-        this.isSendingEmail = false;
-        AffiAlert.fire({
-          icon: 'success',
-          title: 'Enviado',
-          text: 'El recordatorio de importación se ha enviado correctamente.',
-          timer: 2000,
-          showConfirmButton: false
-        });
-      },
-      error: (err: any) => { 
-        this.isSendingEmail = false;
-        console.error(err);
-        AffiAlert.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'No se pudo enviar el recordatorio.'
+      this.inmoService.triggerImportReminder().subscribe({
+        next: () => {
+          this.isSendingEmail = false;
+          AffiAlert.fire({
+            icon: 'success',
+            title: 'Enviado',
+            text: 'El recordatorio de importación se ha enviado correctamente.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        },
+        error: (err: any) => { 
+          this.isSendingEmail = false;
+          console.error(err);
+          AffiAlert.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo enviar el recordatorio.'
+            });
+          }
         });
       }
     });
