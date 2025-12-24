@@ -564,6 +564,16 @@ export class InformeInmobiliariaComponent implements OnInit {
           if (col.key.includes('Fecha')) val = this.datePipe.transform(val as string, 'yyyy-MM-dd') || val;
           if (col.key === 'claseProceso') val = this.clasePipe.transform(val as string);
 
+          let configFound: EtapaConfig | undefined = undefined;
+          
+          if (col.key === 'etapaProcesal') {
+            configFound = this.getEtapaConfig(val as string);
+            
+            if (configFound) {
+              val = configFound.summaryTitle;
+            }
+          }
+
           if (span > 1) { sheet.mergeCells(currentRowIndex, rowPhysicalCol, currentRowIndex, rowPhysicalCol + span - 1); }
 
           const cell = sheet.getCell(currentRowIndex, rowPhysicalCol);
@@ -572,13 +582,11 @@ export class InformeInmobiliariaComponent implements OnInit {
           cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
           cell.border = borderStyle;
 
-          if (col.key === 'etapaProcesal') {
-             const config = this.getEtapaConfig(item.etapaProcesal);
-             if (config) {
-               const argbColor = 'FF' + config.colorHex.replace('#', '');
-               cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: argbColor } };
-             }
+          if (col.key === 'etapaProcesal' && configFound) {
+             const argbColor = 'FF' + configFound.colorHex.replace('#', '');
+             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: argbColor } };
           }
+          
           rowPhysicalCol += span;
         });
       });
@@ -705,11 +713,18 @@ export class InformeInmobiliariaComponent implements OnInit {
         drawPDFBoxRow(currentY, row2Data);
       }
 
-      const bodyData = this.filteredData.map(item => {
+const bodyData = this.filteredData.map(item => {
         return activeColumns.map(col => {
           let val = item[col.key as keyof InformeInmobiliaria];
           if (col.key.includes('Fecha')) val = this.datePipe.transform(val as string, 'yyyy-MM-dd') || val;
           if (col.key === 'claseProceso') val = this.clasePipe.transform(val as string);
+          
+          if (col.key === 'etapaProcesal') {
+             const config = this.getEtapaConfig(val as string);
+             if (config) {
+               val = config.summaryTitle; 
+             }
+          }
           return val || '';
         });
       });
@@ -728,8 +743,8 @@ export class InformeInmobiliariaComponent implements OnInit {
         columnStyles: dynamicColumnStyles,
         didParseCell: (data) => {
           if (data.section === 'body' && etapaColIndex !== -1 && data.column.index === etapaColIndex) {
-            const rawEtapa = data.cell.raw as string;
-            const config = this.getEtapaConfig(rawEtapa);
+            const cellValue = data.cell.raw as string;
+            const config = ETAPAS_CONFIG.find(c => c.summaryTitle === cellValue);
             
             if (config) {
               const rgb = hexToRgb(config.colorHex);

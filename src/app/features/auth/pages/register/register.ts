@@ -51,7 +51,7 @@ export class RegisterComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.titleService.setTitle('Affi - Registrarse');
+    this.titleService.setTitle('Estados Procesales - Registrarse');
   }
 
   submit() {
