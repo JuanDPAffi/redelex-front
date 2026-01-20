@@ -86,6 +86,9 @@ export class UsersListComponent implements OnInit {
   availableRoles = [
     { value: 'admin', label: 'Administrador' },
     { value: 'affi', label: 'Colaborador Affi' },
+    { value: 'gerente_comercial', label: 'Gerente Comercial' },
+    { value: 'director_comercial', label: 'Director Comercial' },
+    { value: 'gerente_cuenta', label: 'Gerente de Cuenta' },
     { value: 'inmobiliaria', label: 'Inmobiliaria' }
   ];
 
